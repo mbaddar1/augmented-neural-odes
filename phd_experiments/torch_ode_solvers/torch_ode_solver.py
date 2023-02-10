@@ -15,7 +15,6 @@ class TorchODESolverSolution:
         """
         self.z_trajectory = z_trajectory
         self.t_values = t_values
-        self.zf = zf
 
 
 class TorchODESolver(ABC):
