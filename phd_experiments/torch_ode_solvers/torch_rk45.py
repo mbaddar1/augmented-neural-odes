@@ -84,6 +84,8 @@ class TorchRK45(TorchODESolver):
                 finished = True
             z_trajectory.append(z)
             t_values.append(t)
+        assert len(z_trajectory) == len(t_values), f"len(z_trajectory)must == len(t_values) : " \
+                                                   f"f{len(z_trajectory)} != {len(t_values)}"
         sol = TorchODESolverSolution(zf=z, z_trajectory=z_trajectory, t_values=t_values)
         return sol
 
