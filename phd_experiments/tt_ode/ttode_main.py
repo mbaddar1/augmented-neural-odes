@@ -3,6 +3,7 @@ import logging
 from argparse import ArgumentParser
 from typing import List
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import yaml
@@ -183,8 +184,8 @@ if __name__ == '__main__':
     if isinstance(model_, TensorTrainODEBLOCK):
         logger.info(f'for TT-ODE model : \n'
                     f'P = {model_.get_P()}\n'
-                    f'F = {model_.get_Q()}\n'
-                    f'M = {model_.get_W()}\n')
+                    f'Q = {model_.get_Q()}\n'
+                    f'W = {model_.get_W()}\n')
     end_time = datetime.datetime.now()
     training_time = end_time - start_time
     total_nfe = model_.get_nfe() if isinstance(model_, (ODENet, TensorTrainODEBLOCK)) else None
@@ -193,3 +194,14 @@ if __name__ == '__main__':
         f'final epoch loss = {epochs_loss_history[-1]} at epoch = {epoch}\n'
         f'training time = {training_time.seconds} seconds\n'
         f'total_nfe(@num_epochs={epoch}) = {total_nfe}\n')
+    # plot
+    if configs_['model-name'] == 'ttode':
+        Dx = configs_['concentric-sphere']['input_dim']
+        Dz = configs_['ttode']['tensor_dims'][Dx][0]
+        plt.xlabel('Epochs')
+        plt.ylabel('SmoothL1loss')
+        plt.title(
+            f"""Loss convergence over epochs for {configs_['model-name']}, 
+            loss_threshold = {configs_['train']['loss_threshold']}, Dx = {Dx} , Dz = {Dz}""")
+        plt.plot(epochs_loss_history)
+        plt.savefig(f"""loss_convergence_model_type_{configs_['model-name']}.png""")

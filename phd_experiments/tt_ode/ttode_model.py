@@ -119,12 +119,14 @@ class TensorTrainODEBLOCK(torch.nn.Module):
         ulow, uhigh = 1e-7, 1e-5
         self.P = torch.nn.Parameter(
             torch.distributions.Uniform(low=ulow, high=uhigh).sample(sample_shape=P_dims))
+        # Set P as param for all models even for TT-ODE with TT-ALS and custom autograd function, why
+        #   Because if no param in the P -> W-> path has requires_grad=True, the custom autograd fn
+        #   will not be called
 
         # Initialize W
-        # self.W = torch.nn.Parameter(
-        #     torch.distributions.Uniform(low=ulow, high=uhigh).sample(sample_shape=W_dims))
+
         D_z = tensor_dimensions[0]  # assume tensor dimensions is for length 1 : i.e. project vector to vector
-        # FIXME tensor dimension can be simply and integer not a list
+        # FIXME tensor dimension can be simply an integer not a list
 
         # TODO support list of ranks or adaptive using ALS / DMRG ??
         assert isinstance(tt_rank, int), "Now only supported fixed-rank TT"
@@ -145,8 +147,10 @@ class TensorTrainODEBLOCK(torch.nn.Module):
                                                requires_grad=True, dtype=self.tensor_dtype)
                 self.W.append(w)
                 assert isinstance(self.W[-1], TensorTrain)
-                for i, G in enumerate(self.W[-1].comps):
-                    self.register_parameter(name=f'W{d}_G{i}', param=G)
+                # if we implement with custom auto-grad, then we don't need to register TT-cores
+                if not self.custom_autograd_fn:
+                    for i, G in enumerate(self.W[-1].comps):
+                        self.register_parameter(name=f'W{d}_G{i}', param=G)
 
             # the + 1 in int(self.basis_params['deg'])+1 is for deg_poly i.e x^0 , x^1 , .. x^deg
 

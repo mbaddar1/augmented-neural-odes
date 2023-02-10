@@ -32,7 +32,7 @@ train:
   print_freq: 10
   loss: "smoothl1loss"
   loss_window: 10
-  loss_threshold: 1e-3 # must be adjusted based on dataset
+  loss_threshold: 2e-3 # must be adjusted based on dataset
 
 # 6 ) Model-specific params
 resnet:
