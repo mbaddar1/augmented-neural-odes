@@ -141,8 +141,9 @@ class TensorTrainODEBLOCK(torch.nn.Module):
             #   correct way it to register W as a ModuleList of TT or D-output TT , and let
             #   Recursive name parameters mechanism retrive them, but didn't work
             self.W = []
+            ranks = [self.tt_rank]*int(D_z) # FIXME assume all ranks are equal for all cores
             for d in range(D_z):
-                w = TensorTrainODEBLOCK.get_tt(ranks=[self.tt_rank] * int(D_z),
+                w = TensorTrainODEBLOCK.get_tt(ranks=ranks,
                                                basis_dim=int(self.basis_params['deg']) + 1,
                                                requires_grad=True, dtype=self.tensor_dtype)
                 self.W.append(w)
@@ -182,7 +183,7 @@ class TensorTrainODEBLOCK(torch.nn.Module):
         core_list = TensorTrainODEBLOCK.generate_tt_cores(ranks=ranks, basis_dim=basis_dim, requires_grad=requires_grad,
                                                           dtype=dtype)
         # FIXME assume fixed basis-dim for all orders
-        return TensorTrain(dims=[basis_dim] * order, comp_list=core_list)
+        return TensorTrain(dims=[basis_dim] * order, comp_list=core_list,ranks=ranks)
 
     @staticmethod
     def generate_tt_cores(ranks: List[int], basis_dim: int, requires_grad, dtype: torch.dtype) -> ParameterList:

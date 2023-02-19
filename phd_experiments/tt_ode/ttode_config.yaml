@@ -28,7 +28,7 @@ concentric-sphere:
 train:
   n_epochs: 500
   lr: 1e-3
-  batch_size: 64
+  batch_size: 256
   print_freq: 10
   loss: "smoothl1loss"
   loss_window: 10
@@ -56,11 +56,11 @@ ttode: # tensor ode
   # if input is a 3D tensor (colored) image -> tensor dims will be for order-3 tensor with higher dimensions
   non_linearity: None
   basis: poly,3 # poly, dim or trig , a,b,c
-  t_span: [ 0.0,0.3 ] # FIXME : higher tf => higher depth => h(delta t) underflow problem
+  t_span: [ 0.0,0.2 ] # FIXME : higher tf => higher depth => h(delta t) underflow problem
   # TODO Understand : why when tf is large (e.g. 10) we get underflow
   # TODO more experiment with tf : seems crucial to accuracy and running time
   forward_impl_method: "ttode_als"
-  custom_autograd_fn: False
+  custom_autograd_fn: True
   lambda: 1 # TODO make it fn (Coeff tensor order)
   tt_rank: 5
 
