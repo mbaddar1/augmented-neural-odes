@@ -60,6 +60,7 @@ class TensorTrainODEBLOCK(torch.nn.Module):
         self.tt_rank = tt_rank
         self.nfe = 0
         self.tt_container = TensorTrainContainer()
+        self.ttode_als_context = dict()
         # assert parameters
         assert len(input_dimensions) == 1, " Supporting input vectors only"
         assert len(output_dimensions) == 1, " Supporting output vectors only"
@@ -248,7 +249,7 @@ class TensorTrainODEBLOCK(torch.nn.Module):
                 tt_ode_alias = TTOdeAls.apply
                 zf = tt_ode_alias(x, self.P, self.input_dimensions, self.W, self.tt_container, self.tensor_dtype,
                                   self.tt_ode_func, self.t_span
-                                  , self.basis_fn, self.basis_params)
+                                  , self.basis_fn, self.basis_params,self.ttode_als_context)
             else:
                 z_trajectory, t_values = Forward2.forward2(x, self.P, self.input_dimensions, self.W, self.tensor_dtype,
                                                            self.tt_ode_func,

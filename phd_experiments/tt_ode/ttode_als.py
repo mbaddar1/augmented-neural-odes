@@ -43,13 +43,14 @@ class TTOdeAls(torch.autograd.Function):
     def forward(ctx: Any, x: torch.Tensor, P: torch.Tensor, input_dimensions: Iterable[int],
                 W: [TensorTrainFixedRank | List[TensorTrain]], tt_container: TensorTrainContainer,
                 tensor_dtype: torch.dtype,
-                tt_ode_func: Callable, t_span: Tuple, basis_fn: str, basis_params: dict) -> torch.Tensor:
+                tt_ode_func: Callable, t_span: Tuple, basis_fn: str, basis_params: dict,ttode_als_context : dict) -> torch.Tensor:
         ctx.z_trajectory, ctx.t_values = Forward2.forward2(x, P, input_dimensions, W, tensor_dtype, tt_ode_func, t_span,
                                                            basis_fn,
                                                            basis_params)
         ctx.W = W
         ctx.P = P
         ctx.x = x
+        ctx.ttode_als_context = ttode_als_context
         return ctx.z_trajectory[-1]
 
     @staticmethod
@@ -73,19 +74,45 @@ class TTOdeAls(torch.autograd.Function):
             t_plus_1 = ctx.t_values[i + 1]
             delta_t = t_plus_1 - t
             assert delta_t > 1e-8, f"delta_t is too small : {delta_t} < {eps}"
-            yy = (z_t_plus_1_prime - ctx.z_trajectory[i]) / delta_t
+            # fixme debug code : to remove
+            delta_z_prime = z_t_plus_1_prime - ctx.z_trajectory[i]
+            norm_delta_z_prime = torch.norm(delta_z_prime)
+            avg_delta = norm_delta_z_prime / delta_z_prime.numel()
+            yy = (z_t_plus_1_prime - ctx.z_trajectory[
+                i]) / delta_t
+            # TODO to avoid very large values for yy at delta t are sometimes
+            #   small, we CAN experiment optimizing for W.delta_t as one variable then correct for that
             xx = ctx.z_trajectory[i]
             t_tensor = torch.Tensor([t] * batch_size).view(batch_size, 1)
             # concat time
             xx = torch.concat([xx, t_tensor], dim=1)
             W_yy_pair = pd.DataFrame({'W': W_last, 'yy': list(yy.T)})
             # apply als
-            W_als = W_yy_pair.apply(lambda v: TTOdeAls._als(v[0], v[1].view(batch_size, -1), xx, poly_basis),
-                                    axis=1).values
+            W_als = list(W_yy_pair.apply(lambda v: TTOdeAls._als(v[0], v[1].view(batch_size, -1), xx, poly_basis),
+                                         axis=1).values)
+            # delta_t_inv = 1.0 / delta_t
+            # W_als = list(map(lambda w: delta_t_inv * w, W_als)) # correct for delta t
+            # fixme , remove , for debugging only
+            W_als_norm = sum([w.norm() for w in W_als])
+            W_als_numel = sum([w.numel for w in W_als])
+            W_als_norm_average = float(W_als_norm) / W_als_numel
+            # fixme end debug code to remove
             # update W and Z
-            W_last = [alpha * W_als[i] + (1 - alpha) * W_last[i] for i in range(Dz)]
+            # fixme, simplify W_als update , this 2 steps are for debugging
+            W_last_new = [alpha * W_als[i] + (1 - alpha) * W_last[i] for i in range(Dz)]
+            W_last_zip = zip(W_last_new, W_last)
+            W_last_diff_norm = sum(list(map(lambda v: abs(v[0].norm().item() - v[1].norm().item()), W_last_zip)))
+            W_last = W_last_new
+            # TODO might use W_last_diff_norm for stop criteria
+            # TODO apply norm of diff not diff of norms,
             z_t_plus_1_prime = torch.concat(tensors=list(
                 map(lambda w: TTOdeAls._apply_dzdt_fn(w, xx, poly_basis), W_last)), dim=1)  # TODO or W_als ??
+            # fixme, remove , for debugging only
+            W_last_norm = sum([w.norm() for w in W_last])
+            W_last_numel = sum([w.numel for w in W_last])
+            W_last_norm_average = float(W_last_norm) / W_last_numel
+            norms_diff = W_last_norm_average - W_als_norm_average
+            # fixme , end of debugging code
         # FIXME , for debug only, and apply norm of diffs not diffs of norms
         W_norm_diff = sum([W_last[i].norm() - ctx.W[i].norm() for i in range(len(ctx.W))])
         ret = torch.linalg.lstsq(ctx.x, z_t_plus_1_prime)
@@ -93,7 +120,9 @@ class TTOdeAls(torch.autograd.Function):
         P_prime = alpha * P_als + (1 - alpha) * ctx.P  # TODO get P_als or smoothen with alpha ?
         diff_ = torch.norm(P_als - ctx.P)
         diff2_ = torch.norm(P_prime - ctx.P)
-        return None, None, None, None, None, None, None, None, None, None, None
+        ctx.ttode_als_context['W'] = W_last
+        ctx.ttode_als_context['P'] = P_prime
+        return None, None, None, None, None, None, None, None, None, None, None,None
 
     @staticmethod
     def _als(W: TensorTrain, yy_vec: torch.Tensor, xx_tensor: torch.Tensor, basis_fn: Any) -> TensorTrain:
@@ -103,7 +132,7 @@ class TTOdeAls(torch.autograd.Function):
         ranks = [list(comp.size())[2] for comp in W.comps[:n_comps - 1]]
         xTT = Extended_TensorTrain(tfeatures=basis_fn, ranks=ranks, comps=W.comps)
         norm_before = xTT.tt.norm()
-        xTT.fit(x=lb.tensor(xx_tensor), y=lb.tensor(yy_vec), rule=None, verboselevel=1, reg_param=1e-6, iterations=2000)
+        xTT.fit(x=lb.tensor(xx_tensor), y=lb.tensor(yy_vec), rule=None, verboselevel=0, reg_param=100.0, iterations=2000)
         norm_after = xTT.tt.norm()
         diff_ = norm_after - norm_before
         return xTT.tt

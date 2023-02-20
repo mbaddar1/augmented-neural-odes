@@ -149,15 +149,22 @@ if __name__ == '__main__':
             W_norm = get_W_norm(model_.get_W())
             reg_term = lambda_ * W_norm
             loss = loss_fn(Y_pred, Y) + reg_term
-            # call backward hooks
-            loss.backward()
+
             # save old norms
             P_old_norm = model_.get_P().norm().item()
             W_old_norm = get_W_norm(model_.get_W())
             Q_old_norm = model_.get_Q().norm().item()
 
+            # call backward hooks, and als update for als-based params
+            loss.backward()
+            # call optimizer for grad-based params
+            # TODO , implement TT_ALS in optimize step not in backward step, makes more sense
             optimizer.step()
-
+            ####
+            # FIXME , hack to set W and P coming from TT_ALS , find a better way
+            if configs_['model-name'] == 'ttode' and configs_['ttode']['forward_impl_method'] == 'ttode_als':
+                model_.W = model_.ttode_als_context['W']
+                model_.P = torch.nn.Parameter(model_.ttode_als_context['P'])
             # calculate delta norm
             delta_P_norm = model_.get_P().norm().item() - P_old_norm
             # P_diff_opt_manual = torch.norm(P_new_manual - model_.get_P())
@@ -168,7 +175,7 @@ if __name__ == '__main__':
             batch_losses.append(loss.item())
         epoch_loss = np.mean(batch_losses)
         # print every freq epochs
-        if epoch % 10 == 0:
+        if epoch % 1 == 0:
             logger.info(f'epoch = {epoch} | loss = {epoch_loss} | P_norm_delta = {delta_P_norm} , W_norm_delta = '
                         f'{delta_W_norm} , Q_delta = {delta_Q}')
 

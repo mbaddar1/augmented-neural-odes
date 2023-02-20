@@ -1,0 +1,5 @@
+* review RK45 formula and maybe it is a way to stabilize the issue high values for delta z / delta t when t is small
+* apply TT-ALS for a simpler problem ( diabetes regression with TT-ALS optimizaiton) , maybe better
+implemented at optimize phase not backward??
+need to know, will it converege ?
+* experiment regularization over trajectory itself , i.e sum of z norm
