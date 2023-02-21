@@ -8,6 +8,7 @@ from dlra.feature_utils import PolyBasis
 from dlra.linearbackend import lb
 from dlra.tt import TensorTrain, Extended_TensorTrain
 from phd_experiments.tn.tt import TensorTrainFixedRank
+from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 
 """
@@ -26,7 +27,8 @@ class Forward2():
         z0_contract_dims = list(range(1, len(input_dimensions) + 1))
         P_contract_dims = list(range(len(input_dimensions)))
         z0 = torch.tensordot(a=x, b=P, dims=(z0_contract_dims, P_contract_dims))
-        torch_solver = TorchRK45(device=torch.device('cpu'), tensor_dtype=tensor_dtype, is_batch=True)
+        # torch_solver = TorchRK45(device=torch.device('cpu'), tensor_dtype=tensor_dtype, is_batch=True)
+        torch_solver = TorchEulerSolver()
         soln = torch_solver.solve_ivp(func=tt_ode_func, t_span=t_span, z0=z0,
                                       args=(W, basis_fn, basis_params))
 
@@ -51,7 +53,7 @@ class TTOdeAls(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx: Any, grad_outputs: Tensor) -> Any:
-        alpha = 0.1
+        alpha = 0.001
         lr = 0.001
         eps = 1e-8
         zT = ctx.z_trajectory[-1]
@@ -129,7 +131,7 @@ class TTOdeAls(torch.autograd.Function):
         xTT = Extended_TensorTrain(tfeatures=basis_fn, ranks=ranks, comps=W.comps)
         norm_before = xTT.tt.norm()
         xTT.fit(x=lb.tensor(xx_tensor), y=lb.tensor(yy_vec), rule=None, verboselevel=0, reg_param=100.0,
-                iterations=2000)
+                iterations=10)
         norm_after = xTT.tt.norm()
         diff_ = norm_after - norm_before
         return xTT.tt

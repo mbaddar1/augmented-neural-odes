@@ -60,7 +60,7 @@ ttode: # tensor ode
   # TODO Understand : why when tf is large (e.g. 10) we get underflow
   # TODO more experiment with tf : seems crucial to accuracy and running time
   forward_impl_method: "ttode_als"
-  custom_autograd_fn: True
-  lambda: 100 # TODO make it fn (Coeff tensor order)
+  custom_autograd_fn: False
+  lambda: 0.2 # TODO make it fn (Coeff tensor order)
   tt_rank: 5
 

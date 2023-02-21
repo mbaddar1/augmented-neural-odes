@@ -10,7 +10,7 @@ from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchODESolver, T
 
 class TorchEulerSolver(TorchODESolver):
 
-    def __init__(self, step_size: [float, str] = 0.01):
+    def __init__(self, step_size: [float, str] = 0.02):
         super().__init__(step_size)
 
     def solve_ivp(self, func: Callable[[float, torch.Tensor, ...], torch.Tensor], t_span: Tuple, z0: torch.Tensor,
@@ -22,12 +22,12 @@ class TorchEulerSolver(TorchODESolver):
         if abs(h - self.step_size) > 1e-4:
             self.logger.info(f'Modified step size from {self.step_size} to h for tf alignment')
         # start integration
-        zt = z0.type(torch.float32)
+        zt = z0
         z_trajectory = [z0]
         t_values = [t0]
         if args:
             func = lambda t, y, func=func: func(t, y, *args)
-        for t in tqdm(np.arange(t0, tf, h), desc='euler loop'):
+        for t in np.arange(t0, tf, h):
             zt = zt + h * func(t, zt)
             z_trajectory.append(zt)
             t_values.append(t + h)

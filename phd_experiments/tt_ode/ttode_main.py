@@ -176,7 +176,7 @@ if __name__ == '__main__':
             batch_losses.append(loss.item())
         epoch_loss = np.mean(batch_losses)
         # print every freq epochs
-        if epoch % 1 == 0:
+        if epoch % 10 == 0:
             logger.info(f'epoch = {epoch} | loss = {epoch_loss} | P_norm_delta = {delta_P_norm} , W_norm_delta = '
                         f'{delta_W_norm} , Q_delta = {delta_Q}')
 
