@@ -162,7 +162,8 @@ if __name__ == '__main__':
             optimizer.step()
             ####
             # FIXME , hack to set W and P coming from TT_ALS , find a better way
-            if configs_['model-name'] == 'ttode' and configs_['ttode']['forward_impl_method'] == 'ttode_als':
+            if configs_['model-name'] == 'ttode' and configs_['ttode']['forward_impl_method'] == 'ttode_als' and \
+                    configs_['ttode']['custom_autograd_fn']:
                 model_.W = model_.ttode_als_context['W']
                 model_.P = torch.nn.Parameter(model_.ttode_als_context['P'])
             # calculate delta norm
@@ -175,7 +176,7 @@ if __name__ == '__main__':
             batch_losses.append(loss.item())
         epoch_loss = np.mean(batch_losses)
         # print every freq epochs
-        if epoch % 1 == 0:
+        if epoch % 10 == 0:
             logger.info(f'epoch = {epoch} | loss = {epoch_loss} | P_norm_delta = {delta_P_norm} , W_norm_delta = '
                         f'{delta_W_norm} , Q_delta = {delta_Q}')
 

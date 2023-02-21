@@ -8,7 +8,7 @@ from dlra.tt import TensorTrain
 from phd_experiments.tn.tt import TensorTrainFixedRank
 from torch import Tensor
 from phd_experiments.tt_ode.basis import Basis
-from phd_experiments.tt_ode.ttode_als import TTOdeAls, TensorTrainContainer, Forward2
+from phd_experiments.tt_ode.ttode_als import TTOdeAls, Forward2
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 
 
@@ -59,7 +59,6 @@ class TensorTrainODEBLOCK(torch.nn.Module):
         self.t_span = t_span
         self.tt_rank = tt_rank
         self.nfe = 0
-        self.tt_container = TensorTrainContainer()
         self.ttode_als_context = dict()
         # assert parameters
         assert len(input_dimensions) == 1, " Supporting input vectors only"

@@ -33,17 +33,13 @@ class Forward2():
         return soln.z_trajectory, soln.t_values
 
 
-class TensorTrainContainer:
-    def __init__(self):
-        self.tt = None
-
-
 class TTOdeAls(torch.autograd.Function):
     @staticmethod
     def forward(ctx: Any, x: torch.Tensor, P: torch.Tensor, input_dimensions: Iterable[int],
-                W: [TensorTrainFixedRank | List[TensorTrain]], tt_container: TensorTrainContainer,
+                W: [TensorTrainFixedRank | List[TensorTrain]],
                 tensor_dtype: torch.dtype,
-                tt_ode_func: Callable, t_span: Tuple, basis_fn: str, basis_params: dict,ttode_als_context : dict) -> torch.Tensor:
+                tt_ode_func: Callable, t_span: Tuple, basis_fn: str, basis_params: dict,
+                ttode_als_context: dict) -> torch.Tensor:
         ctx.z_trajectory, ctx.t_values = Forward2.forward2(x, P, input_dimensions, W, tensor_dtype, tt_ode_func, t_span,
                                                            basis_fn,
                                                            basis_params)
@@ -122,7 +118,7 @@ class TTOdeAls(torch.autograd.Function):
         diff2_ = torch.norm(P_prime - ctx.P)
         ctx.ttode_als_context['W'] = W_last
         ctx.ttode_als_context['P'] = P_prime
-        return None, None, None, None, None, None, None, None, None, None, None,None
+        return None, None, None, None, None, None, None, None, None, None, None
 
     @staticmethod
     def _als(W: TensorTrain, yy_vec: torch.Tensor, xx_tensor: torch.Tensor, basis_fn: Any) -> TensorTrain:
@@ -132,7 +128,8 @@ class TTOdeAls(torch.autograd.Function):
         ranks = [list(comp.size())[2] for comp in W.comps[:n_comps - 1]]
         xTT = Extended_TensorTrain(tfeatures=basis_fn, ranks=ranks, comps=W.comps)
         norm_before = xTT.tt.norm()
-        xTT.fit(x=lb.tensor(xx_tensor), y=lb.tensor(yy_vec), rule=None, verboselevel=0, reg_param=100.0, iterations=2000)
+        xTT.fit(x=lb.tensor(xx_tensor), y=lb.tensor(yy_vec), rule=None, verboselevel=0, reg_param=100.0,
+                iterations=2000)
         norm_after = xTT.tt.norm()
         diff_ = norm_after - norm_before
         return xTT.tt
