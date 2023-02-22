@@ -9,7 +9,8 @@ need to know, will it converege ?
 
 
 # In progress
-* Apply Euler integ. for forward. why ? Formula is easier
+* experiment RLS applied to linear ODE problem whey LS is applied to matrix. Test the Recursive part
+* Apply Euler integ. for forward. why ? Formula is easier => didn't converge also
 
 
 
