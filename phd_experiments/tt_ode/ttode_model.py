@@ -92,6 +92,8 @@ class TensorTrainODEBLOCK(torch.nn.Module):
             self.basis_params = {'deg': int(basis_[1])}
         elif basis_[0] == 'trig':
             self.basis_params = {'a': basis_[1], 'b': basis_[2], 'c': basis_[3]}
+        else:
+            raise ValueError(f"Unsupported basis {basis_[0]}")
 
         # W dimensions
         if self.basis_fn == 'None':

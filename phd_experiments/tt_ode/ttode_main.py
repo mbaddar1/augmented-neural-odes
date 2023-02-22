@@ -143,42 +143,52 @@ if __name__ == '__main__':
     for epoch in tqdm(range(1, configs_['train']['n_epochs'] + 1), desc="Epochs"):
         batch_losses = []
         for batch_idx, (X, Y) in enumerate(train_dataloader_):
-            optimizer.zero_grad()
-            Y_pred = model_(X)
-            forward_call_count += 1
-            W_norm = get_W_norm(model_.get_W())
-            reg_term = lambda_ * W_norm
-            loss = loss_fn(Y_pred, Y) + reg_term
+            for batch_repeat_idx in range(0,10): # FIXME , just for experiments
+                optimizer.zero_grad()
+                logger.info('Before forward pass call')
+                Y_pred = model_(X)
+                logger.info('After forward pass call')
+                forward_call_count += 1
+                W_norm = get_W_norm(model_.get_W())
+                reg_term = lambda_ * W_norm
+                residual_loss = loss_fn(Y_pred, Y)
+                loss = residual_loss + reg_term
+                logger.info(f'Batch {batch_idx} | epoch = {epoch} | loss_fn = {str(loss_fn.__class__)} '
+                            f'| residual_loss = {residual_loss.item()} | reg_term = {reg_term.item()}')
+                # save old norms
+                P_old_norm = model_.get_P().norm().item()
+                W_old_norm = get_W_norm(model_.get_W())
+                Q_old_norm = model_.get_Q().norm().item()
 
-            # save old norms
-            P_old_norm = model_.get_P().norm().item()
-            W_old_norm = get_W_norm(model_.get_W())
-            Q_old_norm = model_.get_Q().norm().item()
+                # call backward hooks, and als update for als-based params
+                loss.backward()
+                # call optimizer for grad-based params
+                # TODO , implement TT_ALS in optimize step not in backward step, makes more sense
+                optimizer.step()
+                ####
+                # FIXME , hack to set W and P coming from TT_ALS , find a better way
+                if configs_['model-name'] == 'ttode' and configs_['ttode']['forward_impl_method'] == 'ttode_als' and \
+                        configs_['ttode']['custom_autograd_fn']:
+                    model_.W = model_.ttode_als_context['W']
+                    model_.P = torch.nn.Parameter(model_.ttode_als_context['P'])
+                # calculate delta norm
+                delta_P_norm = model_.get_P().norm().item() - P_old_norm
+                # P_diff_opt_manual = torch.norm(P_new_manual - model_.get_P())
+                W_new_norm = get_W_norm(model_.get_W())
+                delta_W_norm = W_new_norm - W_old_norm
+                delta_Q = model_.get_Q().norm().item() - Q_old_norm
 
-            # call backward hooks, and als update for als-based params
-            loss.backward()
-            # call optimizer for grad-based params
-            # TODO , implement TT_ALS in optimize step not in backward step, makes more sense
-            optimizer.step()
-            ####
-            # FIXME , hack to set W and P coming from TT_ALS , find a better way
-            if configs_['model-name'] == 'ttode' and configs_['ttode']['forward_impl_method'] == 'ttode_als' and \
-                    configs_['ttode']['custom_autograd_fn']:
-                model_.W = model_.ttode_als_context['W']
-                model_.P = torch.nn.Parameter(model_.ttode_als_context['P'])
-            # calculate delta norm
-            delta_P_norm = model_.get_P().norm().item() - P_old_norm
-            # P_diff_opt_manual = torch.norm(P_new_manual - model_.get_P())
-            W_new_norm = get_W_norm(model_.get_W())
-            delta_W_norm = W_new_norm - W_old_norm
-            delta_Q = model_.get_Q().norm().item() - Q_old_norm
-
-            batch_losses.append(loss.item())
-        epoch_loss = np.mean(batch_losses)
-        # print every freq epochs
-        if epoch % 10 == 0:
-            logger.info(f'epoch = {epoch} | loss = {epoch_loss} | P_norm_delta = {delta_P_norm} , W_norm_delta = '
-                        f'{delta_W_norm} , Q_delta = {delta_Q}')
+                batch_losses.append(loss.item())
+            epoch_loss = np.mean(batch_losses)
+            # print every freq epochs
+            if epoch % 1 == 0:
+                logger.info(
+                    f'epoch = {epoch} '
+                    f'|loss_fn = {str(loss_fn.__class__)} '
+                    f'|loss = {residual_loss} | P_norm_delta = '
+                    f'|reg_term = {reg_term}'
+                    f'{delta_P_norm} , W_norm_delta = '
+                    f'{delta_W_norm} , Q_delta = {delta_Q}')
 
         epochs_loss_history.append(epoch_loss)
         effective_window = min(len(epochs_loss_history), configs_['train']['loss_window'])
