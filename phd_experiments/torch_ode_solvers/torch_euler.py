@@ -10,7 +10,7 @@ from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchODESolver, T
 
 class TorchEulerSolver(TorchODESolver):
 
-    def __init__(self, step_size: [float, str] = 0.2):
+    def __init__(self, step_size: [float, str]):
         super().__init__(step_size)
 
     def solve_ivp(self, func: Callable[[float, torch.Tensor, ...], torch.Tensor], t_span: Tuple, z0: torch.Tensor,
