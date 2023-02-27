@@ -1,9 +1,11 @@
 # https://mathinsight.org/ordinary_differential_equation_linear_integrating_factor#:~:text=An%20example%20of%20such%20a,easily%20handle%20nonlinearities%20in%20t.
 # https://www.cuemath.com/calculus/linear-differential-equation/
 # https://en.wikipedia.org/wiki/Recursive_least_squares_filter
+# https://www.simiode.org/resources/6425/download/5-010-Text-S-MatrixExponential-StudentVersion.pdf
 from typing import Tuple, Callable, Any, List
 
 import numpy as np
+import scipy.linalg
 import torch
 from torch.nn import Sequential, MSELoss
 from torch.optim import Optimizer
@@ -12,6 +14,7 @@ from torch.utils.data.dataset import T_co
 
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchODESolver
+from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 
 
 def ode_func(t: float, z: torch.Tensor, A: torch.Tensor) -> torch.Tensor:
@@ -20,19 +23,23 @@ def ode_func(t: float, z: torch.Tensor, A: torch.Tensor) -> torch.Tensor:
     A : Dz x (Dz+1)
     t : scalar
     """
-    b = list(z.size())[0]
-    z_aug = torch.cat([z, torch.tensor(np.repeat(t, b), dtype=z.dtype).view(b, 1)], dim=1)
-    dzdt = torch.einsum('ji,bi->bj', A, z_aug)
+
+    assert A.size()[0] == A.size()[1], f"A must be square"
+    # z_aug = torch.cat([z, torch.tensor(np.repeat(t, b), dtype=z.dtype).view(b, 1)], dim=1)
+    dzdt = torch.einsum('ji,bi->bj', A, z)
     return dzdt
 
 
 def forward_function(X: torch.Tensor, P: torch.Tensor, A: torch.Tensor, Q: torch.nn.Module, solver: TorchODESolver,
-                     ode_func: Callable, t_span: Tuple) -> Tuple[torch.Tensor, List[torch.Tensor]]:
+                     ode_func: Callable, t_span: Tuple) -> torch.Tensor:
+    # assert P is an Identity Matrix
+    assert (len(P.size()) == 2) and (P.size()[0] == P.size()[1]) and (torch.equal(P, torch.eye(P.size()[0])))
+
     Z0 = torch.einsum('ji,bi->bj', P, X)
     soln = solver.solve_ivp(func=ode_func, t_span=t_span, z0=Z0, args=(A,))
     ZT = soln.z_trajectory[-1]
     y = Q(ZT)
-    return y, soln.z_trajectory
+    return y
 
 
 def forward_function_ode_only(X: torch.Tensor, P: torch.Tensor, A: torch.Tensor, solver: TorchODESolver,
@@ -49,8 +56,8 @@ class MatrixOdeGradientDescentModel(torch.nn.Module):
         self.ode_solver = ode_solver
         self.ode_func = ode_func
         unif = torch.distributions.Uniform(low=param_ulow, high=param_uhigh)
-        self.P = torch.nn.Parameter(unif.sample(sample_shape=torch.Size([Dz, Dx])))
-        self.A = torch.nn.Parameter(unif.sample(sample_shape=torch.Size([Dz, (Dz + 1)])))
+        self.P = torch.eye(Dz)  # FIXME make a param later unif.sample(sample_shape=torch.Size([Dz, Dx]))  # not a param
+        self.A = torch.nn.Parameter(unif.sample(sample_shape=torch.Size([Dz, Dz])))
         self.Q = QnnMatrixODE(input_dim=Dz, output_dim=Dy, hidden_dim=Q_hidden_dim, n_layers=Q_nlayers)
 
     def forward(self, x):
@@ -66,19 +73,19 @@ class QnnMatrixODE(torch.nn.Module):
         assert n_layers >= 3, "n_layers must >=3"
         internal_layers = n_layers - 2
         self.synthetic = False
-        self.model.extend(torch.nn.Sequential(torch.nn.Linear(input_dim, hidden_dim), torch.nn.ReLU()))
+        self.model.extend(torch.nn.Sequential(torch.nn.Linear(input_dim, hidden_dim,dtype=torch.float64), torch.nn.ReLU()))
         for l in range(internal_layers):
-            self.model.extend(torch.nn.Sequential(torch.nn.Linear(hidden_dim, hidden_dim), torch.nn.ReLU()))
+            self.model.extend(torch.nn.Sequential(torch.nn.Linear(hidden_dim, hidden_dim,dtype=torch.float64), torch.nn.ReLU()))
 
-        self.model.append(torch.nn.Linear(hidden_dim, output_dim))
+        self.model.append(torch.nn.Linear(hidden_dim, output_dim,dtype=torch.float64))
         if u_low is not None and u_high is not None:
             for i in range(n_layers):
                 layer = self.model[i]
                 if isinstance(layer, torch.nn.Linear):
                     layer.weight = torch.nn.Parameter(torch.distributions.Uniform(low=u_low, high=u_high).sample(
-                        sample_shape=layer.weight.size()))
+                        sample_shape=layer.weight.size()).type(tensor_dtype))
                     layer.bias = torch.nn.Parameter(torch.distributions.Uniform(low=u_low, high=u_high).sample(
-                        sample_shape=layer.bias.size()))
+                        sample_shape=layer.bias.size()).type(tensor_dtype))
             self.synthetic = True
         else:
             self.synthetic = False
@@ -95,10 +102,11 @@ class MatrixODEdataSet(Dataset):
 
     def __init__(self, N, Dx, P: torch.Tensor, A: torch.Tensor, Q: torch.nn.Module, solver: TorchODESolver,
                  ode_func: Callable, t_span: Tuple, x_ulow: float,
-                 x_uhigh: float):
+                 x_uhigh: float, tensor_dtype: torch.dtype = torch.float64):
         self.N = N
-        X = torch.distributions.Uniform(low=x_ulow, high=x_uhigh).sample(sample_shape=torch.Size([N, Dx]))
-        y, _ = forward_function(X=X, P=P, A=A, Q=Q, solver=solver, ode_func=ode_func, t_span=t_span)
+        X = torch.distributions.Uniform(low=x_ulow, high=x_uhigh).sample(sample_shape=torch.Size([N, Dx])).type(
+            tensor_dtype)
+        y = forward_function(X=X, P=P, A=A, Q=Q, solver=solver, ode_func=ode_func, t_span=t_span)
         self.x_train = X
         self.y_train = y
 
@@ -115,18 +123,17 @@ class MatrixOdeTrainableModelLeastSquares(torch.nn.Module):
         super().__init__()
         low_ = 0.01
         high_ = 0.1
-        self.P = torch.nn.Parameter(torch.distributions.Uniform(low=low_, high=high_).sample(torch.Size([Dz, Dx])))
-        self.A = torch.distributions.Uniform(low=low_, high=high_).sample(torch.Size([Dz, (Dz + 1)]))
+        self.P = torch.nn.Parameter(torch.distributions.Uniform(low=low_, high=high_).sample(torch.Size([Dz, Dx])).type(torch.float64))
+        self.A = torch.distributions.Uniform(low=low_, high=high_).sample(torch.Size([Dz, Dz])).type(torch.float64)
         self.Q = QnnMatrixODE(input_dim=Dz, output_dim=Dy, hidden_dim=hidden_dim, n_layers=n_layers)
         self.solver = solver
         self.ode_func = ode_func
         self.t_span = t_span
-        self.opt_ctx = {'A': self.A}
 
     def forward(self, X):
         Lscust = LsCustomFunc
 
-        zT = Lscust.apply(X, self.P, self.opt_ctx['A'], self.solver, self.ode_func, self.t_span, self.opt_ctx)
+        zT = Lscust.apply(X, self.P, self.A, self.solver, self.ode_func, self.t_span, self.A)
 
         y = self.Q(zT)
         return y
@@ -153,42 +160,57 @@ class LsCustomFunc(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
-        alpha = 1.
+        alpha = 1.0
         lr = 1e-3
         dl_dzT = grad_outputs[0]
         n_t_values = len(ctx.t_values)
         zT = ctx.z_traj[-1]
         zT_prime = zT - lr * dl_dzT
-        batch_size = list(zT.size())[0]
-        z_t_plus_1_prime = zT_prime
-        A_prime = ctx.A  # updated
-        for i in range(n_t_values - 2, -1, -1):
-            t = ctx.t_values[i]
-            t_plus_1 = ctx.t_values[i + 1]
-            delta_t = t_plus_1 - t
-            zt = ctx.z_traj[i]
-            delta_z = (z_t_plus_1_prime - zt)
-            yy = delta_z / delta_t
-            z_aug = torch.cat([zt, torch.Tensor(np.repeat(t, batch_size)).view(batch_size, 1)], dim=1)
-            A_ls = torch.linalg.lstsq(z_aug, yy).solution.T
-            # update
-            A_prime = alpha * A_ls + (1 - alpha) * A_prime
-            z_aug_prime = torch.cat(
-                [z_t_plus_1_prime, torch.Tensor(np.repeat(t_plus_1, batch_size)).view(batch_size, 1)], dim=1)
-            delta_z_prime = torch.einsum('bi,ji->bj', z_aug_prime, A_prime)
-            z_t_prime = z_t_plus_1_prime - delta_z_prime * delta_t
-            z_t_plus_1_prime = z_t_prime
-            break
-        # TODO checkpoint, check A_ls convergence
-        cst_ = LsCustomFunc
-        zT_prime_hat_1 = cst_.apply(ctx.x, ctx.P, ctx.A, ctx.solver, ctx.ode_func, ctx.t_span, None)
-        zT_prime_hat_2 = cst_.apply(ctx.x, ctx.P, A_prime, ctx.solver, ctx.ode_func, ctx.t_span, None)
-        loss_1 = torch.norm(zT_prime - zT_prime_hat_1)
-        loss_2 = torch.norm(zT_prime - zT_prime_hat_2)
-        delta_loss = loss_2 - loss_1  # must be negative
-        if ctx.opt_ctx is not None:
-            ctx.opt_ctx['A'] = A_prime
-
+        E = torch.linalg.lstsq(ctx.x, zT_prime).solution
+        logE = scipy.linalg.logm(E.detach())
+        A_ls = logE / (ctx.t_span[1] - ctx.t_span[0])
+        # sanity check for A_ls
+        cust = LsCustomFunc
+        zT_prime_hat_1 = cust.apply(ctx.x, ctx.P, ctx.A, ctx.solver, ctx.ode_func, ctx.t_span, ctx.opt_ctx)
+        zT_prime_hat_2 = cust.apply(ctx.x, ctx.P, torch.tensor(A_ls, dtype=ctx.x.dtype), ctx.solver, ctx.ode_func,
+                                    ctx.t_span, ctx.opt_ctx)
+        E2 = torch.tensor(scipy.linalg.expm(ctx.A.detach().numpy() * (ctx.t_span[1] - ctx.t_span[0])))
+        zT_prime_hat_3 = torch.einsum("ji,bi->bj", E2, ctx.x)
+        err_ = torch.norm(zT_prime_hat_3 - zT_prime_hat_1)  # should be close to zero
+        norm1 = torch.norm(zT_prime - zT_prime_hat_1)
+        norm2 = torch.norm(zT_prime - zT_prime_hat_2)
+        norm_diff = norm2 - norm1  # should be negative
+        x = 10
+        # batch_size = list(zT.size())[0]
+        # z_t_plus_1_prime = zT_prime
+        # A_prime = ctx.A  # updated
+        # for i in range(n_t_values - 2, -1, -1):
+        #     t = ctx.t_values[i]
+        #     t_plus_1 = ctx.t_values[i + 1]
+        #     delta_t = t_plus_1 - t
+        #     zt = ctx.z_traj[i]
+        #     delta_z = (z_t_plus_1_prime - zt)
+        #     yy = delta_z / delta_t
+        #     z_aug = torch.cat([zt, torch.Tensor(np.repeat(t, batch_size)).view(batch_size, 1)], dim=1)
+        #     A_ls = torch.linalg.lstsq(z_aug, yy).solution.T
+        #     # update
+        #     A_prime = alpha * A_ls + (1 - alpha) * A_prime
+        #     z_aug_prime = torch.cat(
+        #         [z_t_plus_1_prime, torch.Tensor(np.repeat(t_plus_1, batch_size)).view(batch_size, 1)], dim=1)
+        #     delta_z_prime = torch.einsum('bi,ji->bj', z_aug_prime, A_prime)
+        #     z_t_prime = z_t_plus_1_prime - delta_z_prime * delta_t
+        #     z_t_plus_1_prime = z_t_prime
+        #     break
+        # # TODO checkpoint, check A_ls convergence
+        # cst_ = LsCustomFunc
+        # zT_prime_hat_1 = cst_.apply(ctx.x, ctx.P, ctx.A, ctx.solver, ctx.ode_func, ctx.t_span, None)
+        # zT_prime_hat_2 = cst_.apply(ctx.x, ctx.P, A_prime, ctx.solver, ctx.ode_func, ctx.t_span, None)
+        # loss_1 = torch.norm(zT_prime - zT_prime_hat_1)
+        # loss_2 = torch.norm(zT_prime - zT_prime_hat_2)
+        # delta_loss = loss_2 - loss_1  # must be negative
+        # if ctx.opt_ctx is not None:
+        #     ctx.opt_ctx['A'] = A_prime
+        #
         return None, None, None, None, None, None, None
 
 
@@ -196,7 +218,7 @@ if __name__ == '__main__':
     Dx = 2
     Dy = 1
     N = 1024
-    batch_size = 32
+    batch_size = 1
     hidden_dim = 64
     t_span = (0, 0.8)
     x_ulow = -0.5
@@ -207,17 +229,19 @@ if __name__ == '__main__':
     param_init_uhigh = 0.09
     epochs = 100
     Q_nlayers = 3
+    model_type = 'LS'
+    tensor_dtype = torch.float64
     #######
 
-    A = 1e-8 * torch.Tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 6.0, 0.0, 0.0], [0.0, 0.0, -11.0, 0.0]])
+    A = 1e-8 * torch.tensor([[1.0, 2.0], [5.0, 6.0]], dtype=tensor_dtype)
     # eig_vals = torch.linalg.eigvals(A) FIXME , must be sq
-    P = 2e-2 * torch.Tensor([[1, -2], [-3, 4], [5, -6]])
+    P = torch.tensor([[1.0, 0.0], [0.0, 1.0]],dtype=tensor_dtype)
     Dz = list(P.size())[0]
     synthetic_qnn = QnnMatrixODE(input_dim=Dz, output_dim=Dy, hidden_dim=hidden_dim, u_low=param_synthetic_ulow,
                                  u_high=param_synthetic_uhigh,
                                  n_layers=Q_nlayers)
 
-    solver = TorchEulerSolver(step_size=0.1)
+    solver = TorchRK45(device=torch.device('cpu'), tensor_dtype=tensor_dtype)  # TorchEulerSolver(step_size=0.1)
 
     ds = MatrixODEdataSet(N=N, Dx=Dx, A=A, P=P, Q=synthetic_qnn, t_span=t_span, x_ulow=x_ulow, x_uhigh=x_uhigh,
                           solver=solver, ode_func=ode_func)
@@ -236,9 +260,11 @@ if __name__ == '__main__':
     mtx_ode_trainable_LS = MatrixOdeTrainableModelLeastSquares(Dx=Dx, Dz=Dz, Dy=Dy, solver=solver, ode_func=ode_func,
                                                                t_span=t_span, hidden_dim=hidden_dim, n_layers=Q_nlayers)
 
-    # model = mtx_ode_trainable_grad_desc
-    model = mtx_ode_trainable_LS
-    optimizer = torch.optim.Adam(params=mtx_ode_trainable_grad_desc.parameters(), lr=1e-3)
+    if model_type == 'GD':
+        model = mtx_ode_trainable_grad_desc
+    elif model_type == 'LS':
+        model = mtx_ode_trainable_LS
+    optimizer = torch.optim.Adam(params=mtx_ode_trainable_grad_desc.parameters(), lr=1e-1)
     loss_fn = MSELoss()
     opt_ctx = {}
     for epoch in range(epochs):
@@ -253,5 +279,6 @@ if __name__ == '__main__':
             loss.backward()
 
             optimizer.step()
+    print(model.A)
 
     #####
