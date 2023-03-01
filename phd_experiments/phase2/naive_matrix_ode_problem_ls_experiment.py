@@ -79,18 +79,25 @@ if __name__ == '__main__':
     A_ls_ref = torch.Tensor(scipy.linalg.logm(M.detach().numpy()) / (t_span[1] - t_span[0]))
     ds = PolyDataGen(M, N=N, Dx=Dx, deg=1)
     loader = DataLoader(dataset=ds, batch_size=batch_size, shuffle=True)
-    A = torch.distributions.Uniform(low=0.01, high=0.1).sample(sample_shape=torch.Size([Dx, Dx]))
+    # A = torch.distributions.Uniform(low=0.01, high=0.1).sample(sample_shape=torch.Size([Dx, Dx]))
     mse_loss = MSELoss()
     alpha = 0.8
     losses = []
+    A_ls = None
+    A = np.random.uniform(low=0.01, high=0.1, size=[Dx, Dx])
     for epoch in tqdm(range(epochs), desc='epochs'):
         for i, (Z0, ZT) in enumerate(loader):
-            E_ls = torch.linalg.lstsq(Z0,ZT).solution.T
+            E_ls_fw = torch.Tensor(scipy.linalg.expm(A * (t_span[1] - t_span[0])))
+            Z_hat_2 = torch.einsum('ji,bi->bj', E_ls_fw, Z0)
+            loss2 = mse_loss(Z_hat_2, ZT)
+
+            losses.append(loss2.item())
+
+            E_ls = torch.linalg.lstsq(Z0, ZT).solution.T
             logE_ls = scipy.linalg.logm(E_ls.detach().numpy())
-            A_ls_2 = logE_ls/(t_span[1]-t_span[0])
-            E_ls_fw = torch.Tensor(scipy.linalg.expm(A_ls_2*(t_span[1]-t_span[0])))
-            Z_hat_2 = torch.einsum('ji,bi->bj',E_ls_fw,Z0)
-            loss2 = mse_loss(Z_hat_2,ZT)
+            A_ls_2 = logE_ls / (t_span[1] - t_span[0])
+
+            A = alpha * A_ls_2 + (1 - alpha) * A
             #####
             # ZT_hat = forward(Z0=Z0, A=A, t_span=t_span)
             # Z_hat_ref = forward(Z0=Z0, A=A_ls_ref, t_span=t_span)
@@ -100,7 +107,7 @@ if __name__ == '__main__':
             # norm_ = torch.norm(A_ls - A_ls_ref)
             # A = alpha * A_ls + (1 - alpha) * A
             # norm2_ = torch.norm(A - A_ls_ref)
-            losses.append(loss2.item())
+
     print("-----------------------------------")
     print('####### Losses ################')
     print(losses)
