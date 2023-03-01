@@ -136,7 +136,7 @@ class MatrixODEdataSet(Dataset):
         return self.N
 
     def __getitem__(self, index) -> T_co:
-        return self.x_train[index], self.y_train[index]
+        f
 
 
 # https://mcneela.github.io/machine_learning/2019/09/03/Writing-Your-Own-Optimizers-In-Pytorch.html
@@ -158,7 +158,7 @@ class MatrixOdeTrainableModelLeastSquares(torch.nn.Module):
     def forward(self, X):
         Lscust = LsCustomFunc
 
-        zT = Lscust.apply(X, self.P, self.A, self.solver, self.ode_func, self.t_span)
+        zT = Lscust.apply(X, self.P, self.A, self.solver, self.ode_func, self.t_span,self)
 
         y = self.Q(zT)
         return y
@@ -168,12 +168,14 @@ class LsCustomFunc(torch.autograd.Function):
 
     @staticmethod
     def forward(ctx: Any, X: torch.Tensor, P: torch.Tensor, A: torch.Tensor, solver: TorchODESolver, ode_func: Callable,
-                t_span: Tuple) -> Any:
+                t_span: Tuple,model : Any) -> Any:
         z_traj, t_values = forward_function_ode_only(X=X, P=P, A=A, solver=solver, ode_func=ode_func, t_span=t_span)
 
         ctx.x = X
         ctx.P = P
         ctx.A = A
+        ctx.model = model
+
         ctx.t_values = t_values
         ctx.z_traj = z_traj
         zT = z_traj[-1]
@@ -185,7 +187,7 @@ class LsCustomFunc(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
-        alpha = 1.0
+        alpha = 0.8
         lr = 0.1
         dl_dzT = grad_outputs[0]
         zT = ctx.z_traj[-1]
@@ -195,12 +197,16 @@ class LsCustomFunc(torch.autograd.Function):
         A_ls = logE / (ctx.t_span[1] - ctx.t_span[0])
         # sanity check for A_ls
         cust = LsCustomFunc
-        zT_prime_hat_init = cust.apply(ctx.x, ctx.P, ctx.A, ctx.solver, ctx.ode_func, ctx.t_span)
+        zT_prime_hat_init = cust.apply(ctx.x, ctx.P, ctx.A, ctx.solver, ctx.ode_func, ctx.t_span,ctx.model)
         zT_prime_hat_ls = cust.apply(ctx.x, ctx.P, torch.tensor(A_ls, dtype=ctx.x.dtype), ctx.solver, ctx.ode_func,
-                                     ctx.t_span)
+                                     ctx.t_span,ctx.model)
         norm_init = torch.norm(zT_prime - zT_prime_hat_init)
         norm_ls = torch.norm(zT_prime - zT_prime_hat_ls)
-        assert norm_ls <= norm_init
+        A_prime = alpha * torch.tensor(A_ls, dtype=ctx.A.dtype) + (1 - alpha) * ctx.A
+        ctx.model.A = A_prime
+        if norm_ls > norm_init:
+            print("norm_ls > norm_init")
+
         # A_prime = alpha*A_ls + (1-alpha)*ctx.opt_ctx['A']
         # ctx.opt_ctx['A'] = A_prime
         # E2 = torch.tensor(scipy.linalg.expm(ctx.A.detach().numpy() * (ctx.t_span[1] - ctx.t_span[0])))
@@ -209,7 +215,7 @@ class LsCustomFunc(torch.autograd.Function):
         # norm1 = torch.norm(zT_prime - zT_prime_hat_1)
         # norm2 = torch.norm(zT_prime - zT_prime_hat_2)
         # norm_diff = norm2 - norm1  # should be negative
-        x = 10
+        # x = 10
         # batch_size = list(zT.size())[0]
         # z_t_plus_1_prime = zT_prime
         # A_prime = ctx.A  # updated
@@ -240,14 +246,14 @@ class LsCustomFunc(torch.autograd.Function):
         # if ctx.opt_ctx is not None:
         #     ctx.opt_ctx['A'] = A_prime
         #
-        return None, None, None, None, None, None
+        return None, None, None, None, None, None,None
 
 
 if __name__ == '__main__':
     Dx = 2
     Dy = 1
     N = 1024
-    batch_size = 64
+    batch_size = 128
     hidden_dim = 64
     t_span = (0, 10)
     x_ulow = -0.5
@@ -296,6 +302,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(params=mtx_ode_trainable_grad_desc.parameters(), lr=1e-1)
     loss_fn = MSELoss()
     opt_ctx = {}
+    losses = []
     for epoch in range(epochs):
         for i, (X, y) in enumerate(train_loader):
             optimizer.zero_grad()
@@ -304,9 +311,18 @@ if __name__ == '__main__':
 
             y_hat = model(X)
             loss = loss_fn(y_hat, y)
-            print(loss.item())
+            (loss.item())
+
+            A_norm_before = torch.norm(model.A)
             loss.backward()
+            A_norm_after = torch.norm(model.A)
+            norm_diff = A_norm_before-A_norm_after
+
             optimizer.step()
-    print(model.A)
+            # with torch.no_grad(): # failed
+            #     print(id(model.A))
+            #     model.A = model.A.grad
+
+
 
     #####
