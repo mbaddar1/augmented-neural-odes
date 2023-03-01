@@ -13,17 +13,8 @@ def ode_func(t, z, A):
 
 
 def forward(Z0, A, t_span):
-    # Dz = Z0.size()[1]
-    # Z0_list = list(Z0)
-    # # ZT_hat_list = list(
-    #     map(lambda z: torch.Tensor(
-    #         scipy.integrate.solve_ivp(fun=ode_func, t_span=t_span,
-    #                                   y0=z, args=(A.detach().numpy(),)).y[:, -1]).view(1, Dz), Z0_list))
     E = torch.Tensor(scipy.linalg.expm(A.detach().numpy() * (t_span[1] - t_span[0])))
-
     Z_hat_expm = torch.einsum('ji,bi->bj', E, Z0)
-    # ZT_hat = torch.concat(ZT_hat_list)
-    # norm_ = torch.norm(Z_hat_expm - ZT_hat)
     return Z_hat_expm
 
 
@@ -39,27 +30,30 @@ def backward_ls(Z0, ZT, t_span):
 class PolyDataGen(Dataset):
     def __init__(self, M, N, Dx, deg):
         print("Initializing Data-set")
+        self.noise_scale = 0.1
         self.N = N
         unif = torch.distributions.Uniform(low=-10, high=10)
         X = unif.sample(sample_shape=torch.Size([N, Dx]))
-        X_pow = torch.pow(X, deg)
-        Y = torch.einsum('ji,bi->bj', M, X_pow)
-
-        PolyDataGen.test_expm_reconstruction_error(Y=Y, X=X_pow)
-        self.x_train = X_pow
+        Phi = torch.pow(X, deg)
+        Y = torch.einsum('ji,bi->bj', M, Phi)
+        noise_dist = torch.distributions.Normal(loc=0, scale=self.noise_scale)
+        Y += noise_dist.sample(Y.size())
+        PolyDataGen.test_expm_reconstruction_error(Y=Y, Phi=Phi, noise_scale=self.noise_scale)
+        self.x_train = X
         self.y_train = Y
 
     @staticmethod
-    def test_expm_reconstruction_error(Y, X, t_span=(0, 1)):
-        M_ls = torch.linalg.lstsq(X, Y).solution.T
+    def test_expm_reconstruction_error(Y, Phi, noise_scale, t_span=(0, 1)):
+        M_ls = torch.linalg.lstsq(Phi, Y).solution.T
         E = M_ls
         logE = scipy.linalg.logm(E.detach().numpy())
         A_ls = logE / (t_span[1] - t_span[0])
         E2 = scipy.linalg.expm(A_ls * (t_span[1] - t_span[0]))
-        Y2 = torch.einsum('ji,bi->bj', torch.Tensor(E2), X)
+        Y2 = torch.einsum('ji,bi->bj', torch.Tensor(E2), Phi)
+
         mse_reconst_loss = MSELoss()
         loss_reconstr = mse_reconst_loss(Y, Y2)
-        assert loss_reconstr.item() < 1e-4
+        assert loss_reconstr.item() < 2 * noise_scale, f"Reconstruction mse = {loss_reconstr.item()} "
 
     def __len__(self):
         return self.N
@@ -74,29 +68,34 @@ if __name__ == '__main__':
     epochs = 10
     t_span = (0, 0.8)
     Dx = 3
+    deg = 4
     ###
     M = torch.Tensor([[0.1, 0.8, 0.2], [-0.4, 0.7, 0.1], [0.8, 0.9, -0.3]])
     A_ls_ref = torch.Tensor(scipy.linalg.logm(M.detach().numpy()) / (t_span[1] - t_span[0]))
-    ds = PolyDataGen(M, N=N, Dx=Dx, deg=1)
+    ds = PolyDataGen(M, N=N, Dx=Dx, deg=deg)
     loader = DataLoader(dataset=ds, batch_size=batch_size, shuffle=True)
     # A = torch.distributions.Uniform(low=0.01, high=0.1).sample(sample_shape=torch.Size([Dx, Dx]))
     mse_loss = MSELoss()
-    alpha = 0.8
+    alpha = 0.2
     losses = []
     A_ls = None
     A = np.random.uniform(low=0.01, high=0.1, size=[Dx, Dx])
     for epoch in tqdm(range(epochs), desc='epochs'):
         for i, (Z0, ZT) in enumerate(loader):
+            # forward
+            Phi = torch.pow(Z0, exponent=deg)
             E_ls_fw = torch.Tensor(scipy.linalg.expm(A * (t_span[1] - t_span[0])))
-            Z_hat_2 = torch.einsum('ji,bi->bj', E_ls_fw, Z0)
+            Z_hat_2 = torch.einsum('ji,bi->bj', E_ls_fw, Phi)
             loss2 = mse_loss(Z_hat_2, ZT)
-
+            # loss computation
             losses.append(loss2.item())
 
-            E_ls = torch.linalg.lstsq(Z0, ZT).solution.T
-            logE_ls = scipy.linalg.logm(E_ls.detach().numpy())
+            # backward ls
+            E_ls = torch.linalg.lstsq(Phi, ZT).solution.T.detach().numpy()
+            logE_ls = scipy.linalg.logm(E_ls)
             A_ls_2 = logE_ls / (t_span[1] - t_span[0])
 
+            # update
             A = alpha * A_ls_2 + (1 - alpha) * A
             #####
             # ZT_hat = forward(Z0=Z0, A=A, t_span=t_span)
