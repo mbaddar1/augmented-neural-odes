@@ -25,7 +25,8 @@ def backward_ls(Z0, ZT, t_span):
     A_ls_np = logE / (t_span[1] - t_span[0])
     A_ls = torch.Tensor(A_ls_np)
     return A_ls
-
+def backward_trajectory_ls(Z0,ZT):
+    pass
 
 class PolyDataGen(Dataset):
     def __init__(self, M, N, Dx, deg):
