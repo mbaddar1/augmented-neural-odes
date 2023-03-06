@@ -12,17 +12,28 @@
 # https://math.stackexchange.com/questions/3950704/integral-representation-of-matrix-logarithm
 # http://bayanbox.ir/view/2190529855266466427/Nicholas-J.Higham-Functionsof-Matrices-Theory.pdf
 # http://bayanbox.ir/view/2190529855266466427/Nicholas-J.Higham-Functionsof-Matrices-Theory.pdf
+# exponential of a tensor https://onlinelibrary.wiley.com/doi/pdf/10.1002/9780470694626.app2
 import numpy as np
 import scipy.linalg
 import torch
 
+from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 
-def log_matrix_integral_form(A: np.ndarray) -> np.ndarray:
+
+def log_matrix_integral_form(A: torch.Tensor) -> torch.Tensor:
     # Functions of matrices Book by Nicholas Higham : 2008
     # http://bayanbox.ir/view/2190529855266466427/Nicholas-J.Higham-Functionsof-Matrices-Theory.pdf p269 eqn 11.1
+    def log_ode_func(t, x):
+        pass
 
-    #
-    pass
+
+    solver = TorchRK45(device=torch.device('cpu'), tensor_dtype=A.dtype,is_batch=False)
+    soln = solver.solve_ivp(func=log_ode_func, t_span=(0, 0.95), z0=torch.zeros(size=(A.size()[0], A.size()[1])),
+                            args=None)
+    yT = soln.z_trajectory[-1]
+    A_np = A.detach().numpy()
+    logA = scipy.linalg.logm(A_np)
+    return yT
 
 
 def log_matrix_taylor_series(A: np.ndarray, M=1000, scipy_validate=False, eps=1e-4) -> np.ndarray:
@@ -84,7 +95,11 @@ def log_taylor_series_mtx_draft(A: torch.Tensor):
 
 
 if __name__ == '__main__':
-    for i in range(10):
-        A = np.random.uniform(low=0.01, high=0.02, size=(2, 2))
-        print(f'sample {i} , A= {A}')
-        logA = log_matrix_taylor_series(A=A, scipy_validate=True, eps=0.1)
+    # for i in range(10):
+    #     A = np.random.uniform(low=0.01, high=0.02, size=(2, 2))
+    #     print(f'sample {i} , A= {A}')
+    #     logA = log_matrix_taylor_series(A=A, scipy_validate=True, eps=0.1)
+
+    logA = np.array([[0.5]])
+    A = scipy.linalg.expm(logA)
+    logA_ = log_matrix_integral_form(A=torch.Tensor(A))
