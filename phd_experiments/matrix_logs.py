@@ -13,6 +13,12 @@
 # http://bayanbox.ir/view/2190529855266466427/Nicholas-J.Higham-Functionsof-Matrices-Theory.pdf
 # http://bayanbox.ir/view/2190529855266466427/Nicholas-J.Higham-Functionsof-Matrices-Theory.pdf
 # exponential of a tensor https://onlinelibrary.wiley.com/doi/pdf/10.1002/9780470694626.app2
+# matrix log in pytorch https://stackoverflow.com/questions/73288332/is-there-a-way-to-compute-the-matrix-logarithm-of-a-pytorch-tensor
+# https://core.ac.uk/download/pdf/144007506.pdf pade and gregory
+
+# Eigen Values for Tensor-Train Format
+# https://cscproxy.mpi-magdeburg.mpg.de/preprints/2011/MPIMD11-09.pdf
+
 import numpy as np
 import scipy.linalg
 import torch
@@ -23,12 +29,19 @@ from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 def log_matrix_integral_form(A: torch.Tensor) -> torch.Tensor:
     # Functions of matrices Book by Nicholas Higham : 2008
     # http://bayanbox.ir/view/2190529855266466427/Nicholas-J.Higham-Functionsof-Matrices-Theory.pdf p269 eqn 11.1
-    def log_ode_func(t, x):
-        pass
+    def log_ode_func(t, A):
+        A = A.view(A.size()[0], A.size()[1])
+        assert len(A.size()) == 2
+        assert A.size()[0] == A.size()[1]
+        I = torch.eye(n=A.size()[0])
+        term1 = A - I
+        term2 = torch.inverse(t * (A - I) + I)
+        res = torch.matmul(term1, term2)
+        res = res.view(1, res.size()[0], res.size()[1])
+        return res
 
-
-    solver = TorchRK45(device=torch.device('cpu'), tensor_dtype=A.dtype,is_batch=False)
-    soln = solver.solve_ivp(func=log_ode_func, t_span=(0, 0.95), z0=torch.zeros(size=(A.size()[0], A.size()[1])),
+    solver = TorchRK45(device=torch.device('cpu'), tensor_dtype=A.dtype)
+    soln = solver.solve_ivp(func=log_ode_func, t_span=(0, 1), z0=torch.zeros(size=(1, A.size()[0], A.size()[1])),
                             args=None)
     yT = soln.z_trajectory[-1]
     A_np = A.detach().numpy()

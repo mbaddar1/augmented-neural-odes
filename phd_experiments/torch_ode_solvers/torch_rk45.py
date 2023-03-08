@@ -84,7 +84,6 @@ class TorchRK45(TorchODESolver):
                 finished = True
             z_trajectory.append(z)
             t_values.append(t)
-            print(t)
         assert len(z_trajectory) == len(t_values), f"len(z_trajectory)must == len(t_values) : " \
                                                    f"f{len(z_trajectory)} != {len(t_values)}"
         sol = TorchODESolverSolution(zf=z, z_trajectory=z_trajectory, t_values=t_values)
@@ -96,7 +95,7 @@ class TorchRK45(TorchODESolver):
         torch.Tensor, torch.Tensor]:
         # based on scipy integrate rk_step method
         # https://github.com/scipy/scipy/blob/v1.9.2/scipy/integrate/_ivp/rk.py#L14
-        #if is_batch:
+        # if is_batch:
         K[0] = f.T if is_batch else f
         for s, (a, c) in enumerate(zip(A[1:], C[1:]), start=1):
             dz = torch.matmul(K[:s].T, a[:s]) * h
