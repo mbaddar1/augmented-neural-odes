@@ -4,6 +4,7 @@ from typing import Any, Callable, Tuple
 import mygrad
 import numpy as np
 import jax.numpy as jnp
+import pandas as pd
 import torch
 from torch.nn import MSELoss
 from torch.utils.data import Dataset, DataLoader
@@ -36,7 +37,7 @@ class MatrixOdeDataset(Dataset):
     def __init__(self, D, A, N, t_span):
         self.N = N
         unif = torch.distributions.Uniform(-1, 1)
-        Z0 = torch.tensor(unif.sample(torch.Size([N, D])),requires_grad=True)
+        Z0 = torch.tensor(unif.sample(torch.Size([N, D])), requires_grad=True)
         solver = TorchRK45(device=torch.device('cpu'), tensor_dtype=Z0.dtype)
         soln = solver.solve_ivp(func=ode_func, t_span=t_span, z0=Z0, args=(A,))
         ZT = soln.z_trajectory[-1]
@@ -60,11 +61,51 @@ class MatrixODEAutoGradFn(torch.autograd.Function):
         ctx.params = params
         ctx.z_traj = soln.z_trajectory
         ctx.t_values = soln.t_values
+        ctx.solver = solver
+        ctx.t_span = t_span
+        ctx.ode_func = ode_func
         return ZT
 
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
-        dz_dt_traj = [grad_outputs[0]]
+        # dz_dt_traj = [grad_outputs[0]]
+        dLdz_T = grad_outputs[0]
+        lr = 0.1
+        A = ctx.params['A']
+        I = torch.eye(A.size()[0])
+        ZT = ctx.z_traj[-1]
+        ZT_new = ZT - lr * dLdz_T
+        z_trajectory_new = [ZT_new]  # ZT_new = ZT-0.1*dL/dZT
+        T = len(ctx.t_values)
+        dz_Tdz_t_mul_acc = torch.eye(A.size()[0])
+        for t_idx in range(T - 2, 0, -1):
+            t = ctx.t_values[t_idx]
+            t_plus_1 = ctx.t_values[t_idx + 1]
+            delta_t = t_plus_1 - t
+            dz_t_plus_1_dz_t = A * delta_t + I
+            dz_Tdz_t = torch.matmul(dz_Tdz_t_mul_acc, dz_t_plus_1_dz_t)
+            dL_dz_t = torch.einsum('bi,ij->bj', dLdz_T, dz_Tdz_t)
+            zt_new = ctx.z_traj[t_idx] - lr * dL_dz_t
+            z_trajectory_new.insert(0, zt_new)
+        z_trajectory_new.insert(0, ctx.z_traj[0])
+
+        delta_z = list(pd.Series(z_trajectory_new).diff(1).values[1:])
+        delta_t = list(pd.Series(ctx.t_values).diff(1).values[1:])
+        delta_z_delta_t_zip = list(zip(delta_z, delta_t))
+        Y_lstsq = torch.concat(list(map(lambda x: x[0] / x[1], delta_z_delta_t_zip)), dim=0)
+        X_lstsq = torch.concat(z_trajectory_new[:-1], dim=0)
+        lstsq_soln = torch.linalg.lstsq(X_lstsq, Y_lstsq)
+        A_new = lstsq_soln.solution.T
+
+        # sanity check
+        # Z0_new = z_trajectory_new[0]
+        # ZT_new = z_trajectory_new[-1]
+        # #soln_new = ctx.solver.solve_ivp(func=ctx.ode_func, t_span=ctx.t_span, z0=Z0_new, args=(A_new,))
+        # ZT_hat_new = soln_new.z_trajectory[-1]
+        # mse_loss = MSELoss()
+        # err = mse_loss(ZT_new, ZT_hat_new)
+
+        ctx.params['A'] = A_new
 
         return None, None, None, None, None
 
@@ -110,11 +151,11 @@ if __name__ == '__main__':
     # j2 = A*delta_t+jnp.identity(2)
     # print(j2)
     D = 3
-    A = torch.Tensor([[0.1, 0.2, -0.6], [0.8, -0.3, 0.4], [0.1, -0.2, 0.9]])
+    A = torch.Tensor([[0.0, 0.2, -0.6], [0.1, 0.0, 0.4], [0.1, 1.0, 0.9]])
     N = 1024
     batch_size = 32
-    t_span = 0, 1
-    epochs = 100
+    t_span = 0, 0.5
+    epochs = 1000
     mse_loss = MSELoss()
     ###
     ds = MatrixOdeDataset(D=D, A=A, N=N, t_span=t_span)
@@ -124,9 +165,27 @@ if __name__ == '__main__':
     A_train = torch.nn.Parameter(unif.sample(torch.Size([D, D])))
     solver = TorchRK45(device=torch.device('cpu'), tensor_dtype=torch.float32)
     params = {'A': A_train}
-    for i, (Z0, ZT) in enumerate(dl):
-        ZT_hat = func.apply(Z0, params,solver, ode_func, t_span)
-        # loss = mse_loss(ZT, ZT_hat)
-        # Compute and print loss
-        loss = (ZT_hat - ZT).pow(2).sum()
-        loss.backward()
+    alpha = 1.0
+
+    for epoch in range(1, epochs + 1):
+        batches_losses = []
+        mse_loss_fn = MSELoss()
+        for i, (Z0, ZT) in enumerate(dl):
+            A_old = params['A']
+            ZT_hat = func.apply(Z0, params, solver, ode_func, t_span)
+            # loss = mse_loss(ZT, ZT_hat)
+            # Compute and print loss
+            # print(f"A norm before = {torch.norm(params['A'])}")
+            # loss = (ZT_hat - ZT).pow(2).sum()
+            # print(f'loss = {loss.item()}')
+            loss = mse_loss_fn(ZT_hat, ZT)# +10.0*torch.norm(params['A'])
+            print(loss.item())
+            loss.backward(retain_graph=True)
+            A_new = params['A']
+            A = alpha * A_new + (1 - alpha) * A_old
+            params['A'] = A
+            # print(f"A norm after = {torch.norm(params['A'])}")
+            batches_losses.append(loss.item())
+        epoch_avg_loss = np.nanmean(batches_losses)
+        if epoch % 10 == 0:
+            print(f'epoch = {epoch} , loss = {epoch_avg_loss}')
