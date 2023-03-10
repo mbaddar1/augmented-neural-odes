@@ -22,10 +22,17 @@
 import numpy as np
 import scipy.linalg
 import torch
-
+from scipy.integrate import solve_ivp
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 
+# TODO
+# https://bayanbox.ir/view/2190529855266466427/Nicholas-J.Higham-Functionsof-Matrices-Theory.pdf
+# eq 11.1 and eq 11.16
 
+def log_matrix_gregory():
+    # https://bayanbox.ir/view/2190529855266466427/Nicholas-J.Higham-Functionsof-Matrices-Theory.pdf
+    # eq 11.16
+    pass
 def log_matrix_integral_form(A: torch.Tensor) -> torch.Tensor:
     # Functions of matrices Book by Nicholas Higham : 2008
     # http://bayanbox.ir/view/2190529855266466427/Nicholas-J.Higham-Functionsof-Matrices-Theory.pdf p269 eqn 11.1
@@ -40,9 +47,10 @@ def log_matrix_integral_form(A: torch.Tensor) -> torch.Tensor:
         res = res.view(1, res.size()[0], res.size()[1])
         return res
 
-    solver = TorchRK45(device=torch.device('cpu'), tensor_dtype=A.dtype)
-    soln = solver.solve_ivp(func=log_ode_func, t_span=(0, 1), z0=torch.zeros(size=(1, A.size()[0], A.size()[1])),
-                            args=None)
+    soln = solve_ivp(device=torch.device('cpu'), tensor_dtype=A.dtype)
+    # FIXME, use
+    # soln = sc.solve_ivp(func=log_ode_func, t_span=(0, 1), z0=torch.zeros(size=(1, A.size()[0], A.size()[1])),
+    #                         args=None)
     yT = soln.z_trajectory[-1]
     A_np = A.detach().numpy()
     logA = scipy.linalg.logm(A_np)

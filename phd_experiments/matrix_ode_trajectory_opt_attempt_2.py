@@ -9,6 +9,7 @@ import torch
 from torch.nn import MSELoss
 from torch.utils.data import Dataset, DataLoader
 
+from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 
 
@@ -29,12 +30,12 @@ def function1(z, A, delta_t):
 
 
 def ode_func(t, z, A):
-    dzdt = torch.einsum('ji,bi->bj', A, z)
+    dzdt = torch.einsum('bi,ij->bj', z, A)
     return dzdt
 
 
 class MatrixOdeDataset(Dataset):
-    def __init__(self, D, A, N, t_span):
+    def __init__(self, D, A, N, t_span, delta_t):
         self.N = N
         #
         # Z0 = torch.tensor(unif.sample(torch.Size([N, D])), requires_grad=True)
@@ -44,9 +45,11 @@ class MatrixOdeDataset(Dataset):
 
         # one euler step
         unif = torch.distributions.Uniform(-1, 1)
-        delta_t = t_span[1] - t_span[0]
+        # delta_t = t_span[1] - t_span[0]
         Z0 = torch.tensor(unif.sample(torch.Size([N, D])), requires_grad=True)
-        ZT = torch.einsum('ji,bi->bj', A, Z0) * delta_t + Z0
+        solver = TorchEulerSolver(step_size=delta_t)
+        soln = solver.solve_ivp(func=ode_func, t_span=t_span, z0=Z0, args=(A,))
+        ZT = soln.z_trajectory[-1]
         self.x_train = Z0
         self.y_train = ZT
 
@@ -60,80 +63,51 @@ class MatrixOdeDataset(Dataset):
 class MatrixODEAutoGradFn(torch.autograd.Function):
 
     @staticmethod
-    def forward(ctx: Any, Z0: torch.Tensor, params: dict, solver: TorchRK45, ode_func: Callable, t_span: Tuple) -> Any:
-        # A = params['A']
-        # soln = solver.solve_ivp(func=ode_func, t_span=t_span, z0=Z0, args=(A,))
-        # ZT = soln.z_trajectory[-1]
-        # ctx.params = params
-        # ctx.z_traj = soln.z_trajectory
-        # ctx.t_values = soln.t_values
-        # ctx.solver = solver
-        # ctx.t_span = t_span
-        # ctx.ode_func = ode_func
+    def forward(ctx: Any, Z0: torch.Tensor, params: dict, solver: TorchRK45, ode_func: Callable, t_span: Tuple,
+                delta_t: float) -> Any:
         A = params['A']
-        delta_t = t_span[1] - t_span[0]
-        ZT = torch.einsum('ji,bi->bj', A, Z0) * delta_t + Z0
+        solver = TorchEulerSolver(step_size=delta_t)
+        soln = solver.solve_ivp(func=ode_func, t_span=t_span, z0=Z0, args=(A,))
+        ZT = soln.z_trajectory[-1]
+
+        # back the ctx object
+        ctx.A = A
+        ctx.lr = params['lr']
         ctx.ZT = ZT
-        ctx.t_span = t_span
         ctx.Z0 = Z0
+        ctx.t_span = t_span
         ctx.params = params
+        ctx.Z_traj = soln.z_trajectory
+        ctx.t_values = soln.t_values
         return ZT
 
     @staticmethod
+    def get_A_LS_from_trajectory(z_trajectory, t_values):
+        z_series = pd.Series(z_trajectory)
+        t_series = pd.Series(t_values)
+        delta_z_series = z_series.diff(1)[1:]
+        delta_t_series = t_series.diff(1)[1:]
+        delta_z_delta_t_zip_list = list(zip(delta_z_series.values, delta_t_series.values))
+        Y_list = list(map(lambda x: x[0] / x[1], delta_z_delta_t_zip_list))
+        Y_ls_tensor = torch.concat(tensors=Y_list, dim=0)
+
+        X_ls = torch.concat(tensors=z_trajectory[:-1], dim=0)
+        lstsq_ret = torch.linalg.lstsq(X_ls, Y_ls_tensor)
+        A_ls = lstsq_ret.solution
+        return A_ls
+
+    @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
-        # dz_dt_traj = [grad_outputs[0]]
+        lr = ctx.lr
         dLdz_T = grad_outputs[0]
-        # FIXME, invest some-time modifying it
-        lr = 0.1
         ZT = ctx.ZT
+        Z_traj = ctx.Z_traj
         ZT_new = ZT - lr * dLdz_T
-        delta_t = ctx.t_span[1] - ctx.t_span[0]
-        Y_lstsq = (ZT_new - ctx.Z0) / delta_t
-        X_lstsq = ctx.Z0
-        lstsq_sol = torch.linalg.lstsq(X_lstsq, Y_lstsq)
-        A_lstsq = lstsq_sol.solution.T
+
+        Z_traj[-1] = ZT_new
+        A_lstsq = MatrixODEAutoGradFn.get_A_LS_from_trajectory(z_trajectory=Z_traj, t_values=ctx.t_values)
         ctx.params['A'] = A_lstsq
-
-        # dummy = lr *dLdz_T
-        # A = ctx.params['A']
-        # I = torch.eye(A.size()[0])
-        #
-        # ZT_new = ZT - lr * dLdz_T
-        # z_trajectory_new = [ZT_new]  # ZT_new = ZT-0.1*dL/dZT
-        # T = len(ctx.t_values)
-        # dz_Tdz_t_mul_acc = torch.eye(A.size()[0])
-        # for t_idx in range(T - 2, 0, -1):
-        #     t = ctx.t_values[t_idx]
-        #     t_plus_1 = ctx.t_values[t_idx + 1]
-        #     delta_t = t_plus_1 - t
-        #     dz_t_plus_1_dz_t = A * delta_t + I
-        #     dz_Tdz_t = torch.matmul(dz_Tdz_t_mul_acc, dz_t_plus_1_dz_t)
-        #     dL_dz_t = torch.einsum('bi,ij->bj', dLdz_T, dz_Tdz_t)
-        #     zt_new = ctx.z_traj[t_idx] - lr * dL_dz_t
-        #     # updates
-        #     dz_Tdz_t_mul_acc = torch.matmul(dz_Tdz_t_mul_acc,dz_t_plus_1_dz_t)
-        #     z_trajectory_new.insert(0, zt_new)
-        # z_trajectory_new.insert(0, ctx.z_traj[0])
-        #
-        # delta_z = list(pd.Series(z_trajectory_new).diff(1).values[1:])
-        # delta_t = list(pd.Series(ctx.t_values).diff(1).values[1:])
-        # delta_z_delta_t_zip = list(zip(delta_z, delta_t))
-        # Y_lstsq = torch.concat(list(map(lambda x: x[0] / x[1], delta_z_delta_t_zip)), dim=0)
-        # X_lstsq = torch.concat(z_trajectory_new[:-1], dim=0)
-        # lstsq_soln = torch.linalg.lstsq(X_lstsq, Y_lstsq)
-        # A_new = lstsq_soln.solution.T
-        #
-        # # sanity check
-        # # Z0_new = z_trajectory_new[0]
-        # # ZT_new = z_trajectory_new[-1]
-        # # #soln_new = ctx.solver.solve_ivp(func=ctx.ode_func, t_span=ctx.t_span, z0=Z0_new, args=(A_new,))
-        # # ZT_hat_new = soln_new.z_trajectory[-1]
-        # # mse_loss = MSELoss()
-        # # err = mse_loss(ZT_new, ZT_hat_new)
-        #
-        # ctx.params['A'] = A_new
-
-        return None, None, None, None, None
+        return None, None, None, None, None, None
 
 
 if __name__ == '__main__':
@@ -182,30 +156,31 @@ if __name__ == '__main__':
     batch_size = 64
     t_span = 0, 1
     epochs = 1000
+    delta_t = 0.25
     mse_loss = MSELoss()
     ###
-    ds = MatrixOdeDataset(D=D, A=A_ref, N=N, t_span=t_span)
+    ds = MatrixOdeDataset(D=D, A=A_ref, N=N, t_span=t_span, delta_t=delta_t)
     dl = DataLoader(dataset=ds, batch_size=batch_size, shuffle=True)
     func = MatrixODEAutoGradFn()
     unif = torch.distributions.Uniform(0.001, 0.005)
     A_train = torch.nn.Parameter(unif.sample(torch.Size([D, D])))
     solver = TorchRK45(device=torch.device('cpu'), tensor_dtype=torch.float32)
-    params = {'A': A_train}
+    params = {'A': A_train, 'lr': 2.0}
     alpha = 1.0
-
+    loss_threshold = 1e-3
     for epoch in range(1, epochs + 1):
         batches_losses = []
         mse_loss_fn = MSELoss()
         for i, (Z0, ZT) in enumerate(dl):
             A_old = params['A']
-            ZT_hat = func.apply(Z0, params, solver, ode_func, t_span)
+            ZT_hat = func.apply(Z0, params, solver, ode_func, t_span, delta_t)
             # loss = mse_loss(ZT, ZT_hat)
             # Compute and print loss
             # print(f"A norm before = {torch.norm(params['A'])}")
             # loss = (ZT_hat - ZT).pow(2).sum()
             # print(f'loss = {loss.item()}')
             loss = mse_loss_fn(ZT_hat, ZT)  # +10.0*torch.norm(params['A'])
-            print(loss.item())
+            # print(loss.item())
             loss.backward(retain_graph=True)
             A_new = params['A']
             A_updated = alpha * A_new + (1 - alpha) * A_old
@@ -215,3 +190,6 @@ if __name__ == '__main__':
         epoch_avg_loss = np.nanmean(batches_losses)
         if epoch % 10 == 0:
             print(f'epoch = {epoch} , loss = {epoch_avg_loss}')
+        if epoch_avg_loss <= 1e-3:
+            print(f'loss <= threshold = {loss_threshold}, Terminating ! ')
+            break
