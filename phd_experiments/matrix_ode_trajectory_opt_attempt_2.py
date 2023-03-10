@@ -1,4 +1,5 @@
 # https://jax.readthedocs.io/en/latest/installation.html
+import time
 from typing import Any, Callable, Tuple
 
 import mygrad
@@ -35,7 +36,7 @@ def ode_func(t, z, A):
 
 
 class MatrixOdeDataset(Dataset):
-    def __init__(self, D, A, N, t_span, delta_t):
+    def __init__(self, D, A, N, t_span, solver):
         self.N = N
         #
         # Z0 = torch.tensor(unif.sample(torch.Size([N, D])), requires_grad=True)
@@ -44,10 +45,9 @@ class MatrixOdeDataset(Dataset):
         # ZT = soln.z_trajectory[-
 
         # one euler step
-        unif = torch.distributions.Uniform(-1, 1)
+        unif = torch.distributions.Normal(loc=0, scale=1.0)
         # delta_t = t_span[1] - t_span[0]
         Z0 = torch.tensor(unif.sample(torch.Size([N, D])), requires_grad=True)
-        solver = TorchEulerSolver(step_size=delta_t)
         soln = solver.solve_ivp(func=ode_func, t_span=t_span, z0=Z0, args=(A,))
         ZT = soln.z_trajectory[-1]
         self.x_train = Z0
@@ -63,10 +63,8 @@ class MatrixOdeDataset(Dataset):
 class MatrixODEAutoGradFn(torch.autograd.Function):
 
     @staticmethod
-    def forward(ctx: Any, Z0: torch.Tensor, params: dict, solver: TorchRK45, ode_func: Callable, t_span: Tuple,
-                delta_t: float) -> Any:
+    def forward(ctx: Any, Z0: torch.Tensor, params: dict, solver: TorchRK45, ode_func: Callable, t_span: Tuple) -> Any:
         A = params['A']
-        solver = TorchEulerSolver(step_size=delta_t)
         soln = solver.solve_ivp(func=ode_func, t_span=t_span, z0=Z0, args=(A,))
         ZT = soln.z_trajectory[-1]
 
@@ -79,10 +77,11 @@ class MatrixODEAutoGradFn(torch.autograd.Function):
         ctx.params = params
         ctx.Z_traj = soln.z_trajectory
         ctx.t_values = soln.t_values
+        ctx.solver = solver
         return ZT
 
     @staticmethod
-    def get_A_LS_from_trajectory(z_trajectory, t_values):
+    def get_A_LS_from_euler_trajectory(z_trajectory, t_values):
         z_series = pd.Series(z_trajectory)
         t_series = pd.Series(t_values)
         delta_z_series = z_series.diff(1)[1:]
@@ -104,88 +103,70 @@ class MatrixODEAutoGradFn(torch.autograd.Function):
         Z_traj = ctx.Z_traj
         ZT_new = ZT - lr * dLdz_T
 
-        Z_traj[-1] = ZT_new
-        A_lstsq = MatrixODEAutoGradFn.get_A_LS_from_trajectory(z_trajectory=Z_traj, t_values=ctx.t_values)
-        ctx.params['A'] = A_lstsq
+        if isinstance(solver, TorchEulerSolver):
+            Z_traj[-1] = ZT_new
+            A_lstsq = MatrixODEAutoGradFn.get_A_LS_from_euler_trajectory(z_trajectory=Z_traj, t_values=ctx.t_values)
+            A_old = ctx.params['A']
+            ctx.params['A'] = A_lstsq
+        else:
+            raise NotImplementedError(f'Backward Least-squares is not implemented for solver {type(ctx.solver)}')
+
+        # assertion code
+        # assert that the get_A_ALS code is quite accuracy, it assumes euler forward pass
+        # let's see how it works with euler and not euler solvers
+        A_ls_sanity_check = False
+        if A_ls_sanity_check:
+            Z_traj[-1] = ZT  # put back the original ZT
+            A_lstsq_sanity = MatrixODEAutoGradFn.get_A_LS_from_euler_trajectory(z_trajectory=Z_traj,
+                                                                                t_values=ctx.t_values)
+            err = torch.norm(A_lstsq_sanity - A_old)
+            print(f'A sanity check error = {err}')
+            time.sleep(1)
         return None, None, None, None, None, None
 
 
 if __name__ == '__main__':
-    # Z = mygrad.Tensor([0.1, 0.2])
-    # A = mygrad.Tensor([[0.3, 0.4], [0.8, -0.9]])
-    # delta_t = 0.01
-    # f = mygrad.matmul(A, Z) * delta_t + Z
-    # y = f
-    # f.backward()
-    # print(Z.grad)
-    # Z_grad_analytical = A*delta_t + np.identity(2)
-    # print(Z_grad_analytical)
-    # f_inst = F()
-    # z = torch.Tensor([0.2,0.3])
-    # z_new = f_inst(z)
-
-    # https://jax.readthedocs.io/en/latest/notebooks/autodiff_cookbook.html
-    """
-    # Differentiate `loss` with respect to the first positional argument:
-    W_grad = grad(loss, argnums=0)(W, b)
-    print('W_grad', W_grad)
-    
-    # Since argnums=0 is the default, this does the same thing:
-    W_grad = grad(loss)(W, b)
-    print('W_grad', W_grad)
-    
-    # But we can choose different values too, and drop the keyword:
-    b_grad = grad(loss, 1)(W, b)
-    print('b_grad', b_grad)
-    
-    # Including tuple values
-    W_grad, b_grad = grad(loss, (0, 1))(W, b)
-    print('W_grad', W_grad)
-    print('b_grad', b_grad)
-    """
-    # A = jnp.array([[0.1, 0.2], [0.8, 0.9]])
-    # z = jnp.array([0.1, 0.2])
-    # delta_t = 0.01
-    # j = jacfwd(function1, argnums=0)(z, A, delta_t)
-    # print(j)
-    # j2 = A*delta_t+jnp.identity(2)
-    # print(j2)
+    # Parameters
     D = 3
-    A_ref = torch.distributions.Uniform(-10, 10).sample(sample_shape=torch.Size([3, 3]))
+    A_ref = torch.distributions.Uniform(-1, 1).sample(sample_shape=torch.Size([3, 3]))
     N = 1024
     batch_size = 64
     t_span = 0, 1
     epochs = 1000
-    delta_t = 0.25
+    delta_t = 0.2
+    solver_type = 'torch-euler'
+
+    # Experiment code start
     mse_loss = MSELoss()
-    ###
-    ds = MatrixOdeDataset(D=D, A=A_ref, N=N, t_span=t_span, delta_t=delta_t)
+    if solver_type == 'torch-euler':
+        solver = TorchEulerSolver(step_size=delta_t)
+    elif solver_type == 'torch-rk45':
+        solver = TorchRK45(device=torch.device('cpu'), tensor_dtype=torch.float32)
+    else:
+        raise ValueError(f'Unknown solver-type = {solver_type}')
+
+    ds = MatrixOdeDataset(D=D, A=A_ref, N=N, solver=solver, t_span=t_span)
     dl = DataLoader(dataset=ds, batch_size=batch_size, shuffle=True)
     func = MatrixODEAutoGradFn()
-    unif = torch.distributions.Uniform(0.001, 0.005)
+    unif = torch.distributions.Uniform(0.01, 0.05)
     A_train = torch.nn.Parameter(unif.sample(torch.Size([D, D])))
-    solver = TorchRK45(device=torch.device('cpu'), tensor_dtype=torch.float32)
-    params = {'A': A_train, 'lr': 2.0}
-    alpha = 1.0
+
+    params = {'A': A_train, 'lr': 0.8}
+    alpha = 0.8
     loss_threshold = 1e-3
     for epoch in range(1, epochs + 1):
         batches_losses = []
         mse_loss_fn = MSELoss()
         for i, (Z0, ZT) in enumerate(dl):
             A_old = params['A']
-            ZT_hat = func.apply(Z0, params, solver, ode_func, t_span, delta_t)
-            # loss = mse_loss(ZT, ZT_hat)
-            # Compute and print loss
-            # print(f"A norm before = {torch.norm(params['A'])}")
-            # loss = (ZT_hat - ZT).pow(2).sum()
-            # print(f'loss = {loss.item()}')
-            loss = mse_loss_fn(ZT_hat, ZT)  # +10.0*torch.norm(params['A'])
-            # print(loss.item())
+            ZT_hat = func.apply(Z0, params, solver, ode_func, t_span)
+            loss = mse_loss_fn(ZT_hat, ZT)  # +0.2*torch.norm(params['A'])
             loss.backward(retain_graph=True)
             A_new = params['A']
             A_updated = alpha * A_new + (1 - alpha) * A_old
+            # print(f'Norm A = {torch.norm(A_updated)}')
+            # print(f'A updated = A {A_updated}')
             params['A'] = A_updated
-            # print(f"A norm after = {torch.norm(params['A'])}")
             batches_losses.append(loss.item())
         epoch_avg_loss = np.nanmean(batches_losses)
         if epoch % 10 == 0:

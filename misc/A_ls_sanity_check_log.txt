@@ -1,0 +1,55 @@
+euler
+A sanity check error = 2.519739616957395e-08
+A sanity check error = 3.5743862980552876e-08
+A sanity check error = 5.316901408036756e-08
+A sanity check error = 3.699590322980839e-08
+A sanity check error = 3.002793391715386e-08
+A sanity check error = 4.181627843991009e-08
+A sanity check error = 5.713798856277208e-08
+A sanity check error = 2.83709660209297e-08
+A sanity check error = 5.333804153906385e-08
+A sanity check error = 4.0978193283081055e-08
+
+
+rk45
+/home/mbaddar/phd/augmented-neural-odes/phd_experiments/matrix_ode_trajectory_opt_attempt_2.py:50: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  Z0 = torch.tensor(unif.sample(torch.Size([N, D])), requires_grad=True)
+/home/mbaddar/phd/augmented-neural-odes/phd_experiments/torch_ode_solvers/torch_rk45.py:101: UserWarning: The use of `x.T` on tensors of dimension other than 2 to reverse their shape is deprecated and it will throw an error in a future release. Consider `x.mT` to transpose batches of matrices or `x.permute(*torch.arange(x.ndim - 1, -1, -1))` to reverse the dimensions of a tensor. (Triggered internally at /opt/conda/conda-bld/pytorch_1667286755372/work/aten/src/ATen/native/TensorShape.cpp:3494.)
+  dz = torch.matmul(K[:s].T, a[:s]) * h
+A sanity check error = 0.0021902809385210276
+A sanity check error = 0.001617554109543562
+A sanity check error = 0.004611144308000803
+A sanity check error = 0.005621442571282387
+A sanity check error = 0.006851350422948599
+A sanity check error = 0.008341493085026741
+A sanity check error = 0.006255065556615591
+A sanity check error = 0.009219230152666569
+A sanity check error = 0.023028453812003136
+A sanity check error = 0.07703892141580582
+A sanity check error = 0.054541781544685364
+A sanity check error = 0.07285988330841064
+A sanity check error = 0.0970228761434555
+A sanity check error = 0.09530157595872879
+A sanity check error = 0.10807132720947266
+A sanity check error = 0.18272800743579865
+A sanity check error = 0.3083053529262543
+A sanity check error = 0.5141332745552063
+A sanity check error = 1.1249682903289795
+A sanity check error = 0.483725368976593
+A sanity check error = 1.8878923654556274
+A sanity check error = 4.831004619598389
+A sanity check error = 59.04108428955078
+A sanity check error = 51.24504852294922
+A sanity check error = 25.104774475097656
+A sanity check error = 21.776456832885742
+A sanity check error = 47.363304138183594
+Traceback (most recent call last):
+  File "/home/mbaddar/phd/augmented-neural-odes/phd_experiments/matrix_ode_trajectory_opt_attempt_2.py", line 186, in <module>
+    ZT_hat = func.apply(Z0, params, solver, ode_func, t_span)
+  File "/home/mbaddar/phd/augmented-neural-odes/phd_experiments/matrix_ode_trajectory_opt_attempt_2.py", line 68, in forward
+    soln = solver.solve_ivp(func=ode_func, t_span=t_span, z0=Z0, args=(A,))
+  File "/home/mbaddar/phd/augmented-neural-odes/phd_experiments/torch_ode_solvers/torch_rk45.py", line 79, in solve_ivp
+    z, f, h, t = TorchRK45._torch_rk_step_adaptive_step(func=func, t=t, tf=tf, z=z, f=f, h=h, A=self.A,
+  File "/home/mbaddar/phd/augmented-neural-odes/phd_experiments/torch_ode_solvers/torch_rk45.py", line 129, in _torch_rk_step_adaptive_step
+    raise ValueError(f'h={h} < min_step = {min_step}. Cannot complete the integration, exiting!!!')
+ValueError: h=7.993605777301127e-16 < min_step = 1.1102230246251565e-15. Cannot complete the integration, exiting!!!
