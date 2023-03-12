@@ -9,16 +9,5 @@ https://www.cs.princeton.edu/courses/archive/fall11/cos323/notes/cos323_f11_lect
 import torch.nn
 from torch.utils.data import Dataset
 
-
-
-
-class BenchmarkNN(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self):
-        pass
-
-
 if __name__ == '__main__':
     pass
