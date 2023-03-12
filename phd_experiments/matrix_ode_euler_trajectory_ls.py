@@ -60,6 +60,7 @@ class MatrixOdeDataset(Dataset):
         return self.N
 
 
+
 class MatrixODEAutoGradFn(torch.autograd.Function):
 
     @staticmethod
@@ -135,7 +136,7 @@ if __name__ == '__main__':
     epochs = 1000
     delta_t = 0.2
     solver_type = 'torch-euler'
-
+    alpha = 0.8
     # Experiment code start
     mse_loss = MSELoss()
     if solver_type == 'torch-euler':
@@ -152,7 +153,6 @@ if __name__ == '__main__':
     A_train = torch.nn.Parameter(unif.sample(torch.Size([D, D])))
 
     params = {'A': A_train, 'lr': 0.8}
-    alpha = 0.8
     loss_threshold = 1e-3
     for epoch in range(1, epochs + 1):
         batches_losses = []
