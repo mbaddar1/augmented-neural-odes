@@ -9,6 +9,21 @@ from torch.nn import Sequential, MSELoss
 from torch.utils.data import DataLoader
 
 from phd_experiments.datasets.torch_diabetes import TorchDiabetesDataset
+from phd_experiments.datasets.toy_linear import ToyLinearDataSet1
+
+
+class NNBasic(torch.nn.Module):
+    def __init__(self, input_dim, hidden_dim, out_dim, n_layers):
+        super().__init__()
+        assert n_layers >= 3, "n_layers must >=3"
+        self.model = Sequential()
+        self.model.append(torch.nn.Linear(in_features=input_dim, out_features=hidden_dim)).append(torch.nn.ReLU())
+        for _ in range(n_layers - 2):
+            self.model.append(torch.nn.Linear(in_features=hidden_dim, out_features=hidden_dim)).append(torch.nn.ReLU())
+        self.model.append(torch.nn.Linear(in_features=hidden_dim, out_features=out_dim)).append(torch.nn.ReLU())
+
+    def forward(self, x):
+        return self.model(x)
 
 
 def get_activation_model(activation_function_name: str):
@@ -29,13 +44,13 @@ class ResNetNonLinearSubBlock(torch.nn.Module):
 
     def __init__(self, dim, activation_function_name):
         super().__init__()
-
-        activation_model = get_activation_model(activation_function_name)
+        # https://d2l.ai/chapter_convolutional-modern/resnet.html#residual-blocks
+        # https://d2l.ai/_images/residual-block.svg
+        # activation_model = get_activation_model(activation_function_name)
 
         self.model = Sequential(torch.nn.Linear(in_features=dim, out_features=dim),
-                                activation_model,
-                                torch.nn.Linear(in_features=dim, out_features=dim),
-                                activation_model)
+                                torch.nn.ReLU(),
+                                torch.nn.Linear(in_features=dim, out_features=dim))
 
     def forward(self, x: torch.Tensor):
         return self.model(x)
@@ -58,19 +73,20 @@ class ResNetBasic(torch.nn.Module):
     https://d2l.ai/_images/resnet18-90.svg
     """
 
-    def __init__(self, n_layers: int, input_dim: int, hidden_dim: int, output_dim: int, activation_function_name: str):
+    def __init__(self, n_layers: int, input_dim: int, hidden_dim: int, output_dim: int,
+                 activation_function_name: str):
         super().__init__()
         # a bit of modification on the arch in https://d2l.ai/chapter_convolutional-modern/resnet.html#resnet-model
-        activation_model = get_activation_model(activation_function_name=activation_function_name)
+        # activation_model = get_activation_model(activation_function_name=activation_function_name)
         self.model = Sequential()
         # add init model
-        self.model.append(torch.nn.Linear(input_dim, hidden_dim)).append(activation_model)
+        self.model.append(torch.nn.Linear(input_dim, hidden_dim)).append(torch.nn.ReLU())
         # add resnet blocks
         assert n_layers >= 3, "Number of layers must be >=3"
         n_resnet_blocks = n_layers - 2
         for i in range(n_resnet_blocks):
-            self.model.append(ResNetBlock(dim=hidden_dim,activation_function_name=activation_function_name))
-        self.model.append(torch.nn.Linear(hidden_dim, output_dim)).append(activation_model)
+            self.model.append(ResNetBlock(dim=hidden_dim, activation_function_name=activation_function_name))
+        self.model.append(torch.nn.Linear(hidden_dim, output_dim)).append(torch.nn.ReLU())
 
     def forward(self, x: torch.Tensor):
         return self.model(x)
@@ -78,26 +94,47 @@ class ResNetBasic(torch.nn.Module):
 
 if __name__ == '__main__':
     batch_size = 64
-    epochs = 1000
-    input_dim = 10
-    output_dim = 1
+    epochs = 10000
+    N = None
+    input_dim = None
+    output_dim = None
     hidden_dim = 64
-    n_layers = 3
+    n_layers = 5
     activation_function_name = 'relu'
-    lr = 0.1
+    lr = 1e-3
     mse_loss_fn = MSELoss()
+    dataset = 'toy-linear-1'
+    model = 'nn'
     ###
-    ds = TorchDiabetesDataset()
+    if dataset == 'diabetes':
+        input_dim = 10
+        output_dim = 1
+        ds = TorchDiabetesDataset()
+    elif dataset == 'toy-linear-1':
+        input_dim = 3
+        N = 2048
+        A = torch.Tensor([[0.1, 0.2, -0.3], [0.8, -0.9, 0.1], [0.8, 0.1, 0.4]])
+        b = torch.Tensor([1.0]).view(1, 1)
+        dist = torch.distributions.Normal(loc=1.0, scale=2.0)
+        output_dim = 1
+        ds = ToyLinearDataSet1(N=N, A=A, b=b, dist=dist)
+    else:
+        raise ValueError(f'unknown dataset {dataset}')
+
     dl = DataLoader(dataset=ds, batch_size=batch_size, shuffle=True)
-    res_net_basic_model = ResNetBasic(n_layers=n_layers, input_dim=input_dim, hidden_dim=hidden_dim,
-                                      output_dim=output_dim, activation_function_name=activation_function_name)
-    optimizer = torch.optim.Adam(params=res_net_basic_model.parameters(), lr=lr)
-    for epoch in range(1,epochs+1):
+    if model == 'resnet':
+        model = ResNetBasic(n_layers=n_layers, input_dim=input_dim, hidden_dim=hidden_dim,
+                            output_dim=output_dim, activation_function_name=activation_function_name)
+    elif model == 'nn':
+        model = NNBasic(input_dim=input_dim, hidden_dim=hidden_dim,out_dim=output_dim, n_layers=3)
+
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=lr)
+    for epoch in range(1, epochs + 1):
         for i, (X, y) in enumerate(dl):
             optimizer.zero_grad()
-            y_hat = res_net_basic_model(X)
+            y_hat = model(X)
             loss = mse_loss_fn(y, y_hat)
             loss.backward()
             optimizer.step()
-        if epoch%10==0:
+        if epoch % 10 == 0:
             print(f'epoch = {epoch}, loss= {loss.item()}')
