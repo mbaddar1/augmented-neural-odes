@@ -21,14 +21,14 @@ from torch.optim import Adam
 from phd_experiments.tn.tt import TensorTrainFixedRank
 from phd_experiments.tt_ode.ttode_model import TensorTrainODEBLOCK
 
-MODEL_NAMES = ['resnet', 'node', 'anode', 'ttode']
+MODEL_NAMES = ['baseline', 'node', 'anode', 'ttode']
 DATASETS_NAMES = ['flip1d', 'concentric-sphere']
 
 
 def get_model(configs: dict):
     if configs['model-name'] not in MODEL_NAMES:
         raise ValueError(f"""Model name {configs['model-name']} is not supported : must be one of {MODEL_NAMES}""")
-    if configs['model-name'] == 'resnet':
+    if configs['model-name'] == 'baseline':
         return ResNet(data_dim=configs[configs['dataset-name']]['input_dim'],
                       hidden_dim=configs[configs['model-name']]['hidden_dim'],
                       num_layers=configs[configs['model-name']]['num_layers'],

@@ -180,7 +180,7 @@ def histories_plt(all_history_info, plot_type='loss', shaded_err=False,
             color = categorical_colors[i % 4]
             label = labels[i]
         else:
-            if model_type == 'resnet':
+            if model_type == 'baseline':
                 color = categorical_colors[0]
                 label = 'ResNet'
             if model_type == 'odenet':
@@ -191,7 +191,7 @@ def histories_plt(all_history_info, plot_type='loss', shaded_err=False,
                 label = 'ANODE'
 
         # No concept of number of function evaluations for ResNet
-        if model_type == 'resnet' and plot_type != 'loss':
+        if model_type == 'baseline' and plot_type != 'loss':
             continue
 
         if plot_type == 'loss':

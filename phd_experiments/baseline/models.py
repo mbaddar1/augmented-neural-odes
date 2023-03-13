@@ -4,7 +4,11 @@ https://d2l.ai/chapter_convolutional-modern/resnet.html
 https://debuggercafe.com/implementing-resnet18-in-pytorch-from-scratch/
 https://blog.paperspace.com/writing-resnet-from-scratch-in-pytorch/
 """
+import numpy as np
+import sklearn.model_selection
 import torch.nn
+from sklearn import datasets, linear_model
+from sklearn.metrics import mean_squared_error
 from torch.nn import Sequential, MSELoss
 from torch.utils.data import DataLoader
 
@@ -13,8 +17,21 @@ from phd_experiments.datasets.toy_linear import ToyLinearDataSet1
 from phd_experiments.datasets.toy_relu import ToyRelu
 
 
-# NN for diabetes
-# https://www.kaggle.com/code/kredy10/simple-neural-network-for-diabetes-prediction
+def build_sklearn_diabetes_baseline():
+    # https://scikit-learn.org/stable/auto_examples/linear_model/plot_ols.html#sphx-glr-auto-examples-linear-model-plot-ols-py
+    epochs = 100
+    mse_list = []
+    for i in range(epochs):
+        X, y = datasets.load_diabetes(return_X_y=True)
+        X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.33)
+        regr = linear_model.LinearRegression()
+        regr.fit(X_train, y_train)
+        y_pred = regr.predict(X_test)
+        mse = mean_squared_error(y_test, y_pred)
+        mse_list.append(mse)
+    ret = {'model': str(regr.__class__), 'avg-mse': np.nanmean(mse_list), 'std-mse': np.nanstd(mse_list)}
+    return ret
+
 
 class LinearModel(torch.nn.Module):
     def __init__(self, input_dim, out_dim):
@@ -22,8 +39,7 @@ class LinearModel(torch.nn.Module):
         self.model = torch.nn.Linear(in_features=input_dim, out_features=out_dim)
 
     def forward(self, x):
-        y = self.model(x)
-        return y
+        return self.model(x)
 
 
 class NNBasic(torch.nn.Module):
@@ -98,7 +114,7 @@ class ResNetBasic(torch.nn.Module):
         self.model = Sequential()
         # add init model
         self.model.append(torch.nn.Linear(input_dim, hidden_dim)).append(get_activation_model(activation_function_name))
-        # add resnet blocks
+        # add baseline blocks
         assert n_layers >= 3, "Number of layers must be >=3"
         n_resnet_blocks = n_layers - 2
         for i in range(n_resnet_blocks):
@@ -111,6 +127,7 @@ class ResNetBasic(torch.nn.Module):
 
 
 if __name__ == '__main__':
+
     batch_size = 32
     epochs = 1000
     N = None
@@ -123,11 +140,15 @@ if __name__ == '__main__':
     mse_loss_fn = MSELoss()
     dataset = 'diabetes'
     model = 'linear'
+    baselines = {}
     ###
     if dataset == 'diabetes':
         input_dim = 10
         output_dim = 1
         ds = TorchDiabetesDataset()
+        ret = build_sklearn_diabetes_baseline()
+        print(f'diabetes baseline model (linear-regression) score = {ret}')
+
     elif dataset == 'toy-linear-1':
         # TODO The nn models works fine with out-dim=1, higher dims (Multi-linear regression, No..) . Dig Deeper
         # TODO, also this data-set works fine with Identity Activation, not with Relu or sigmoid, logical ??
@@ -148,7 +169,7 @@ if __name__ == '__main__':
         raise ValueError(f'unknown dataset {dataset}')
 
     dl = DataLoader(dataset=ds, batch_size=batch_size, shuffle=True)
-    if model == 'resnet':
+    if model == 'baseline':
         model = ResNetBasic(n_layers=n_layers, input_dim=input_dim, hidden_dim=hidden_dim,
                             output_dim=output_dim, activation_function_name=activation_function_name)
     elif model == 'nn':
