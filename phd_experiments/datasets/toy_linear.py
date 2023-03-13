@@ -8,6 +8,7 @@ class ToyLinearDataSet1(Dataset):
         Dx = A.size()[0]
         self.X = dist.sample(sample_shape=torch.Size([N, Dx]))
         self.Y = torch.einsum('bi,ij->bj', self.X, A) + b
+        x=10
 
     def __getitem__(self, idx):
         return self.X[idx], self.Y[idx]

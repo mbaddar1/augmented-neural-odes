@@ -8,19 +8,35 @@ import torch.nn
 from torch.nn import Sequential, MSELoss
 from torch.utils.data import DataLoader
 
-from phd_experiments.datasets.torch_diabetes import TorchDiabetesDataset
+from phd_experiments.datasets.torch_sklearn_diabetes import TorchDiabetesDataset
 from phd_experiments.datasets.toy_linear import ToyLinearDataSet1
+from phd_experiments.datasets.toy_relu import ToyRelu
+
+
+# NN for diabetes
+# https://www.kaggle.com/code/kredy10/simple-neural-network-for-diabetes-prediction
+
+class LinearModel(torch.nn.Module):
+    def __init__(self, input_dim, out_dim):
+        super().__init__()
+        self.model = torch.nn.Linear(in_features=input_dim, out_features=out_dim)
+
+    def forward(self, x):
+        y = self.model(x)
+        return y
 
 
 class NNBasic(torch.nn.Module):
-    def __init__(self, input_dim, hidden_dim, out_dim, n_layers):
+    def __init__(self, input_dim, hidden_dim, out_dim, n_layers, activation_function_name):
         super().__init__()
         assert n_layers >= 3, "n_layers must >=3"
         self.model = Sequential()
-        self.model.append(torch.nn.Linear(in_features=input_dim, out_features=hidden_dim)).append(torch.nn.ReLU())
+        self.model.append(torch.nn.Linear(in_features=input_dim, out_features=hidden_dim)) \
+            .append(get_activation_model(activation_function_name))
         for _ in range(n_layers - 2):
-            self.model.append(torch.nn.Linear(in_features=hidden_dim, out_features=hidden_dim)).append(torch.nn.ReLU())
-        self.model.append(torch.nn.Linear(in_features=hidden_dim, out_features=out_dim)).append(torch.nn.ReLU())
+            self.model.append(torch.nn.Linear(in_features=hidden_dim, out_features=hidden_dim)) \
+                .append(get_activation_model(activation_function_name))
+        self.model.append(torch.nn.Linear(in_features=hidden_dim, out_features=out_dim))  # .append(torch.nn.Identity())
 
     def forward(self, x):
         return self.model(x)
@@ -33,6 +49,8 @@ def get_activation_model(activation_function_name: str):
         return torch.nn.Tanh()
     elif activation_function_name == 'sigmoid':
         return torch.nn.Sigmoid()
+    elif activation_function_name == 'identity':
+        return torch.nn.Identity()
     else:
         raise ValueError(f'Unknown activation name = {activation_function_name}')
 
@@ -46,10 +64,9 @@ class ResNetNonLinearSubBlock(torch.nn.Module):
         super().__init__()
         # https://d2l.ai/chapter_convolutional-modern/resnet.html#residual-blocks
         # https://d2l.ai/_images/residual-block.svg
-        # activation_model = get_activation_model(activation_function_name)
 
         self.model = Sequential(torch.nn.Linear(in_features=dim, out_features=dim),
-                                torch.nn.ReLU(),
+                                get_activation_model(activation_function_name),
                                 torch.nn.Linear(in_features=dim, out_features=dim))
 
     def forward(self, x: torch.Tensor):
@@ -80,44 +97,53 @@ class ResNetBasic(torch.nn.Module):
         # activation_model = get_activation_model(activation_function_name=activation_function_name)
         self.model = Sequential()
         # add init model
-        self.model.append(torch.nn.Linear(input_dim, hidden_dim)).append(torch.nn.ReLU())
+        self.model.append(torch.nn.Linear(input_dim, hidden_dim)).append(get_activation_model(activation_function_name))
         # add resnet blocks
         assert n_layers >= 3, "Number of layers must be >=3"
         n_resnet_blocks = n_layers - 2
         for i in range(n_resnet_blocks):
             self.model.append(ResNetBlock(dim=hidden_dim, activation_function_name=activation_function_name))
-        self.model.append(torch.nn.Linear(hidden_dim, output_dim)).append(torch.nn.ReLU())
+        self.model.append(torch.nn.Linear(hidden_dim, output_dim)).append(
+            get_activation_model(activation_function_name))
 
     def forward(self, x: torch.Tensor):
         return self.model(x)
 
 
 if __name__ == '__main__':
-    batch_size = 64
-    epochs = 10000
+    batch_size = 32
+    epochs = 1000
     N = None
     input_dim = None
     output_dim = None
     hidden_dim = 64
     n_layers = 5
-    activation_function_name = 'relu'
-    lr = 1e-3
+    activation_function_name = 'identity'
+    lr = 0.1
     mse_loss_fn = MSELoss()
-    dataset = 'toy-linear-1'
-    model = 'nn'
+    dataset = 'diabetes'
+    model = 'linear'
     ###
     if dataset == 'diabetes':
         input_dim = 10
         output_dim = 1
         ds = TorchDiabetesDataset()
     elif dataset == 'toy-linear-1':
+        # TODO The nn models works fine with out-dim=1, higher dims (Multi-linear regression, No..) . Dig Deeper
+        # TODO, also this data-set works fine with Identity Activation, not with Relu or sigmoid, logical ??
         input_dim = 3
-        N = 2048
-        A = torch.Tensor([[0.1, 0.2, -0.3], [0.8, -0.9, 0.1], [0.8, 0.1, 0.4]])
-        b = torch.Tensor([1.0]).view(1, 1)
+        N = batch_size * 10
+        A = torch.Tensor([[0.1, 0.2, -0.3]]).T
+        b = torch.Tensor([[1.0]])
         dist = torch.distributions.Normal(loc=1.0, scale=2.0)
         output_dim = 1
         ds = ToyLinearDataSet1(N=N, A=A, b=b, dist=dist)
+    elif dataset == 'toy-relu':
+        N = batch_size * 10
+        input_dim = 10
+        output_dim = 1
+        ds = ToyRelu(N=N, input_dim=input_dim, out_dim=output_dim)
+
     else:
         raise ValueError(f'unknown dataset {dataset}')
 
@@ -126,7 +152,10 @@ if __name__ == '__main__':
         model = ResNetBasic(n_layers=n_layers, input_dim=input_dim, hidden_dim=hidden_dim,
                             output_dim=output_dim, activation_function_name=activation_function_name)
     elif model == 'nn':
-        model = NNBasic(input_dim=input_dim, hidden_dim=hidden_dim,out_dim=output_dim, n_layers=3)
+        model = NNBasic(input_dim=input_dim, hidden_dim=hidden_dim, out_dim=output_dim, n_layers=n_layers,
+                        activation_function_name=activation_function_name)
+    elif model == 'linear':
+        model = LinearModel(input_dim=input_dim, out_dim=output_dim)
 
     optimizer = torch.optim.Adam(params=model.parameters(), lr=lr)
     for epoch in range(1, epochs + 1):
