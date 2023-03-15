@@ -14,7 +14,6 @@ class TorchBostonHousingPrices(Dataset):
         y_col = ["MEDV"]
         self.X = torch.tensor(df.loc[:, X_cols].values)
         self.y = torch.tensor(df.loc[:, y_col].values)
-        x=10
 
     def __len__(self):
         return self.N
