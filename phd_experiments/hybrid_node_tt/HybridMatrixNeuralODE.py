@@ -9,5 +9,12 @@ https://www.cs.princeton.edu/courses/archive/fall11/cos323/notes/cos323_f11_lect
 import torch.nn
 from torch.utils.data import Dataset
 
+"""
+Model Design
+1. Z0 = X
+2. Linear ode model that takes Z0 to ZT via dz/dt = A.z , not basis
+3. NN that compresses ZT to y_hat
+Linear ODE from
+"""
 if __name__ == '__main__':
     pass
