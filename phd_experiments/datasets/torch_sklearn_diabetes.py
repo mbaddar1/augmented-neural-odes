@@ -8,7 +8,8 @@ class TorchDiabetesDataset(Dataset):
     def __init__(self, dtype=torch.float32):
         X, y = load_diabetes(return_X_y=True)
         self.X = torch.tensor(X, dtype=dtype)
-        self.y = torch.tensor(y, dtype=dtype).view(len(y),1)
+        self.y = torch.tensor(y, dtype=dtype).view(len(y), 1)
+
 
     def __len__(self):
         return self.X.size()[0]
@@ -32,7 +33,7 @@ if __name__ == '__main__':
         for i, (X, y) in enumerate(dl):
             X_with_const = torch.cat([X, torch.ones(size=(X.size()[0], 1))], dim=1)
             # forward
-            y_hat = torch.einsum('bi,ij->bj', X_with_const,A)
+            y_hat = torch.einsum('bi,ij->bj', X_with_const, A)
             # loss
             loss = mse_loss_fn(y, y_hat)
             print(loss.item())

@@ -5,22 +5,30 @@ https://debuggercafe.com/implementing-resnet18-in-pytorch-from-scratch/
 https://blog.paperspace.com/writing-resnet-from-scratch-in-pytorch/
 """
 import logging
+import random
 
 import numpy as np
-import sklearn.model_selection
 import torch.nn
-import torcheval.metrics
 import torchmetrics
-from sklearn import datasets, linear_model
-from sklearn.metrics import mean_squared_error
-from torch.nn import Sequential, MSELoss
+from sklearn import linear_model
+from torch.nn import Sequential
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+from phd_experiments.datasets.torch_boston_housing import TorchBostonHousingPrices
 from phd_experiments.datasets.torch_sklearn_diabetes import TorchDiabetesDataset
 from phd_experiments.datasets.toy_linear import ToyLinearDataSet1
 from phd_experiments.datasets.toy_relu import ToyRelu
 from phd_experiments.utils.torch_utils import get_activation_model, get_torch_loss
 from sklearn.metrics import r2_score
+
+# Reproducibility
+# https://pytorch.org/docs/stable/notes/randomness.html
+# https://sklearn-genetic-opt.readthedocs.io/en/stable/tutorials/reproducibility.html
+SEED = 54
+torch.manual_seed(SEED)
+np.random.seed(SEED)
+random.seed(SEED)
 
 
 def build_sklearn_linear_regression_baseline(X: np.ndarray, y: np.ndarray, loss_function_name: str):
@@ -115,7 +123,7 @@ if __name__ == '__main__':
     logger = logging.getLogger()
     ###
     batch_size = 64
-    epochs = 1000
+    epochs = 10000
     N = None
     input_dim = None
     output_dim = None
@@ -124,12 +132,13 @@ if __name__ == '__main__':
     activation_function_name = 'relu'
     lr = 1e-3
 
-    dataset_name = 'diabetes'
+    dataset_name = 'boston'
     model = 'resnet'
     naive_baseline_model = None
     loss_function_name = 'mse'
     ###
     if dataset_name == 'diabetes':
+
         input_dim = 10
         output_dim = 1
         overall_dataset = TorchDiabetesDataset()
@@ -149,6 +158,11 @@ if __name__ == '__main__':
         input_dim = 10
         output_dim = 1
         overall_dataset = ToyRelu(N=N, input_dim=input_dim, out_dim=output_dim)
+    elif dataset_name == 'boston':
+        csv_file = '../datasets/boston.csv'
+        overall_dataset = TorchBostonHousingPrices(csv_file=csv_file)
+        input_dim = overall_dataset.get_Xdim()
+        output_dim = 1
 
     else:
         raise ValueError(f'unknown dataset {dataset_name}')
