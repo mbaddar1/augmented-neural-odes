@@ -1,7 +1,8 @@
 import pandas as pd
 import torch.nn
+from sklearn import preprocessing
 from torch.utils.data import Dataset
-
+import numpy as np
 
 # https://www.kaggle.com/datasets/fedesoriano/the-boston-houseprice-data
 # https://www.kaggle.com/code/marcinrutecki/regression-models-evaluation-
@@ -14,9 +15,15 @@ class TorchBostonHousingPrices(Dataset):
         X_cols = ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"]
         y_col = ["MEDV"]
         self.X_dim = len(X_cols)
-        self.X = torch.tensor(df.loc[:, X_cols].values,dtype=torch.float32)
-        self.y = torch.tensor(df.loc[:, y_col].values,dtype=torch.float32)
-
+        X = df.loc[:, X_cols].values
+        scaler = preprocessing.StandardScaler().fit(X)
+        X_scale = scaler.transform(X)
+        self.X = torch.tensor(X_scale,dtype=torch.float32)
+        y = df.loc[:, y_col].values
+        scaler = preprocessing.StandardScaler().fit(y)
+        y_scale = scaler.transform(y)
+        self.y = torch.tensor(y_scale,dtype=torch.float32)
+        x=10
     def get_Xdim(self):
         return self.X_dim
 
