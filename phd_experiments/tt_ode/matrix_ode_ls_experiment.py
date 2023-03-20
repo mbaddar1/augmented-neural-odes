@@ -180,7 +180,7 @@ class LsCustomFunc(torch.autograd.Function):
         ctx.z_traj = z_traj
         zT = z_traj[-1]
         ctx.solver = solver
-        ctx.ode_func = ode_func
+        ctx.ode_func_linear = ode_func
         ctx.t_span = t_span
         ctx.opt_ctx = opt_ctx
         return zT
@@ -197,9 +197,9 @@ class LsCustomFunc(torch.autograd.Function):
         A_ls = logE / (ctx.t_span[1] - ctx.t_span[0])
         # sanity check for A_ls
         cust = LsCustomFunc
-        zT_prime_hat_init = cust.apply(ctx.x, ctx.P, ctx.A, ctx.solver, ctx.ode_func, ctx.t_span,ctx.model)
-        zT_prime_hat_ls = cust.apply(ctx.x, ctx.P, torch.tensor(A_ls, dtype=ctx.x.dtype), ctx.solver, ctx.ode_func,
-                                     ctx.t_span,ctx.model)
+        zT_prime_hat_init = cust.apply(ctx.x, ctx.P, ctx.A, ctx.solver, ctx.ode_func_linear, ctx.t_span, ctx.model)
+        zT_prime_hat_ls = cust.apply(ctx.x, ctx.P, torch.tensor(A_ls, dtype=ctx.x.dtype), ctx.solver, ctx.ode_func_linear,
+                                     ctx.t_span, ctx.model)
         norm_init = torch.norm(zT_prime - zT_prime_hat_init)
         norm_ls = torch.norm(zT_prime - zT_prime_hat_ls)
         A_prime = alpha * torch.tensor(A_ls, dtype=ctx.A.dtype) + (1 - alpha) * ctx.A

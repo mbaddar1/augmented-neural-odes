@@ -8,14 +8,11 @@ https://www.cs.princeton.edu/courses/archive/fall11/cos323/notes/cos323_f11_lect
 """
 import random
 from typing import Any
-
 import pandas as pd
 from torch.utils.data import random_split, DataLoader
 import numpy as np
 import torch.nn
 from torch.nn import Sequential, MSELoss
-
-from phd_experiments.datasets.torch_boston_housing import TorchBostonHousingPrices
 from phd_experiments.datasets.toy_relu import ToyRelu
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 
@@ -33,10 +30,25 @@ Linear ODE from
 """
 
 
-def ode_func(t: float, x: torch.Tensor, A: torch.Tensor):
+def basis(x: torch.Tensor, t: float):
+    pass
+
+
+def ode_func_linear(t: float, z: torch.Tensor, A: torch.Tensor):
     # FIXME : add bias
     # https://pytorch.org/docs/stable/_modules/torch/nn/modules/linear.html#Linear
-    dzdt = torch.einsum('bi,ij->bj', x, A)
+    batch_size = z.size()[0]
+    x_aug = torch.concat(tensors=[z, torch.ones(batch_size).view(batch_size, 1)], dim=1)
+    dzdt = torch.einsum('bi,ij->bj', x_aug, A)
+    return dzdt
+
+
+def ode_func_nn(t: float, z: torch.Tensor, nn_func: torch.nn.Module):
+    b = z.size()[0]
+    z_aug = torch.concat(tensors=[z, torch.tensor(t).repeat(b, 1)], dim=1).type(torch.float32)
+    dt = z_aug.dtype
+    dt2 = nn_func[0].weight.dtype
+    dzdt = nn_func(z_aug)
     return dzdt
 
 
@@ -48,12 +60,11 @@ class EulerFunc(torch.autograd.Function):
         t_span = params['t_span']
         A = params['A']
         solver = TorchEulerSolver(step_size)
-        soln = solver.solve_ivp(func=ode_func, t_span=t_span, z0=X, args=(A,))
+        soln = solver.solve_ivp(func=ode_func_nn, t_span=t_span, z0=x, args=(A,))
         ctx.z_traj = soln.z_trajectory
         ctx.t_vals = soln.t_values
         zT = soln.z_trajectory[-1]
         ctx.params = params
-        # zT.requires_grad = True
         return zT
 
     @staticmethod
@@ -82,15 +93,16 @@ class HybridMatrixNeuralODE(torch.nn.Module):
         #                     torch.nn.ReLU(),
         #                     torch.nn.Linear(in_features=hidden_dim,out_features=out_dim),
         #                     torch.nn.ReLU())
+        self.dzdt_func = Sequential(
+            torch.nn.Linear(in_features=(hidden_dim + 1), out_features=hidden_dim),
+            torch.nn.ReLU())
         self.Q = Sequential(
             torch.nn.Linear(in_features=hidden_dim, out_features=out_dim),
             torch.nn.ReLU())
-        # torch.nn.Linear(in_features=hidden_dim, out_features=hidden_dim),
-        # torch.nn.ReLU(),
         unif_low = 0.001
         unif_high = 0.005
         A_init = torch.distributions.Uniform(unif_low, unif_high).sample(
-            sample_shape=torch.Size([hidden_dim, hidden_dim]))
+            sample_shape=torch.Size([(hidden_dim + 1), hidden_dim]))
         if opt_method == 'lstsq':
             self.A = A_init
             self.params = {}
@@ -108,10 +120,10 @@ class HybridMatrixNeuralODE(torch.nn.Module):
             zT = fn.apply(x, self.params)
         elif self.opt_method == 'graddesc':
             solver = TorchEulerSolver(step_size=step_size)
-            soln = solver.solve_ivp(func=ode_func, t_span=t_span, args=(self.A,), z0=x)
+            soln = solver.solve_ivp(func=ode_func_nn, t_span=t_span, args=(self.dzdt_func,), z0=x)
             zT = soln.z_trajectory[-1]
         else:
-            raise ValueError(f'Unkown opt method = {self.opt_method}')
+            raise ValueError(f'Unknown opt method = {self.opt_method}')
         y_hat = self.Q(zT)
         return y_hat
 
@@ -121,7 +133,6 @@ if __name__ == '__main__':
     batch_size = 128
     lr = 1e-3
     N = 1000
-    # overall_dataset = TorchBostonHousingPrices(csv_file='../datasets/boston.csv')
     input_dim = 2
     # Fixme add normalization
     # https://inside-machinelearning.com/en/why-and-how-to-normalize-data-object-detection-on-image-in-pytorch-part-1/
@@ -132,11 +143,10 @@ if __name__ == '__main__':
     splits = random_split(dataset=overall_dataset, lengths=[0.8, 0.2])
     train_dataset = splits[0]
     test_dataset = splits[1]
-    opt_method = 'lstsq'
+    opt_method = 'graddesc'
     train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
     model = HybridMatrixNeuralODE(hidden_dim=hidden_dim, out_dim=out_dim, opt_method=opt_method)
-    # a = list(model.parameters())
     optimizer = torch.optim.SGD(lr=lr, params=model.parameters())
     loss_fn = MSELoss()
     epochs_avg_losses = []
@@ -148,10 +158,8 @@ if __name__ == '__main__':
             optimizer.zero_grad()
             if opt_method == 'lstsq':
                 X = torch.nn.Parameter(X)  # FIXME : a hack to make backward in autograd.func be fired !!
-            if epoch > 700:
-                x=10
             y_hat = model(X)
-            if opt_method=='lstsq':
+            if opt_method == 'lstsq':
                 A_old = model.params['A']
             loss = loss_fn(y, y_hat)  # +1000.0*torch.norm(model.A)
             batches_losses.append(loss.item())
