@@ -39,10 +39,8 @@ class OdeFuncLinear(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.net = torch.nn.Linear(in_features=2, out_features=2, bias=False)
-        # torch.nn.Parameter(torch.distributions.Uniform(0.01, 0.05).sample(torch.Size([2, 2])))
 
     def forward(self, t, y):
-        # dydt = torch.einsum('bi,ij->bj', y ** 3, self.A)
         dydt = self.net(y ** 3)
         return dydt
 
@@ -107,9 +105,12 @@ class HybridMatrixNeuralODE(torch.nn.Module):
         super().__init__()
         self.opt_method = opt_method
         self.ode_func = ode_func
-        self.Q = torch.nn.Identity()  # Sequential(
-        # torch.nn.Linear(in_features=hidden_dim, out_features=out_dim),
-        # torch.nn.ReLU())
+        # self.Q = Sequential(torch.nn.Linear(hidden_dim, hidden_dim), torch.nn.Tanh(),
+        #                     torch.nn.Linear(hidden_dim, out_dim))
+        # Sequential(
+        # torch.nn.Linear(in_features=hidden_dim, out_features=hidden_dim),
+        # torch.nn.Identity(),
+        # torch.nn.Linear(in_features=hidden_dim, out_features=out_dim))
         unif_low = 0.001
         unif_high = 0.005
         A_init = torch.distributions.Uniform(unif_low, unif_high).sample(
@@ -136,8 +137,7 @@ class HybridMatrixNeuralODE(torch.nn.Module):
             zT = soln.z_trajectory[-1]
         else:
             raise ValueError(f'Unknown opt method = {self.opt_method}')
-        y_hat = self.Q(zT)
-        return zT  # y_hat
+        return zT
 
 
 if __name__ == '__main__':
@@ -151,7 +151,7 @@ if __name__ == '__main__':
     # overall_dataset = ToyRelu(input_dim=input_dim, out_dim=1, N=N)
     overall_dataset = ToyODE()
     hidden_dim = input_dim
-    out_dim = 1
+    out_dim = 2
     ##
     splits = random_split(dataset=overall_dataset, lengths=[0.8, 0.2])
     train_dataset = splits[0]
@@ -178,6 +178,8 @@ if __name__ == '__main__':
             if opt_method == 'lstsq':
                 A_old = model.params['A']
             loss = loss_fn(y, y_hat)
+            # print(f'loss = {loss.item()}')
+            # print(f'A = {ode_func_linear_instance.net.weight}')
             batches_losses.append(loss.item())
             loss.backward()
             if opt_method == 'lstsq':
