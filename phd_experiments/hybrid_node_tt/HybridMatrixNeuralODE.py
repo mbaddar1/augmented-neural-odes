@@ -36,9 +36,9 @@ def basis(x: torch.Tensor, t: float):
 
 
 class OdeFuncLinear(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, latent_dim):
         super().__init__()
-        self.net = torch.nn.Linear(in_features=2, out_features=2, bias=False)
+        self.net = torch.nn.Linear(in_features=latent_dim, out_features=latent_dim, bias=False)
 
     def forward(self, t, y):
         dydt = self.net(y ** 3)
@@ -47,13 +47,13 @@ class OdeFuncLinear(torch.nn.Module):
 
 class OdeFuncNN(torch.nn.Module):
 
-    def __init__(self):
+    def __init__(self, input_dim, hidden_dim, out_dim):
         super(OdeFuncNN, self).__init__()
 
         self.net = torch.nn.Sequential(
-            torch.nn.Linear(2, 50),
+            torch.nn.Linear(in_features=input_dim, out_features=hidden_dim),
             torch.nn.Tanh(),
-            torch.nn.Linear(50, 2),
+            torch.nn.Linear(in_features=hidden_dim, out_features=out_dim),
         )
 
         for m in self.net.modules():
@@ -101,12 +101,12 @@ class EulerFunc(torch.autograd.Function):
 
 
 class HybridMatrixNeuralODE(torch.nn.Module):
-    def __init__(self, hidden_dim, out_dim, opt_method: str, ode_func: Callable):
+    def __init__(self, latent_dim, nn_hidden_dim, out_dim, opt_method: str, ode_func: Callable):
         super().__init__()
         self.opt_method = opt_method
         self.ode_func = ode_func
-        # self.Q = Sequential(torch.nn.Linear(hidden_dim, hidden_dim), torch.nn.Tanh(),
-        #                     torch.nn.Linear(hidden_dim, out_dim))
+        self.Q = Sequential(torch.nn.Linear(latent_dim, nn_hidden_dim), torch.nn.Tanh(),
+                            torch.nn.Linear(nn_hidden_dim, out_dim))
         # Sequential(
         # torch.nn.Linear(in_features=hidden_dim, out_features=hidden_dim),
         # torch.nn.Identity(),
@@ -114,7 +114,7 @@ class HybridMatrixNeuralODE(torch.nn.Module):
         unif_low = 0.001
         unif_high = 0.005
         A_init = torch.distributions.Uniform(unif_low, unif_high).sample(
-            sample_shape=torch.Size([(hidden_dim + 1), hidden_dim]))
+            sample_shape=torch.Size([(latent_dim + 1), latent_dim]))
         if opt_method == 'lstsq':
             self.A = A_init
             self.params = {}
@@ -125,7 +125,7 @@ class HybridMatrixNeuralODE(torch.nn.Module):
 
     def forward(self, x):
         t_span = 0, 1
-        step_size = 0.05
+        step_size = 0.02
         solver = TorchEulerSolver(step_size=step_size)
         if self.opt_method == 'lstsq':
             fn = EulerFunc()
@@ -137,7 +137,8 @@ class HybridMatrixNeuralODE(torch.nn.Module):
             zT = soln.z_trajectory[-1]
         else:
             raise ValueError(f'Unknown opt method = {self.opt_method}')
-        return zT
+        y_hat = self.Q(zT)
+        return y_hat
 
 
 if __name__ == '__main__':
@@ -145,13 +146,16 @@ if __name__ == '__main__':
     batch_size = 128
     lr = 1e-3
     N = 1000
-    input_dim = 2
+
     # Fixme add normalization
     # https://inside-machinelearning.com/en/why-and-how-to-normalize-data-object-detection-on-image-in-pytorch-part-1/
     # overall_dataset = ToyRelu(input_dim=input_dim, out_dim=1, N=N)
     overall_dataset = ToyODE()
-    hidden_dim = input_dim
-    out_dim = 2
+    input_dim = overall_dataset.get_input_dim()
+    output_dim = overall_dataset.get_output_dim()
+    latent_dim = input_dim
+    nn_hidden_dim = 50
+
     ##
     splits = random_split(dataset=overall_dataset, lengths=[0.8, 0.2])
     train_dataset = splits[0]
@@ -159,9 +163,10 @@ if __name__ == '__main__':
     opt_method = 'graddesc'
     train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
-    ode_func_nn_instance = OdeFuncNN()
-    ode_func_linear_instance = OdeFuncLinear()
-    model = HybridMatrixNeuralODE(hidden_dim=hidden_dim, out_dim=out_dim, opt_method=opt_method,
+    ode_func_nn_instance = OdeFuncNN(input_dim=input_dim, hidden_dim=nn_hidden_dim, out_dim=output_dim)
+    ode_func_linear_instance = OdeFuncLinear(latent_dim=latent_dim)
+    model = HybridMatrixNeuralODE(latent_dim=latent_dim, nn_hidden_dim=nn_hidden_dim, out_dim=output_dim,
+                                  opt_method=opt_method,
                                   ode_func=ode_func_linear_instance)
     optimizer = torch.optim.SGD(lr=lr, params=model.parameters())
     loss_fn = MSELoss()

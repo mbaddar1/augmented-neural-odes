@@ -22,6 +22,8 @@ class ToyODE(Dataset):
     def __init__(self):
         super().__init__()
         self.N = 2048
+        self.input_dim = 2
+        self.output_dim = 2
         dtype = torch.float32
         device = torch.device("cpu")
         t_span = 0, 1
@@ -48,3 +50,9 @@ class ToyODE(Dataset):
     def ode_func(t, y: torch.Tensor, true_A: torch.Tensor) -> torch.Tensor:
         dydt = torch.einsum("bi,ij->bj", y ** 3, true_A)
         return dydt
+
+    def get_input_dim(self):
+        return self.input_dim
+
+    def get_output_dim(self):
+        return self.output_dim
