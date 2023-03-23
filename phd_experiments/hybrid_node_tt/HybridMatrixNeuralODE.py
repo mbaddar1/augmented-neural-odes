@@ -38,10 +38,13 @@ def basis(x: torch.Tensor, t: float):
 class OdeFuncLinear(torch.nn.Module):
     def __init__(self, latent_dim):
         super().__init__()
-        self.net = torch.nn.Linear(in_features=latent_dim, out_features=latent_dim, bias=False)
+        # self.net = torch.nn.Linear(in_features=latent_dim, out_features=latent_dim, bias=False)
+        self.A = torch.nn.Parameter(
+            torch.distributions.Uniform(low=0.01, high=0.05).sample(sample_shape=torch.Size([latent_dim, latent_dim])))
 
     def forward(self, t, y):
-        dydt = self.net(y ** 3)
+        # dydt = self.net(y ** 3)
+        dydt = torch.einsum('bi,ij->bj', y ** 3, self.A)
         return dydt
 
 
