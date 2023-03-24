@@ -47,6 +47,9 @@ class OdeFuncLinear(torch.nn.Module):
         dydt = torch.einsum('bi,ij->bj', y ** 3, self.A)
         return dydt
 
+    def set_A(self, A_new):
+        self.A = torch.nn.Parameter(A_new)
+
 
 class OdeFuncNN(torch.nn.Module):
 
@@ -74,7 +77,6 @@ class EulerFunc(torch.autograd.Function):
     def forward(ctx: Any, x: torch.Tensor, params: dict) -> Any:
         step_size = params['step_size']
         t_span = params['t_span']
-        A = params['A']
         ode_func = params['ode_func']
         solver = TorchEulerSolver(step_size)
         # solver = TorchRK45(device=torch.device('cpu'))
@@ -82,12 +84,14 @@ class EulerFunc(torch.autograd.Function):
         ctx.z_traj = soln.z_trajectory
         ctx.t_vals = soln.t_values
         zT = soln.z_trajectory[-1]
-        ctx.params = params
+        ctx.ode_func = ode_func
         return zT
 
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
         lr = 0.01
+        alpha = 0.8
+        A_old = ctx.ode_func.A
         zT = ctx.z_traj[-1]
         dLdzT = grad_outputs[0]
         zT_prime = zT - lr * dLdzT
@@ -97,9 +101,13 @@ class EulerFunc(torch.autograd.Function):
         delta_t = np.nanmean(pd.Series(data=ctx.t_vals).diff(1)[1:].values)  # assume fixed delta-t
         X_ls = torch.concat(tensors=ctx.z_traj[:-1])
         Y_ls = torch.concat(tensors=list(delta_z / delta_t))
-        ls_soln = torch.linalg.lstsq(X_ls, Y_ls)
+        try:
+            ls_soln = torch.linalg.lstsq(X_ls, Y_ls)
+        except Exception as e:
+            x = 10
         A_ls = ls_soln.solution
-        ctx.params['A'] = A_ls
+        A_new = alpha * A_ls + (1 - alpha) * A_old
+        ctx.ode_func.set_A(A_new)
         return None, None
 
 
@@ -110,21 +118,6 @@ class HybridMatrixNeuralODE(torch.nn.Module):
         self.ode_func = ode_func
         self.Q = Sequential(torch.nn.Linear(latent_dim, nn_hidden_dim), torch.nn.Tanh(),
                             torch.nn.Linear(nn_hidden_dim, out_dim))
-        # Sequential(
-        # torch.nn.Linear(in_features=hidden_dim, out_features=hidden_dim),
-        # torch.nn.Identity(),
-        # torch.nn.Linear(in_features=hidden_dim, out_features=out_dim))
-        unif_low = 0.001
-        unif_high = 0.005
-        A_init = torch.distributions.Uniform(unif_low, unif_high).sample(
-            sample_shape=torch.Size([(latent_dim + 1), latent_dim]))
-        if opt_method == 'lstsq':
-            self.A = A_init
-            self.params = {}
-        elif opt_method == 'graddesc':
-            self.A = torch.nn.Parameter(A_init)
-        else:
-            raise ValueError(f'Unknown opt-method = {opt_method}')
 
     def forward(self, x):
         t_span = 0, 1
@@ -132,7 +125,7 @@ class HybridMatrixNeuralODE(torch.nn.Module):
         solver = TorchEulerSolver(step_size=step_size)
         if self.opt_method == 'lstsq':
             fn = EulerFunc()
-            self.params = {'A': self.A, 't_span': t_span, 'ode_func': self.ode_func, 'step_size': step_size,
+            self.params = {'t_span': t_span, 'ode_func': self.ode_func, 'step_size': step_size,
                            'solver': solver}
             zT = fn.apply(x, self.params)
         elif self.opt_method == 'graddesc':
@@ -163,7 +156,7 @@ if __name__ == '__main__':
     splits = random_split(dataset=overall_dataset, lengths=[0.8, 0.2])
     train_dataset = splits[0]
     test_dataset = splits[1]
-    opt_method = 'graddesc'
+    opt_method = 'lstsq'
     train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
     ode_func_nn_instance = OdeFuncNN(input_dim=input_dim, hidden_dim=nn_hidden_dim, out_dim=output_dim)
@@ -180,20 +173,19 @@ if __name__ == '__main__':
         batches_losses = []
         for i, (X, y) in enumerate(train_loader):
             optimizer.zero_grad()
-            if opt_method == 'lstsq':
-                X = torch.nn.Parameter(X)  # FIXME : a hack to make backward in autograd.func be fired !!
+            # if opt_method == 'lstsq':
+            #     X = torch.nn.Parameter(X)  # FIXME : a hack to make backward in autograd.func be fired !!
+            # FIXME this is wrong and makes  a lot of problems, causes X itself to be updated by optimizer.step() call
             y_hat = model(X)
-            if opt_method == 'lstsq':
-                A_old = model.params['A']
             loss = loss_fn(y, y_hat)
             # print(f'loss = {loss.item()}')
             # print(f'A = {ode_func_linear_instance.net.weight}')
             batches_losses.append(loss.item())
             loss.backward()
-            if opt_method == 'lstsq':
-                A_ls = model.params['A']
-                e = torch.norm(A_ls - A_old)
-                model.A = alpha * A_ls + (1 - alpha) * A_old
+            # if opt_method == 'lstsq':
+            #     A_ls = model.params['A']
+            #     e = torch.norm(A_ls - A_old)
+            #     model.A = alpha * A_ls + (1 - alpha) * A_old
 
             optimizer.step()
         epochs_avg_losses.append(np.nanmean(batches_losses))
