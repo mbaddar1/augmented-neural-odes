@@ -31,19 +31,13 @@ Linear ODE from
 """
 
 
-def basis(x: torch.Tensor, t: float):
-    pass
-
-
 class OdeFuncLinear(torch.nn.Module):
     def __init__(self, latent_dim):
         super().__init__()
-        # self.net = torch.nn.Linear(in_features=latent_dim, out_features=latent_dim, bias=False)
         self.A = torch.nn.Parameter(
             torch.distributions.Uniform(low=0.01, high=0.05).sample(sample_shape=torch.Size([latent_dim, latent_dim])))
 
     def forward(self, t, y):
-        # dydt = self.net(y ** 3)
         dydt = torch.einsum('bi,ij->bj', y ** 3, self.A)
         return dydt
 
@@ -142,10 +136,7 @@ if __name__ == '__main__':
     batch_size = 128
     lr = 1e-3
     N = 1000
-
-    # Fixme add normalization
-    # https://inside-machinelearning.com/en/why-and-how-to-normalize-data-object-detection-on-image-in-pytorch-part-1/
-    # overall_dataset = ToyRelu(input_dim=input_dim, out_dim=1, N=N)
+    # TODO experiment with other dataset both lstsq and grad desc
     overall_dataset = ToyODE()
     input_dim = overall_dataset.get_input_dim()
     output_dim = overall_dataset.get_output_dim()
@@ -173,20 +164,10 @@ if __name__ == '__main__':
         batches_losses = []
         for i, (X, y) in enumerate(train_loader):
             optimizer.zero_grad()
-            # if opt_method == 'lstsq':
-            #     X = torch.nn.Parameter(X)  # FIXME : a hack to make backward in autograd.func be fired !!
-            # FIXME this is wrong and makes  a lot of problems, causes X itself to be updated by optimizer.step() call
             y_hat = model(X)
             loss = loss_fn(y, y_hat)
-            # print(f'loss = {loss.item()}')
-            # print(f'A = {ode_func_linear_instance.net.weight}')
             batches_losses.append(loss.item())
             loss.backward()
-            # if opt_method == 'lstsq':
-            #     A_ls = model.params['A']
-            #     e = torch.norm(A_ls - A_old)
-            #     model.A = alpha * A_ls + (1 - alpha) * A_old
-
             optimizer.step()
         epochs_avg_losses.append(np.nanmean(batches_losses))
         if epoch % 10 == 0:
