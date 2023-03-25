@@ -16,6 +16,7 @@ import numpy as np
 import torch.nn
 from torch.nn import Sequential, MSELoss
 
+from phd_experiments.datasets.custom_dataset import CustomDataSet
 from phd_experiments.datasets.torch_boston_housing import TorchBostonHousingPrices
 from phd_experiments.datasets.toy_ode import ToyODE
 from phd_experiments.datasets.toy_relu import ToyRelu
@@ -137,12 +138,12 @@ class HybridMatrixNeuralODE(torch.nn.Module):
         t_span = 0, 1
         step_size = 0.02
         solver = TorchEulerSolver(step_size=step_size)
-        if self.opt_method == 'lstsq':
+        if self.opt_method == OptMethod.MATRIX_LEAST_SQUARES:
             fn = EulerFunc()
             self.params = {'t_span': t_span, 'ode_func': self.ode_func, 'step_size': step_size,
                            'solver': solver}
             zT = fn.apply(x, self.params)
-        elif self.opt_method == 'graddesc':
+        elif self.opt_method == OptMethod.GRADIENT_DESCENT:
             soln = solver.solve_ivp(func=self.ode_func, t_span=t_span, z0=x)
             zT = soln.z_trajectory[-1]
         else:
@@ -151,7 +152,7 @@ class HybridMatrixNeuralODE(torch.nn.Module):
         return y_hat
 
 
-def get_dataset(dataset_instance: Enum, N: int = 2024, input_dim: int = None, output_dim: int = None) -> Dataset:
+def get_dataset(dataset_instance: Enum, N: int = 2024, input_dim: int = None, output_dim: int = None) -> CustomDataSet:
     if dataset_instance == DataSetInstance.TOY_ODE:
         return ToyODE(N)
     elif dataset_instance == DataSetInstance.TOY_RELU:
@@ -183,8 +184,9 @@ if __name__ == '__main__':
     batch_size = 128
     lr = 1e-3
     nn_hidden_dim = 50
-    opt_method = 'lstsq'
-    dataset_instance = DataSetInstance.TOY_ODE
+    # TODO debug boston experiment
+    opt_method = OptMethod.MATRIX_LEAST_SQUARES
+    dataset_instance = DataSetInstance.BOSTON_HOUSING
     train_size_ratio = 0.8
     ode_func_type = OdeFuncType.NN
     N = 2024
