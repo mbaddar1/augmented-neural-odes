@@ -4,11 +4,15 @@ from sklearn import preprocessing
 from torch.utils.data import Dataset
 import numpy as np
 
+from phd_experiments.datasets.custom_dataset import CustomDataSet
+
+
 # https://www.kaggle.com/datasets/fedesoriano/the-boston-houseprice-data
 # https://www.kaggle.com/code/marcinrutecki/regression-models-evaluation-
 # NN for boston housing
 # https://github.com/glingden/Boston-House-Price-Prediction
-class TorchBostonHousingPrices(Dataset):
+class TorchBostonHousingPrices(CustomDataSet):
+
     def __init__(self, csv_file: str):
         df = pd.read_csv(csv_file, sep=',')
         self.N = df.shape[0]
@@ -18,14 +22,18 @@ class TorchBostonHousingPrices(Dataset):
         X = df.loc[:, X_cols].values
         scaler = preprocessing.StandardScaler().fit(X)
         X_scale = scaler.transform(X)
-        self.X = torch.tensor(X_scale,dtype=torch.float32)
+        self.X = torch.tensor(X_scale, dtype=torch.float32)
         y = df.loc[:, y_col].values
         scaler = preprocessing.StandardScaler().fit(y)
         y_scale = scaler.transform(y)
-        self.y = torch.tensor(y_scale,dtype=torch.float32)
-        x=10
-    def get_Xdim(self):
+        self.y = torch.tensor(y_scale, dtype=torch.float32)
+        x = 10
+
+    def get_input_dim(self):
         return self.X_dim
+
+    def get_output_dim(self):
+        return 1
 
     def __len__(self):
         return self.N

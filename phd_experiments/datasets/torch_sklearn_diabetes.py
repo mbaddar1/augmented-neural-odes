@@ -3,8 +3,10 @@ from sklearn.datasets import load_diabetes
 from torch.nn import MSELoss
 from torch.utils.data import Dataset, DataLoader
 
+from phd_experiments.datasets.custom_dataset import CustomDataSet
 
-class TorchDiabetesDataset(Dataset):
+
+class TorchDiabetesDataset(CustomDataSet):
     def __init__(self, dtype=torch.float32):
         X, y = load_diabetes(return_X_y=True)
         self.X = torch.tensor(X, dtype=dtype)

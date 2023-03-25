@@ -6,16 +6,20 @@ https://en.wikipedia.org/wiki/Matrix_differential_equation#Stability_and_steady_
 ODE and PDE Stability Analysis
 https://www.cs.princeton.edu/courses/archive/fall11/cos323/notes/cos323_f11_lecture19_pde2.pdf
 """
+import logging
 import random
+from enum import Enum
 from typing import Any, Callable
 import pandas as pd
-from torch.utils.data import random_split, DataLoader
+from torch.utils.data import random_split, DataLoader, Dataset
 import numpy as np
 import torch.nn
 from torch.nn import Sequential, MSELoss
+
+from phd_experiments.datasets.torch_boston_housing import TorchBostonHousingPrices
 from phd_experiments.datasets.toy_ode import ToyODE
+from phd_experiments.datasets.toy_relu import ToyRelu
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
-from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 
 SEED = 42
 torch.manual_seed(SEED)
@@ -31,11 +35,27 @@ Linear ODE from
 """
 
 
-class OdeFuncLinear(torch.nn.Module):
-    def __init__(self, latent_dim):
+class OptMethod(Enum):
+    MATRIX_LEAST_SQUARES = 0
+    GRADIENT_DESCENT = 1
+
+
+class OdeFuncType(Enum):
+    NN = 0
+    MATRIX = 1
+
+
+class DataSetInstance(Enum):
+    TOY_ODE = 0
+    TOY_RELU = 1
+    BOSTON_HOUSING = 2
+
+
+class OdeFuncMatrix(torch.nn.Module):
+    def __init__(self, input_dim, latent_dim):
         super().__init__()
         self.A = torch.nn.Parameter(
-            torch.distributions.Uniform(low=0.01, high=0.05).sample(sample_shape=torch.Size([latent_dim, latent_dim])))
+            torch.distributions.Uniform(low=0.01, high=0.05).sample(sample_shape=torch.Size([input_dim, latent_dim])))
 
     def forward(self, t, y):
         dydt = torch.einsum('bi,ij->bj', y ** 3, self.A)
@@ -47,13 +67,13 @@ class OdeFuncLinear(torch.nn.Module):
 
 class OdeFuncNN(torch.nn.Module):
 
-    def __init__(self, input_dim, hidden_dim, out_dim):
+    def __init__(self, input_dim, hidden_dim, output_dim):
         super(OdeFuncNN, self).__init__()
 
         self.net = torch.nn.Sequential(
             torch.nn.Linear(in_features=input_dim, out_features=hidden_dim),
             torch.nn.Tanh(),
-            torch.nn.Linear(in_features=hidden_dim, out_features=out_dim),
+            torch.nn.Linear(in_features=hidden_dim, out_features=output_dim),
         )
 
         for m in self.net.modules():
@@ -106,12 +126,12 @@ class EulerFunc(torch.autograd.Function):
 
 
 class HybridMatrixNeuralODE(torch.nn.Module):
-    def __init__(self, latent_dim, nn_hidden_dim, out_dim, opt_method: str, ode_func: Callable):
+    def __init__(self, input_dim, latent_dim, nn_hidden_dim, output_dim, opt_method: str, ode_func: Callable):
         super().__init__()
         self.opt_method = opt_method
         self.ode_func = ode_func
         self.Q = Sequential(torch.nn.Linear(latent_dim, nn_hidden_dim), torch.nn.Tanh(),
-                            torch.nn.Linear(nn_hidden_dim, out_dim))
+                            torch.nn.Linear(nn_hidden_dim, output_dim))
 
     def forward(self, x):
         t_span = 0, 1
@@ -131,35 +151,69 @@ class HybridMatrixNeuralODE(torch.nn.Module):
         return y_hat
 
 
+def get_dataset(dataset_instance: Enum, N: int = 2024, input_dim: int = None, output_dim: int = None) -> Dataset:
+    if dataset_instance == DataSetInstance.TOY_ODE:
+        return ToyODE(N)
+    elif dataset_instance == DataSetInstance.TOY_RELU:
+        return ToyRelu(N=N, input_dim=input_dim, out_dim=output_dim)
+    elif dataset_instance == DataSetInstance.BOSTON_HOUSING:
+        return TorchBostonHousingPrices(csv_file="../datasets/boston.csv")
+    else:
+        raise ValueError(f'dataset-name is not known {dataset_instance}')
+
+
+def get_ode_func(ode_func_type: Enum, input_dim: int, nn_hidden_dim: int, latent_dim: int,
+                 output_dim: int) -> torch.nn.Module:
+    """
+    some params are useless, passing all for consistency
+    """
+    if ode_func_type == OdeFuncType.NN:
+        return OdeFuncNN(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
+    elif ode_func_type == OdeFuncType.MATRIX:
+        return OdeFuncMatrix(input_dim=input_dim, latent_dim=latent_dim)
+    else:
+        raise ValueError(f'Unknown ode func type {ode_func_type}')
+
+
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger()
+    # configs
     epochs = 10000
     batch_size = 128
     lr = 1e-3
-    N = 1000
-    # TODO experiment with other dataset both lstsq and grad desc
-    overall_dataset = ToyODE()
+    nn_hidden_dim = 50
+    opt_method = 'lstsq'
+    dataset_instance = DataSetInstance.TOY_ODE
+    train_size_ratio = 0.8
+    ode_func_type = OdeFuncType.NN
+    N = 2024
+    input_dim = 3
+    output_dim = 1
+    ##
+    overall_dataset = get_dataset(dataset_instance=dataset_instance, N=N, input_dim=input_dim, output_dim=output_dim)
     input_dim = overall_dataset.get_input_dim()
     output_dim = overall_dataset.get_output_dim()
     latent_dim = input_dim
-    nn_hidden_dim = 50
-
-    ##
-    splits = random_split(dataset=overall_dataset, lengths=[0.8, 0.2])
+    # split data to train_test sets
+    splits = random_split(dataset=overall_dataset, lengths=[train_size_ratio, 1 - train_size_ratio])
     train_dataset = splits[0]
     test_dataset = splits[1]
-    opt_method = 'lstsq'
     train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
-    ode_func_nn_instance = OdeFuncNN(input_dim=input_dim, hidden_dim=nn_hidden_dim, out_dim=output_dim)
-    ode_func_linear_instance = OdeFuncLinear(latent_dim=latent_dim)
-    model = HybridMatrixNeuralODE(latent_dim=latent_dim, nn_hidden_dim=nn_hidden_dim, out_dim=output_dim,
+    # define ode
+    ode_func = get_ode_func(ode_func_type=ode_func_type, input_dim=input_dim, output_dim=output_dim,
+                            nn_hidden_dim=nn_hidden_dim,
+                            latent_dim=latent_dim)
+
+    model = HybridMatrixNeuralODE(latent_dim=latent_dim, input_dim=input_dim, nn_hidden_dim=nn_hidden_dim,
+                                  output_dim=output_dim,
                                   opt_method=opt_method,
-                                  ode_func=ode_func_linear_instance)
+                                  ode_func=ode_func)
     optimizer = torch.optim.SGD(lr=lr, params=model.parameters())
     loss_fn = MSELoss()
     epochs_avg_losses = []
-    print(opt_method)
-    alpha = 0.8
+    logger.info(f"Optimization method = {opt_method}")
     for epoch in range(epochs):
         batches_losses = []
         for i, (X, y) in enumerate(train_loader):
@@ -171,4 +225,4 @@ if __name__ == '__main__':
             optimizer.step()
         epochs_avg_losses.append(np.nanmean(batches_losses))
         if epoch % 10 == 0:
-            print(f'epoch {epoch} loss = {epochs_avg_losses[-1]}')
+            logger.info(f'Epoch {epoch} Avg-mse-Loss = {epochs_avg_losses[-1]}')

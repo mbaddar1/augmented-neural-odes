@@ -4,6 +4,7 @@ https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L34
 import torch.nn
 from torch.utils.data import Dataset
 
+from phd_experiments.datasets.custom_dataset import CustomDataSet
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 
@@ -18,10 +19,10 @@ class TrueODEFunc(torch.nn.Module):
         return dydt
 
 
-class ToyODE(Dataset):
-    def __init__(self):
+class ToyODE(CustomDataSet):
+    def __init__(self, N: int):
         super().__init__()
-        self.N = 2048
+        self.N = N
         self.input_dim = 2
         self.output_dim = 2
         dtype = torch.float32
