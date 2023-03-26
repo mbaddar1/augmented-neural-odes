@@ -186,12 +186,13 @@ if __name__ == '__main__':
     nn_hidden_dim = 50
     # TODO debug boston experiment
     opt_method = OptMethod.MATRIX_LEAST_SQUARES
-    dataset_instance = DataSetInstance.BOSTON_HOUSING
+    dataset_instance = DataSetInstance.TOY_ODE
     train_size_ratio = 0.8
     ode_func_type = OdeFuncType.NN
     N = 2024
     input_dim = 3
     output_dim = 1
+    stop_thr = 1e-2
     ##
     overall_dataset = get_dataset(dataset_instance=dataset_instance, N=N, input_dim=input_dim, output_dim=output_dim)
     input_dim = overall_dataset.get_input_dim()
@@ -215,6 +216,9 @@ if __name__ == '__main__':
     optimizer = torch.optim.SGD(lr=lr, params=model.parameters())
     loss_fn = MSELoss()
     epochs_avg_losses = []
+
+    # logging about the problem and opt. method
+    logger.info(f"Dataset = {dataset_instance}")
     logger.info(f"Optimization method = {opt_method}")
     for epoch in range(epochs):
         batches_losses = []
@@ -226,5 +230,10 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
         epochs_avg_losses.append(np.nanmean(batches_losses))
+        if epoch > 10:
+            avg_last_diff = np.nanmean(pd.Series(data=epochs_avg_losses).diff(1).apply(lambda x: abs(x)).values[1:])
+            if avg_last_diff < stop_thr:
+                logger.info(f"Optimization converged at avg_diff_loss = {avg_last_diff} < stop_thr = {stop_thr}")
+                break
         if epoch % 10 == 0:
             logger.info(f'Epoch {epoch} Avg-mse-Loss = {epochs_avg_losses[-1]}')
