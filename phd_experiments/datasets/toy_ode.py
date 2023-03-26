@@ -31,11 +31,12 @@ class ToyODE(CustomDataSet):
         delta_t = 0.1
         solver = TorchEulerSolver(step_size=delta_t)
         # solver = TorchRK45(device=torch.device("cpu"),tensor_dtype=dtype)
-        true_y0 = torch.distributions.MultivariateNormal(loc=torch.tensor([2.0, -1.0]),
+        true_y0 = torch.distributions.MultivariateNormal(loc=torch.tensor([-0.3, -0.2]),
                                                          scale_tril=torch.diag(torch.tensor([0.01, 0.01]))).sample(
             torch.Size([self.N]))
         true_A = torch.tensor([[-0.1, 0.8], [-0.9, -0.1]]).to(device)
         true_ode_func = TrueODEFunc(true_A=true_A)
+        eigval, eigvec = torch.linalg.eigvals(true_A)
         soln = solver.solve_ivp(func=true_ode_func, t_span=t_span, z0=true_y0)
         yT = soln.z_trajectory[-1]
         self.X = true_y0
