@@ -58,8 +58,7 @@ class OdeFuncMatrix(torch.nn.Module):
         # self.A = torch.nn.Parameter(
         #     torch.distributions.Uniform(low=0.01, high=0.05).sample(sample_shape=torch.Size([input_dim, latent_dim])))
         self.A = torch.nn.Parameter(
-            torch.diag(torch.distributions.Uniform(4.0, 6.0).sample(torch.Size([latent_dim]))))
-        x = 10
+            torch.diag(torch.distributions.Uniform(0.0001, 0.0002).sample(torch.Size([latent_dim]))))
 
     def forward(self, t, y):
         dydt = torch.einsum('bi,ij->bj', y ** 3, self.A)
@@ -115,10 +114,9 @@ class EulerFunc(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
-        A_old = ctx.ode_func.A
         zT = ctx.z_traj[-1]
         dLdzT = grad_outputs[0]
-        lr = 1e-3
+        lr = 0.01
         zT_prime = zT - lr * dLdzT
         z_traj_new = ctx.z_traj
         z_traj_new[-1] = zT_prime
@@ -132,9 +130,9 @@ class EulerFunc(torch.autograd.Function):
         except Exception as e:
             raise Exception(f"exception at lstsq = {e}")
         A_ls = ls_soln.solution
+        eval = torch.linalg.eigvals(A_ls)
         # TODO add eigen-val check
-        A_new = ctx.alpha * A_ls + (1 - ctx.alpha) * A_old
-        ctx.ode_func.set_A(A_new)
+        ctx.ode_func.set_A(A_ls)
         return None, None, None
 
 
@@ -199,14 +197,14 @@ if __name__ == '__main__':
     # configs
     N = 4096
     epochs = 200
-    batch_size = 128
+    batch_size = 256
     lr = 1e-3
     nn_hidden_dim = 50
     alpha = 1.0
     data_loader_shuffle = False
     # TODO debug boston experiment
-    opt_method = OptMethod.MATRIX_LEAST_SQUARES
-    dataset_instance = DataSetInstance.TOY_ODE
+    opt_method = OptMethod.GRADIENT_DESCENT
+    dataset_instance = DataSetInstance.BOSTON_HOUSING
     ode_func_type = OdeFuncType.MATRIX
     #
     train_size_ratio = 0.8
