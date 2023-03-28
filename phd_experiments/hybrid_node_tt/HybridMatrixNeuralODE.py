@@ -166,7 +166,7 @@ class HybridMatrixNeuralODE(torch.nn.Module):
         else:
             raise ValueError(f'Unknown opt method = {self.opt_method}')
         y_hat = self.Q(zT)
-        return zT  # y_hat
+        return y_hat
 
 
 def get_dataset(dataset_instance: Enum, N: int = 2024, input_dim: int = None, output_dim: int = None) -> CustomDataSet:
