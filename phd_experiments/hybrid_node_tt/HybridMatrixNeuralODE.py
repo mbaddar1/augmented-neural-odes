@@ -202,10 +202,10 @@ if __name__ == '__main__':
     batch_size = 128
     lr = 1e-3
     nn_hidden_dim = 50
-    alpha = 0.8
+    alpha = 1.0
     data_loader_shuffle = False
     # TODO debug boston experiment
-    opt_method = OptMethod.GRADIENT_DESCENT
+    opt_method = OptMethod.MATRIX_LEAST_SQUARES
     dataset_instance = DataSetInstance.TOY_ODE
     ode_func_type = OdeFuncType.MATRIX
     #
@@ -269,7 +269,7 @@ if __name__ == '__main__':
             # if avg_last_diff < stop_thr:
             #     logger.info(f"Optimization converged at avg_diff_loss = {avg_last_diff} < stop_thr = {stop_thr}")
             #     break
-        if epoch % 10 == 0:
+        if epoch % 1 == 0:
             logger.info(f'Epoch {epoch} Avg-mse-Loss = {epochs_avg_losses[-1]}')
     if isinstance(ode_func, OdeFuncMatrix):
         A_opt = torch.clone(model.ode_func.A.detach())
