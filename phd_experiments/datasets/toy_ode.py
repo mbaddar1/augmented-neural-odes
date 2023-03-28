@@ -31,7 +31,7 @@ class ToyODE(CustomDataSet):
         delta_t = 0.1
         solver = TorchEulerSolver(step_size=delta_t)
         # solver = TorchRK45(device=torch.device("cpu"),tensor_dtype=dtype)
-        true_y0 = torch.distributions.MultivariateNormal(loc=torch.tensor([-0.1, -0.2]),
+        true_y0 = torch.distributions.MultivariateNormal(loc=torch.tensor([-0.001, -0.002]),
                                                          scale_tril=torch.diag(torch.tensor([0.01, 0.01]))).sample(
             torch.Size([self.N]))
         true_A = torch.tensor([[-0.1, 0.8], [-0.9, -0.1]]).to(device)

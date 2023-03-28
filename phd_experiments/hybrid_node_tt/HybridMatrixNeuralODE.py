@@ -120,10 +120,11 @@ class EulerFunc(torch.autograd.Function):
         zT_prime = zT - lr * dLdzT
         z_traj_new = ctx.z_traj
         z_traj_new[-1] = zT_prime
-
+        traj_len = len(z_traj_new)
+        z_traj_new = z_traj_new[traj_len - 3:traj_len - 1]
         delta_z = pd.Series(data=z_traj_new).diff(1)[1:].values
         delta_t = np.nanmean(pd.Series(data=ctx.t_vals).diff(1)[1:].values)  # assume fixed delta-t
-        X_ls = torch.concat(tensors=ctx.z_traj[:-1])
+        X_ls = z_traj_new[0]#torch.concat(tensors=ctx.z_traj[:-1])
         Y_ls = torch.concat(tensors=list(delta_z / delta_t))
         try:
             ls_soln = torch.linalg.lstsq(X_ls, Y_ls)
@@ -198,13 +199,13 @@ if __name__ == '__main__':
     N = 4096
     epochs = 200
     batch_size = 256
-    lr = 1e-3
+    lr = 1e-1
     nn_hidden_dim = 50
     alpha = 1.0
     data_loader_shuffle = False
     # TODO debug boston experiment
-    opt_method = OptMethod.GRADIENT_DESCENT
-    dataset_instance = DataSetInstance.BOSTON_HOUSING
+    opt_method = OptMethod.MATRIX_LEAST_SQUARES
+    dataset_instance = DataSetInstance.TOY_ODE
     ode_func_type = OdeFuncType.MATRIX
     #
     train_size_ratio = 0.8
