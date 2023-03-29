@@ -8,5 +8,7 @@ def tensor_exponent(A: torch.Tensor, method="power", verify=False):
     pass
 
 
+# power series method
+
 def _tensor_exponent_power(A: torch.Tensor, verify: bool):
     pass
