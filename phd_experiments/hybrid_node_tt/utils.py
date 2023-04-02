@@ -1,3 +1,4 @@
+import string
 from enum import Enum
 
 import torch
@@ -8,6 +9,23 @@ from phd_experiments.datasets.toy_ode import ToyODE
 from phd_experiments.datasets.toy_relu import ToyRelu
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
+
+
+def generate_einsum_string(order: int):
+    MAX_ORDER = 39
+    chars = string.ascii_lowercase
+    assert order > 0 and order % 2 == 0, "order must be > 0 and even"
+    """
+    let number of unique characters in einsum str = x 
+    then x/2*3 must be <= 26 (number of chr) , then x <=39
+    """
+    assert order <= MAX_ORDER, f"order must be <= {MAX_ORDER}"
+    k = int(order / 2)
+    str1 = chars[:order]
+    str2 = str1[k:order] + chars[order:(order + k)]
+    str3 = str1[:k] + chars[order:(order + k)]
+    einsum_str = f"{str1},{str2}->{str3}"
+    return einsum_str
 
 
 class ForwardMethod(Enum):
