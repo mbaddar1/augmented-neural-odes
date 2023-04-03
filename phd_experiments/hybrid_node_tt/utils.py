@@ -1,5 +1,6 @@
 import string
 from enum import Enum
+from typing import List
 
 import torch
 
@@ -9,6 +10,32 @@ from phd_experiments.datasets.toy_ode import ToyODE
 from phd_experiments.datasets.toy_relu import ToyRelu
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
+
+
+def prod_list(l: List):
+    prod_ = 1
+    for e in l:
+        prod_ *= e
+    return prod_
+
+
+def assert_dims_symmetry(dims: List[int]):
+    order = len(dims)
+    assert order > 0 and order % 2 == 0, f"order must be even and > 0 , got order = {order}"
+    k = int(order / 2)
+    for i in range(k):
+        assert dims[i] == dims[i + k], f"dims[{i + 1}] = {dims[i]} != dims{[i + k]} = {dims[i + k]}"
+    return True
+
+
+def generate_identity_tensor(dims: List[int]):
+    order = len(dims)
+    k = int(order / 2)
+    matricized_dims = [prod_list(dims[:k]), prod_list(dims[k:])]
+    assert matricized_dims[0] == matricized_dims[1], f"matricized dims are not symmetric : {matricized_dims}"
+    matrix_identity = torch.eye(matricized_dims[0],dtype=torch.float64)
+    identity_tensor = torch.reshape(matrix_identity, dims)
+    return identity_tensor
 
 
 def generate_einsum_string(order: int):
