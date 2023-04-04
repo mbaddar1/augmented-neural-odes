@@ -10,7 +10,7 @@ from scipy.linalg import expm
 import torch
 
 from phd_experiments.hybrid_node_tt.tensor_power import TensorPower
-from phd_experiments.hybrid_node_tt.utils import generate_einsum_string, prod_list, generate_identity_tensor, \
+from phd_experiments.hybrid_node_tt.utils import generate_einsum_string_tensor_power, prod_list, generate_identity_tensor, \
     assert_dims_symmetry
 
 
@@ -66,7 +66,7 @@ class TensorExponent:
                 if torch.norm(term) < TensorExponent.TOL:
                     print(f'breaking taylor series at power = {power_}')
                     break
-            exp_acc+=term
+            exp_acc += term
         return exp_acc
 
 

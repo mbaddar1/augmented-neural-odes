@@ -1,15 +1,27 @@
 import string
 from enum import Enum
 from typing import List
-
 import torch
-
 from phd_experiments.datasets.custom_dataset import CustomDataSet
 from phd_experiments.datasets.torch_boston_housing import TorchBostonHousingPrices
 from phd_experiments.datasets.toy_ode import ToyODE
 from phd_experiments.datasets.toy_relu import ToyRelu
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
+
+
+def generate_tensor_poly_einsum(dims: List[int]):
+    chars = string.ascii_letters
+    chars = chars.replace("b", "")  # reserve b for batch
+    order = len(dims)
+    k = int(order / 2)
+    assert order <= len(chars) - 1, f"order must be <={len(chars) - 1}"
+    assert_dims_symmetry(dims), "symmetry dims failed"
+    einsum_str = chars[:order]
+    for i in range(k):
+        einsum_str += f',b{chars[i + k]}'
+    einsum_str += f"->b{chars[:k]}"
+    return einsum_str
 
 
 def prod_list(l: List):
@@ -33,12 +45,12 @@ def generate_identity_tensor(dims: List[int]):
     k = int(order / 2)
     matricized_dims = [prod_list(dims[:k]), prod_list(dims[k:])]
     assert matricized_dims[0] == matricized_dims[1], f"matricized dims are not symmetric : {matricized_dims}"
-    matrix_identity = torch.eye(matricized_dims[0],dtype=torch.float64)
+    matrix_identity = torch.eye(matricized_dims[0], dtype=torch.float64)
     identity_tensor = torch.reshape(matrix_identity, dims)
     return identity_tensor
 
 
-def generate_einsum_string(order: int):
+def generate_einsum_string_tensor_power(order: int):
     MAX_ORDER = 39
     chars = string.ascii_lowercase
     assert order > 0 and order % 2 == 0, "order must be > 0 and even"
@@ -76,7 +88,7 @@ class DataSetInstance(Enum):
     BOSTON_HOUSING = 2
 
 
-def get_dataset(dataset_instance: Enum, N: int = 2024, input_dim: int = None, output_dim: int = None) -> CustomDataSet:
+def get_dataset(dataset_instance: Enum, N: int = 2024, input_dim: int = 6, output_dim: int = 1) -> CustomDataSet:
     if dataset_instance == DataSetInstance.TOY_ODE:
         return ToyODE(N)
     elif dataset_instance == DataSetInstance.TOY_RELU:
@@ -94,3 +106,9 @@ def get_solver(solver_type: Enum, **kwargs):
         return TorchRK45(device=torch.device("cpu"), tensor_dtype=torch.float32)
     else:
         raise ValueError(f"Unsupported solver type {solver_type}")
+
+
+if __name__ == '__main__':
+    dims = [3]*26
+    einsum_str = generate_tensor_poly_einsum(dims)
+    x = 10

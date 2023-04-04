@@ -7,7 +7,7 @@ from typing import Tuple
 
 import torch
 
-from phd_experiments.hybrid_node_tt.utils import generate_einsum_string, generate_identity_tensor, assert_dims_symmetry, \
+from phd_experiments.hybrid_node_tt.utils import generate_einsum_string_tensor_power, generate_identity_tensor, assert_dims_symmetry, \
     prod_list
 
 
@@ -16,7 +16,8 @@ class TensorPower:
     def calculate(A: torch.Tensor, n: int) -> Tuple[torch.Tensor, int]:
         dims = list(A.size())
         order = len(dims)
-        einsum_str = generate_einsum_string(order)
+        # FIXME : don't generate everytime, generate once
+        einsum_str = generate_einsum_string_tensor_power(order)
         contract_op_count = 0
         bin_n = format(n, 'b')
         bin_n = bin_n[::-1]

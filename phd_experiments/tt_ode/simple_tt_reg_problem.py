@@ -11,20 +11,16 @@ refs
 https://androidkt.com/load-pandas-dataframe-using-dataset-and-dataloader-in-pytorch/
 """
 import logging
-import time
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch.nn
 from torch import Tensor
-from torch.nn import Sequential, Linear, MSELoss
+from torch.nn import MSELoss
 from torch.optim.adam import Adam
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
-import pandas
 from sklearn.datasets import load_diabetes
-from dlra.tt import TensorTrain
-from phd_experiments.tt_ode.basis import Basis
 from phd_experiments.tt_ode.ttode_model import TensorTrainODEBLOCK
 
 
