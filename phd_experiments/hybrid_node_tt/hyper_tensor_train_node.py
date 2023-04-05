@@ -13,11 +13,12 @@ from torch.utils.data import random_split, DataLoader
 from phd_experiments.hybrid_node_tt.basis import Basis
 from phd_experiments.hybrid_node_tt.utils import DataSetInstance, get_dataset, generate_tensor_poly_einsum
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
+
 #
-# SEED = 42
-# torch.manual_seed(SEED)
-# np.random.seed(SEED)
-# random.seed(SEED)
+SEED = 42
+torch.manual_seed(SEED)
+np.random.seed(SEED)
+random.seed(SEED)
 
 """
 stability of linear ode
@@ -31,6 +32,20 @@ Objective of this script is to verify on research hypothesis ( Tensor-Neural ODE
 memory or speed 
 dzdt = A.phi([z,t]) that works with complex problems
 """
+
+
+class NNodeFunc(torch.nn.Module):
+    # https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L111
+    def __init__(self, latent_dim, nn_hidden_dim):
+        super().__init__()
+        self.net = torch.nn.Sequential(
+            torch.nn.Linear(latent_dim, nn_hidden_dim),
+            torch.nn.Tanh(),
+            torch.nn.Linear(nn_hidden_dim, latent_dim),
+        )
+
+    def forward(self, t, z, *args):
+        return self.net(z)
 
 
 class TensorTrainOdeFunc(torch.nn.Module):
@@ -52,7 +67,12 @@ class TensorTrainOdeFunc(torch.nn.Module):
         """
         dzdt = A.Phi([z,t])
         """
-        dzdt = self.A_TT(t, z, self.deg)
+        # TODO
+        #    https://egrove.olemiss.edu/cgi/viewcontent.cgi?article=1450&context=etd
+        #    might add activation function after linear layer to avoid explostion
+        #
+        u1 = torch.nn.ReLU()(self.A_TT(t, z, self.deg))
+        dzdt = torch.nn.ReLU()(self.A_TT(t, u1, self.deg))
         return dzdt
 
 
@@ -62,8 +82,9 @@ class Qnn(torch.nn.Module):
         linear_part = torch.nn.Linear(latent_dim, output_dim)
         linear_part.weight.requires_grad = False
         linear_part.bias.requires_grad = False
-        # ('non-linearity', torch.nn.Identity()),
-        self.model = torch.nn.Sequential(OrderedDict([('output-matrix', linear_part)]))
+        # , ('non-linearity', torch.nn.ReLU())
+        self.model = torch.nn.Sequential(
+            OrderedDict([('output-matrix', linear_part)]))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         y_hat = self.model(x)
@@ -93,16 +114,20 @@ class HybridTensorTrainNeuralODE(torch.nn.Module):
         self.P = torch.nn.Parameter(torch.distributions.Uniform(unif_low, unif_high).sample(torch.Size([Dx, Dz])),
                                     requires_grad=False)
         self.Q = Qnn(latent_dim=latent_dim, output_dim=output_dim)
-        self.ode_func_tensor = TensorTrainOdeFunc(Dz=self.Dz, basis_type=self.basis_type, basis_param=self.basis_params,
-                                                  unif_low=unif_low,
-                                                  unif_high=unif_high, tt_rank=self.tt_rank)
+        # self.ode_func = TensorTrainOdeFunc(Dz=self.Dz, basis_type=self.basis_type, basis_param=self.basis_params,
+        #                                    unif_low=unif_low,
+        #                                    unif_high=unif_high, tt_rank=self.tt_rank)
+        self.ode_func = NNodeFunc(latent_dim=Dz, nn_hidden_dim=50)
 
     def forward(self, x: torch.Tensor):
         z0 = x  # torch.einsum("bi,ij->bj", x, self.P)
-        soln = self.solver.solve_ivp(func=self.ode_func_tensor, t_span=self.t_span, z0=z0, args=None)
+        soln = self.solver.solve_ivp(func=self.ode_func, t_span=self.t_span, z0=z0, args=None)
+        # FIXME debug start
+        # A_norm = self.ode_func.A_TT.norm()
+        # FIXME END
         zT = soln.z_trajectory[-1]
-        # y_hat = self.Q(zT)
-        return zT
+        y_hat = self.Q(zT)
+        return y_hat
 
     def check_params(self):
         assert self.basis_type in HybridTensorTrainNeuralODE.BASIS_TYPES, \
@@ -119,18 +144,18 @@ if __name__ == '__main__':
     # configs
     N = 4096
     epochs = 200
-    batch_size = 256
-    lr = 0.1
+    batch_size = 64
+    lr = 0.001
     data_loader_shuffle = False
-    dataset_instance = DataSetInstance.TOY_RELU
+    dataset_instance = DataSetInstance.BOSTON_HOUSING
     t_span = 0, 0.6
     train_size_ratio = 0.8
-    poly_deg = 3
+    poly_deg = 4
     basis_type = "poly"
     device = torch.device("cpu")
     tensor_dtype = torch.float32
-    unif_low, unif_high = -0.3, -0.2
-    fixed_tt_rank = 5
+    unif_low, unif_high = 0.01, 0.05
+    fixed_tt_rank = 3
     # get dataset and loader
     overall_dataset = get_dataset(dataset_instance=dataset_instance, N=N)
     input_dim = overall_dataset.get_input_dim()
@@ -144,15 +169,15 @@ if __name__ == '__main__':
     # create model
     latent_dim = input_dim
     assert latent_dim == input_dim
-    #solver = TorchRK45(device=device, tensor_dtype=tensor_dtype)
-    solver = TorchEulerSolver(step_size=0.2)
+    # solver = TorchRK45(device=device, tensor_dtype=tensor_dtype)
+    solver = TorchEulerSolver(step_size=0.1)
     model = HybridTensorTrainNeuralODE(Dx=input_dim, Dz=latent_dim, Dy=output_dim, basis_type=basis_type,
                                        basis_params={'deg': poly_deg}, solver=solver, t_span=t_span,
                                        tensor_dtype=tensor_dtype, unif_low=unif_low, unif_high=unif_high,
                                        tt_rank=fixed_tt_rank)
     loss_fn = MSELoss()
     optimizer = torch.optim.SGD(params=model.parameters(), lr=lr)
-    #TODO
+    # TODO
     """
     1. Vanishing Gradient issue
     2. play with lr
@@ -167,14 +192,15 @@ if __name__ == '__main__':
             loss = loss_fn(y_hat, y)
             batches_loss.append(loss.item())
             # TODO add check point to get A-cores before optimization
-            A_norm_before = model.ode_func_tensor.A_TT.norm()
+            # A_norm_before = model.ode_func.A_TT.norm()
             loss.backward()
             optimizer.step()
             # TODO add check point to get A-cores after optimization
-            A_norm_after = model.ode_func_tensor.A_TT.norm()
-            delta_A_norm = torch.norm(A_norm_after - A_norm_before)
-            if delta_A_norm.item() > 0:
-                u = 0
-            x = 10
-        if epoch % 1 == 0:
-            print(f'At epoch = {epoch} -> avg-batches-loss = {np.nanmean(batches_loss)}')
+            # A_norm_after = model.ode_func.A_TT.norm()
+            # delta_A_norm = torch.norm(A_norm_after - A_norm_before)
+            print(f'Epoch # {epoch} - batch # {i} -> loss = {loss.item()}')
+            # if delta_A_norm.item() > 0:
+            #     u = 0
+            # x = 10
+        # if epoch % 1 == 0:
+        #     print(f'At epoch = {epoch} -> avg-batches-loss = {np.nanmean(batches_loss)}')
