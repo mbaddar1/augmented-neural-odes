@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 from phd_experiments.hybrid_node_tt.tt2 import TensorTrainFixedRank
+from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchOdeSolver
 import logging
 import random
@@ -12,11 +13,11 @@ from torch.utils.data import random_split, DataLoader
 from phd_experiments.hybrid_node_tt.basis import Basis
 from phd_experiments.hybrid_node_tt.utils import DataSetInstance, get_dataset, generate_tensor_poly_einsum
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
-
-SEED = 42
-torch.manual_seed(SEED)
-np.random.seed(SEED)
-random.seed(SEED)
+#
+# SEED = 42
+# torch.manual_seed(SEED)
+# np.random.seed(SEED)
+# random.seed(SEED)
 
 """
 stability of linear ode
@@ -119,16 +120,16 @@ if __name__ == '__main__':
     N = 4096
     epochs = 200
     batch_size = 256
-    lr = 1e-3
+    lr = 0.1
     data_loader_shuffle = False
     dataset_instance = DataSetInstance.TOY_ODE
-    t_span = 0, 1
+    t_span = 0, 0.5
     train_size_ratio = 0.8
     poly_deg = 3
     basis_type = "poly"
     device = torch.device("cpu")
     tensor_dtype = torch.float32
-    unif_low, unif_high = 0.01, 0.05
+    unif_low, unif_high = 0.1, 0.3
     fixed_tt_rank = 5
     # get dataset and loader
     overall_dataset = get_dataset(dataset_instance=dataset_instance, N=N)
@@ -144,12 +145,20 @@ if __name__ == '__main__':
     latent_dim = input_dim
     assert latent_dim == input_dim
     solver = TorchRK45(device=device, tensor_dtype=tensor_dtype)
+    #solver = TorchEulerSolver(step_size=0.2)
     model = HybridTensorTrainNeuralODE(Dx=input_dim, Dz=latent_dim, Dy=output_dim, basis_type=basis_type,
                                        basis_params={'deg': poly_deg}, solver=solver, t_span=t_span,
                                        tensor_dtype=tensor_dtype, unif_low=unif_low, unif_high=unif_high,
                                        tt_rank=fixed_tt_rank)
     loss_fn = MSELoss()
     optimizer = torch.optim.SGD(params=model.parameters(), lr=lr)
+    #TODO
+    """
+    1. Vanishing Gradient issue
+    2. play with lr
+    3. initial state
+    4. inspect 
+    """
     for epoch in range(1, epochs + 1):
         batches_loss = []
         for i, (X, y) in enumerate(train_loader):
