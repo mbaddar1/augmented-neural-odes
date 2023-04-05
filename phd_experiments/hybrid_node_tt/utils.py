@@ -10,17 +10,13 @@ from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 
 
-def generate_tensor_poly_einsum(dims: List[int]):
+def generate_tensor_poly_einsum(order: int):
     chars = string.ascii_letters
     chars = chars.replace("b", "")  # reserve b for batch
-    order = len(dims)
-    k = int(order / 2)
-    assert order <= len(chars) - 1, f"order must be <={len(chars) - 1}"
-    assert_dims_symmetry(dims), "symmetry dims failed"
     einsum_str = chars[:order]
-    for i in range(k):
-        einsum_str += f',b{chars[i + k]}'
-    einsum_str += f"->b{chars[:k]}"
+    for i in range(1, order):
+        einsum_str += f',b{chars[i]}'
+    einsum_str += f"->b{chars[0]}"
     return einsum_str
 
 
@@ -88,7 +84,7 @@ class DataSetInstance(Enum):
     BOSTON_HOUSING = 2
 
 
-def get_dataset(dataset_instance: Enum, N: int = 2024, input_dim: int = 6, output_dim: int = 1) -> CustomDataSet:
+def get_dataset(dataset_instance: Enum, N: int = 2024, input_dim: int = 2, output_dim: int = 1) -> CustomDataSet:
     if dataset_instance == DataSetInstance.TOY_ODE:
         return ToyODE(N)
     elif dataset_instance == DataSetInstance.TOY_RELU:
@@ -109,6 +105,6 @@ def get_solver(solver_type: Enum, **kwargs):
 
 
 if __name__ == '__main__':
-    dims = [3]*26
+    dims = [3] * 26
     einsum_str = generate_tensor_poly_einsum(dims)
     x = 10

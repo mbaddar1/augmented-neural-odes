@@ -15,7 +15,7 @@ class TrueODEFunc(torch.nn.Module):
         self.true_A = true_A
 
     def forward(self, t, y):
-        dydt = torch.einsum('bi,ij->bj', y ** 3, self.true_A)
+        dydt = torch.einsum('bi,ij->bj', y, self.true_A)
         return dydt
 
 

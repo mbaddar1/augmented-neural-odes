@@ -16,10 +16,10 @@ import numpy as np
 import torch
 from torch import Tensor
 from phd_experiments.torch_ode_solvers.common import torch_select_initial_step, torch_rms_norm
-from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchODESolver, TorchODESolverSolution
+from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchOdeSolver, TorchODESolverSolution
 
 
-class TorchRK45(TorchODESolver):
+class TorchRK45(TorchOdeSolver):
     # from https://github.com/scipy/scipy/blob/v1.9.2/scipy/integrate/_ivp/rk.py#L366
     ORDER = 5
     ERROR_ESTIMATOR_ORDER = 4

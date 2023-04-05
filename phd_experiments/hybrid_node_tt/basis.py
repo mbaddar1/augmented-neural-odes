@@ -23,9 +23,9 @@ class Basis:
         pass
 
     @staticmethod
-    def poly(x: torch.Tensor, t: [float | None], poly_deg: int) -> List[Tensor]:
+    def poly(z: torch.Tensor, t: [float | None], poly_deg: int) -> List[Tensor]:
         """
-        x : tensor of shape B x Dx
+        z : tensor of shape B x Dx
         P : degrees of basis polynomial
         t : time value # FIXME ignored for now
         return  : Tensor of List of tensor of shape Bx(poly_dim + 1)
@@ -36,13 +36,13 @@ class Basis:
         """
         x : torch.Tensor of size Batch x dim
         """
-        assert isinstance(x, torch.Tensor)
-        assert len(x.size()) == 2, "Supporting poly-basis generation for only torch-vectors"
-        B = x.size()[0]
-        x = torch.cat([x, torch.tensor(t, dtype=x.dtype).repeat(B).view(-1, 1)], dim=1) if t is not None else x
-        pow_tensors = [torch.ones(x.size()), x]  # to the power 0 and 1
+        assert isinstance(z, torch.Tensor)
+        assert len(z.size()) == 2, "Supporting poly-basis generation for only torch-vectors"
+        B = z.size()[0]
+        z = torch.cat([z, torch.tensor(t, dtype=z.dtype).repeat(B).view(-1, 1)], dim=1) if t is not None else z
+        pow_tensors = [torch.ones(z.size()), z]  # to the power 0 and 1
         for deg in range(2, poly_deg + 1):
-            pow_tensors.append(torch.pow(x, deg))
+            pow_tensors.append(torch.pow(z, deg))
         Phi = list(torch.permute(input=torch.stack(tensors=pow_tensors, dim=0), dims=[2, 1, 0]))
         return Phi
 

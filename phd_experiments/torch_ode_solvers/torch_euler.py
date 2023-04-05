@@ -5,10 +5,10 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchODESolver, TorchODESolverSolution
+from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchOdeSolver, TorchODESolverSolution
 
 
-class TorchEulerSolver(TorchODESolver):
+class TorchEulerSolver(TorchOdeSolver):
 
     def __init__(self, step_size: [float, str]):
         super().__init__(step_size)

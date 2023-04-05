@@ -13,7 +13,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.dataset import T_co
 from scipy.integrate import solve_ivp
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
-from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchODESolver
+from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchOdeSolver
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 
 
@@ -30,7 +30,7 @@ def ode_func(t: float, z: torch.Tensor, A: torch.Tensor) -> torch.Tensor:
     return dzdt
 
 
-def forward_function(X: torch.Tensor, P: torch.Tensor, A: torch.Tensor, Q: torch.nn.Module, solver: TorchODESolver,
+def forward_function(X: torch.Tensor, P: torch.Tensor, A: torch.Tensor, Q: torch.nn.Module, solver: TorchOdeSolver,
                      ode_func: Callable, t_span: Tuple) -> torch.Tensor:
     # assert P is an Identity Matrix
     assert (len(P.size()) == 2) and (P.size()[0] == P.size()[1]) and (torch.equal(P, torch.eye(P.size()[0])))
@@ -47,7 +47,7 @@ def ode_func_numpy(t, x, A):
     return np.matmul(A, x)
 
 
-def forward_function_ode_only(X: torch.Tensor, P: torch.Tensor, A: torch.Tensor, solver: TorchODESolver,
+def forward_function_ode_only(X: torch.Tensor, P: torch.Tensor, A: torch.Tensor, solver: TorchOdeSolver,
                               ode_func: Callable, t_span: Tuple) -> Tuple[List[torch.Tensor], List[float]]:
     Z0 = X  # torch.einsum('ji,bi->bj', P, X)
     batch_size = X.size()[0]
@@ -122,7 +122,7 @@ class QnnMatrixODE(torch.nn.Module):
 
 class MatrixODEdataSet(Dataset):
 
-    def __init__(self, N, Dx, P: torch.Tensor, A: torch.Tensor, Q: torch.nn.Module, solver: TorchODESolver,
+    def __init__(self, N, Dx, P: torch.Tensor, A: torch.Tensor, Q: torch.nn.Module, solver: TorchOdeSolver,
                  ode_func: Callable, t_span: Tuple, x_ulow: float,
                  x_uhigh: float, tensor_dtype: torch.dtype = torch.float64):
         self.N = N
@@ -167,8 +167,8 @@ class MatrixOdeTrainableModelLeastSquares(torch.nn.Module):
 class LsCustomFunc(torch.autograd.Function):
 
     @staticmethod
-    def forward(ctx: Any, X: torch.Tensor, P: torch.Tensor, A: torch.Tensor, solver: TorchODESolver, ode_func: Callable,
-                t_span: Tuple,model : Any) -> Any:
+    def forward(ctx: Any, X: torch.Tensor, P: torch.Tensor, A: torch.Tensor, solver: TorchOdeSolver, ode_func: Callable,
+                t_span: Tuple, model : Any) -> Any:
         z_traj, t_values = forward_function_ode_only(X=X, P=P, A=A, solver=solver, ode_func=ode_func, t_span=t_span)
 
         ctx.x = X

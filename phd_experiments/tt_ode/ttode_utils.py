@@ -3,7 +3,7 @@ from typing import List
 
 import torch
 
-from phd_experiments.tn.tt import TensorTrainFixedRank
+from phd_experiments.hybrid_node_tt.tt2 import TensorTrainFixedRank
 
 
 def gen_einsum_eqn(n_basis):

@@ -5,7 +5,7 @@ from torch.nn import Parameter, ParameterList
 from torchdiffeq import odeint
 from anode.models import ODEFunc
 from dlra.tt import TensorTrain
-from phd_experiments.tn.tt import TensorTrainFixedRank
+from phd_experiments.hybrid_node_tt.tt2 import TensorTrainFixedRank
 from torch import Tensor
 from phd_experiments.hybrid_node_tt.basis import Basis
 from phd_experiments.tt_ode.ttode_als import TTOdeAls, Forward2
@@ -346,7 +346,7 @@ class TensorTrainODEBLOCK(torch.nn.Module):
             dzdt = torch.tensordot(a=z, b=W, dims=[A_contract_dims, W_contract_dims])
 
         elif basis_fn == 'poly':
-            Phi = Basis.poly(x=z, t=t, poly_deg=basis_params['deg'])
+            Phi = Basis.poly(z=z, t=t, poly_deg=basis_params['deg'])
             if isinstance(W, TensorTrainFixedRank):
                 dzdt = W.contract_basis(basis_tensors=Phi)
             elif isinstance(W, list) and all([isinstance(w, TensorTrain) for w in W]):  # FIXME might be slow

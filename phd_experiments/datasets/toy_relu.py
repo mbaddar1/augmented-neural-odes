@@ -12,7 +12,6 @@ class ToyRelu(CustomDataSet):
         self.output_dim = out_dim
         self.X = torch.randn((self.N, input_dim))
         self.y = (torch.rand(size=(self.N, out_dim)) < 0.5).float()
-        x = 10
 
     def __len__(self):
         return self.N

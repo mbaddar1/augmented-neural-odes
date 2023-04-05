@@ -7,7 +7,7 @@ import torch
 from dill.source import getsource
 from torch import nn
 
-from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchODESolver
+from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchOdeSolver
 
 
 def get_device_info():
@@ -27,7 +27,7 @@ def format_timedelta(time_delta: datetime.timedelta):
     return f"{hours} hours , {minutes} minutes, {seconds} seconds"
 
 
-def log_train_experiment(experiment_log_filepath: str, solver: TorchODESolver, f_true_dynamic: Callable, run_type: str,
+def log_train_experiment(experiment_log_filepath: str, solver: TorchOdeSolver, f_true_dynamic: Callable, run_type: str,
                          total_solve_calls: int, training_time_fmt: str, ode_learnable_func: Type[nn.Module], torch_config: dict,
                          data_config: dict, train_params: dict, train_loss: float, nfe: int):
     payload = dict()

@@ -39,7 +39,7 @@ import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 
 from phd_experiments.torch_ode_solvers.DataGenerator import ToyODEDataGenerator
-from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchODESolver
+from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchOdeSolver
 from phd_experiments.torch_ode_solvers.torch_ode_utils import get_device_info, format_timedelta, log_train_experiment
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 from phd_experiments.torch_ode_solvers.torch_train_learnable_dynamics import ODEFuncNN3Layer
@@ -60,7 +60,7 @@ F_TRUE_DYNAMICS_MAP = {'f1': (f_ode_linear_uncoupled, 1),
 
 
 class TorchODETrainer:
-    def __init__(self, num_epochs: int, torch_solver: TorchODESolver,
+    def __init__(self, num_epochs: int, torch_solver: TorchOdeSolver,
                  ode_func_model: nn.Module, train_params: dict, train_loader: DataLoader,
                  train_loss_fn: Callable, t_span: Tuple):
         # Training stuff
@@ -116,7 +116,7 @@ class TorchODETrainer:
         torch.save(obj=self.ode_func_model.state_dict(), f=model_path)
 
 
-def evaluate(solver: TorchODESolver, ode_func_model: nn.Module, t_span: Tuple, test_set: DataLoader,
+def evaluate(solver: TorchOdeSolver, ode_func_model: nn.Module, t_span: Tuple, test_set: DataLoader,
              test_loss_fn: Callable):
     batches_losses = []
     for i, (X, Y) in enumerate(test_set):

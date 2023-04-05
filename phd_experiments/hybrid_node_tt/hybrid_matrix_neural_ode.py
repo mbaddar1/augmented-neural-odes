@@ -19,7 +19,7 @@ from torch.nn import Sequential, MSELoss
 from phd_experiments.hybrid_node_tt.utils import OdeFuncType, DataSetInstance, get_dataset, get_solver, SolverType, \
     ForwardMethod
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
-from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchODESolver
+from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchOdeSolver
 
 SEED = 42
 torch.manual_seed(SEED)
@@ -138,7 +138,7 @@ class EulerFunc(torch.autograd.Function):
 class HybridMatrixNeuralODE(torch.nn.Module):
     def __init__(self, latent_dim, output_dim, opt_method: Enum, ode_func_nn: Callable,
                  lr: float,
-                 alpha: float, solver: TorchODESolver, forward_method: Enum, t_span: Tuple):
+                 alpha: float, solver: TorchOdeSolver, forward_method: Enum, t_span: Tuple):
         super().__init__()
         self.opt_method = opt_method
         self.ode_func_nn = ode_func_nn
@@ -199,9 +199,9 @@ if __name__ == '__main__':
     data_loader_shuffle = False
     # TODO debug boston experiment
     opt_method = OptMethod.GRADIENT_DESCENT
-    dataset_instance = DataSetInstance.TOY_ODE
+    dataset_instance = DataSetInstance.BOSTON_HOUSING
     solver_type = SolverType.TORCH_RK45
-    forward_method = ForwardMethod.EXP
+    forward_method = ForwardMethod.INTEGRATION
     t_span = 0, 0.8
     train_size_ratio = 0.8
     input_dim = 3

@@ -17,7 +17,7 @@ class TorchODESolverSolution:
         self.t_values = t_values
 
 
-class TorchODESolver(ABC):
+class TorchOdeSolver(ABC):
     def __init__(self, step_size: [float, str] = 0.01):
         self.step_size = step_size
         self.logger = logging.getLogger()
