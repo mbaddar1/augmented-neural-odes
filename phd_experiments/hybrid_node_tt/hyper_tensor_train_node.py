@@ -122,14 +122,14 @@ if __name__ == '__main__':
     batch_size = 256
     lr = 0.1
     data_loader_shuffle = False
-    dataset_instance = DataSetInstance.TOY_ODE
-    t_span = 0, 0.5
+    dataset_instance = DataSetInstance.TOY_RELU
+    t_span = 0, 0.6
     train_size_ratio = 0.8
     poly_deg = 3
     basis_type = "poly"
     device = torch.device("cpu")
     tensor_dtype = torch.float32
-    unif_low, unif_high = 0.1, 0.3
+    unif_low, unif_high = -0.3, -0.2
     fixed_tt_rank = 5
     # get dataset and loader
     overall_dataset = get_dataset(dataset_instance=dataset_instance, N=N)
@@ -144,8 +144,8 @@ if __name__ == '__main__':
     # create model
     latent_dim = input_dim
     assert latent_dim == input_dim
-    solver = TorchRK45(device=device, tensor_dtype=tensor_dtype)
-    #solver = TorchEulerSolver(step_size=0.2)
+    #solver = TorchRK45(device=device, tensor_dtype=tensor_dtype)
+    solver = TorchEulerSolver(step_size=0.2)
     model = HybridTensorTrainNeuralODE(Dx=input_dim, Dz=latent_dim, Dy=output_dim, basis_type=basis_type,
                                        basis_params={'deg': poly_deg}, solver=solver, t_span=t_span,
                                        tensor_dtype=tensor_dtype, unif_low=unif_low, unif_high=unif_high,
@@ -176,5 +176,5 @@ if __name__ == '__main__':
             if delta_A_norm.item() > 0:
                 u = 0
             x = 10
-        if epoch % 10 == 0:
+        if epoch % 1 == 0:
             print(f'At epoch = {epoch} -> avg-batches-loss = {np.nanmean(batches_loss)}')
