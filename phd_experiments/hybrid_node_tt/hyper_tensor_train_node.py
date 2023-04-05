@@ -8,9 +8,8 @@ import random
 from typing import Tuple, List
 import numpy as np
 import torch.nn
-from torch.nn import MSELoss
+from torch.nn import MSELoss, Sequential
 from torch.utils.data import random_split, DataLoader
-from phd_experiments.hybrid_node_tt.basis import Basis
 from phd_experiments.hybrid_node_tt.utils import DataSetInstance, get_dataset, generate_tensor_poly_einsum
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 
@@ -43,12 +42,17 @@ class NNodeFunc(torch.nn.Module):
             torch.nn.Tanh(),
             torch.nn.Linear(nn_hidden_dim, latent_dim),
         )
+        for m in self.net.modules():
+            if isinstance(m, torch.nn.Linear):
+                torch.nn.init.normal_(m.weight, mean=0, std=0.1)
+                torch.nn.init.constant_(m.bias, val=0)
 
     def forward(self, t, z, *args):
         return self.net(z)
 
 
 class TensorTrainOdeFunc(torch.nn.Module):
+
     def __init__(self, Dz: int, basis_type: str, basis_param: dict, unif_low: float, unif_high: float,
                  tt_rank: str | int | List[int]):
         super().__init__()
@@ -57,6 +61,7 @@ class TensorTrainOdeFunc(torch.nn.Module):
         assert isinstance(self.deg, int), f"deg must be int, got {type(self.deg)}"
         assert isinstance(tt_rank, int), f"Supporting fixed ranks only"
         assert basis_type == "poly", f"Supporting only poly basis"
+
         dims_A = [Dz] + [self.deg + 1] * (Dz + 1)  # deg+1 as polynomial start from z^0 , z^1 , .. z^deg
         # Dz+1 to append time
         self.order = len(dims_A)
@@ -67,37 +72,21 @@ class TensorTrainOdeFunc(torch.nn.Module):
         """
         dzdt = A.Phi([z,t])
         """
-        # TODO
-        #    https://egrove.olemiss.edu/cgi/viewcontent.cgi?article=1450&context=etd
-        #    might add activation function after linear layer to avoid explostion
-        #
-        u1 = torch.nn.ReLU()(self.A_TT(t, z, self.deg))
-        dzdt = torch.nn.ReLU()(self.A_TT(t, u1, self.deg))
+        dzdt = self.A_TT(t, z, self.deg)
         return dzdt
-
-
-class Qnn(torch.nn.Module):
-    def __init__(self, latent_dim: int, output_dim: int):
-        super().__init__()
-        linear_part = torch.nn.Linear(latent_dim, output_dim)
-        linear_part.weight.requires_grad = False
-        linear_part.bias.requires_grad = False
-        # , ('non-linearity', torch.nn.ReLU())
-        self.model = torch.nn.Sequential(
-            OrderedDict([('output-matrix', linear_part)]))
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y_hat = self.model(x)
-        return y_hat
 
 
 class HybridTensorTrainNeuralODE(torch.nn.Module):
     BASIS_TYPES = ["poly"]
+    NON_LINEARITIES = (torch.nn.Identity, torch.nn.Sigmoid, torch.nn.Tanh, torch.nn.ReLU)
 
     def __init__(self, Dx: int, Dz: int, Dy: int, basis_type: str, basis_params: dict,
                  solver: TorchOdeSolver, t_span: Tuple, tensor_dtype: torch.dtype, unif_low: float,
-                 unif_high: float, tt_rank: str | int | List[int]):
+                 unif_high: float, tt_rank: str | int | List[int], ode_func: torch.nn.Module,
+                 output_non_linearity: torch.nn.Module):
         super().__init__()
+        self.output_non_linearity = output_non_linearity
+        self.ode_func = ode_func
         self.tt_rank = tt_rank
         self.unif_high = unif_high
         self.unif_low = unif_low
@@ -111,20 +100,11 @@ class HybridTensorTrainNeuralODE(torch.nn.Module):
         self.Dz = Dz
         ##
         self.check_params()
-        self.P = torch.nn.Parameter(torch.distributions.Uniform(unif_low, unif_high).sample(torch.Size([Dx, Dz])),
-                                    requires_grad=False)
-        self.Q = Qnn(latent_dim=latent_dim, output_dim=output_dim)
-        # self.ode_func = TensorTrainOdeFunc(Dz=self.Dz, basis_type=self.basis_type, basis_param=self.basis_params,
-        #                                    unif_low=unif_low,
-        #                                    unif_high=unif_high, tt_rank=self.tt_rank)
-        self.ode_func = NNodeFunc(latent_dim=Dz, nn_hidden_dim=50)
+        self.Q = torch.nn.Sequential(torch.nn.Tanh(), torch.nn.Linear(latent_dim, output_dim))
 
     def forward(self, x: torch.Tensor):
-        z0 = x  # torch.einsum("bi,ij->bj", x, self.P)
+        z0 = x
         soln = self.solver.solve_ivp(func=self.ode_func, t_span=self.t_span, z0=z0, args=None)
-        # FIXME debug start
-        # A_norm = self.ode_func.A_TT.norm()
-        # FIXME END
         zT = soln.z_trajectory[-1]
         y_hat = self.Q(zT)
         return y_hat
@@ -136,6 +116,9 @@ class HybridTensorTrainNeuralODE(torch.nn.Module):
             assert "deg" in self.basis_params.keys() and isinstance(self.basis_params["deg"], int), \
                 f"As basis_type is poly, basis-params must contain deg param as an int"
         assert isinstance(self.tt_rank, int), f"supporting fixed tt rank ( int) , got {type(self.tt_rank)}"
+        assert isinstance(self.output_non_linearity,
+                          HybridTensorTrainNeuralODE.NON_LINEARITIES), f"output layer non-linearity must be one of " \
+                                                                       f"{HybridTensorTrainNeuralODE.NON_LINEARITIES}"
 
 
 if __name__ == '__main__':
@@ -144,18 +127,23 @@ if __name__ == '__main__':
     # configs
     N = 4096
     epochs = 200
-    batch_size = 64
-    lr = 0.001
+    batch_size = 16
+    lr = 0.1
     data_loader_shuffle = False
-    dataset_instance = DataSetInstance.BOSTON_HOUSING
+    dataset_instance = DataSetInstance.TOY_RELU
     t_span = 0, 0.6
     train_size_ratio = 0.8
-    poly_deg = 4
+    poly_deg = 3
     basis_type = "poly"
     device = torch.device("cpu")
     tensor_dtype = torch.float32
     unif_low, unif_high = 0.01, 0.05
-    fixed_tt_rank = 3
+    fixed_tt_rank = 2
+    ode_func_type = "tt"
+    nn_ode_func_hidden_dim = 50
+    euler_step_size = 0.1
+    output_non_linearity = torch.nn.Tanh()
+    ######
     # get dataset and loader
     overall_dataset = get_dataset(dataset_instance=dataset_instance, N=N)
     input_dim = overall_dataset.get_input_dim()
@@ -167,23 +155,28 @@ if __name__ == '__main__':
     test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=data_loader_shuffle)
 
     # create model
+    # get ode-func
+
     latent_dim = input_dim
     assert latent_dim == input_dim
+    # TODO investigate why rk45 solver under-flows
     # solver = TorchRK45(device=device, tensor_dtype=tensor_dtype)
-    solver = TorchEulerSolver(step_size=0.1)
+    solver = TorchEulerSolver(step_size=euler_step_size)
+    if ode_func_type == "tt":
+        ode_func = TensorTrainOdeFunc(Dz=latent_dim, basis_type=basis_type, basis_param={'deg': poly_deg},
+                                      unif_low=unif_low, unif_high=unif_high, tt_rank=fixed_tt_rank)
+    elif ode_func_type == "nn":
+        ode_func = NNodeFunc(latent_dim=latent_dim, nn_hidden_dim=nn_ode_func_hidden_dim)
+    else:
+        raise ValueError(f"Unknown ode_func_type {ode_func_type}")
     model = HybridTensorTrainNeuralODE(Dx=input_dim, Dz=latent_dim, Dy=output_dim, basis_type=basis_type,
                                        basis_params={'deg': poly_deg}, solver=solver, t_span=t_span,
                                        tensor_dtype=tensor_dtype, unif_low=unif_low, unif_high=unif_high,
-                                       tt_rank=fixed_tt_rank)
+                                       tt_rank=fixed_tt_rank, ode_func=ode_func,
+                                       output_non_linearity=output_non_linearity)
     loss_fn = MSELoss()
     optimizer = torch.optim.SGD(params=model.parameters(), lr=lr)
-    # TODO
-    """
-    1. Vanishing Gradient issue
-    2. play with lr
-    3. initial state
-    4. inspect 
-    """
+    logger.info(f"Ode-func = {type(ode_func)}")
     for epoch in range(1, epochs + 1):
         batches_loss = []
         for i, (X, y) in enumerate(train_loader):
@@ -191,16 +184,7 @@ if __name__ == '__main__':
             y_hat = model(X)
             loss = loss_fn(y_hat, y)
             batches_loss.append(loss.item())
-            # TODO add check point to get A-cores before optimization
-            # A_norm_before = model.ode_func.A_TT.norm()
             loss.backward()
             optimizer.step()
-            # TODO add check point to get A-cores after optimization
-            # A_norm_after = model.ode_func.A_TT.norm()
-            # delta_A_norm = torch.norm(A_norm_after - A_norm_before)
-            print(f'Epoch # {epoch} - batch # {i} -> loss = {loss.item()}')
-            # if delta_A_norm.item() > 0:
-            #     u = 0
-            # x = 10
-        # if epoch % 1 == 0:
-        #     print(f'At epoch = {epoch} -> avg-batches-loss = {np.nanmean(batches_loss)}')
+        if epoch % 1 == 0:
+            logger.info(f'epoch = {epoch} -> avg-batches-loss = {np.nanmean(batches_loss)}')
