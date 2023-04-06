@@ -19,7 +19,22 @@ torch.manual_seed(SEED)
 np.random.seed(SEED)
 random.seed(SEED)
 
+# TODO
+#   * Document 2x3 experiments (tt/nn-odefunc) x ( toy_ode,toy_relu,boston datasets)
+#       - save each experiment dump in a test file under experiments log
+#       - document details in the gdoc
+#   * experiment different weight init. schemes and document them
+#       Steps
+#       - https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L122
+#       - https://pytorch.org/docs/stable/nn.init.html
+#       - add mechanism to experiment different initializers
+#       - document results in the gdoc
+#   gdoc for experiments
+#   https://docs.google.com/document/d/11-13S54BK4fdqMls0yja26wtveMBZQ3G0g9krLXeyG8/edit?usp=share_link
+
 """
+some material
+
 stability of linear ode
 https://physiology.med.cornell.edu/people/banfelder/qbio/resources_2010/2010_4.2%20Stability%20and%20Linearization%20of%20ODEs.pdf
 https://www.cs.princeton.edu/courses/archive/fall11/cos323/notes/cos323_f11_lecture19_pde2.pdf
@@ -72,6 +87,7 @@ class TensorTrainOdeFunc(torch.nn.Module):
         """
         dzdt = A.Phi([z,t])
         """
+        # dzdt = torch.nn.ReLU()(self.A_TT(t, z, self.deg))
         dzdt = self.A_TT(t, z, self.deg)
         return dzdt
 
@@ -100,7 +116,7 @@ class HybridTensorTrainNeuralODE(torch.nn.Module):
         self.Dz = Dz
         ##
         self.check_params()
-        self.Q = torch.nn.Sequential(torch.nn.Tanh(), torch.nn.Linear(latent_dim, output_dim))
+        self.Q = torch.nn.Sequential(torch.nn.Identity(), torch.nn.Linear(latent_dim, output_dim))
 
     def forward(self, x: torch.Tensor):
         z0 = x
@@ -121,24 +137,31 @@ class HybridTensorTrainNeuralODE(torch.nn.Module):
                                                                        f"{HybridTensorTrainNeuralODE.NON_LINEARITIES}"
 
 
+def get_tt_gradient(A_TT: TensorTrainFixedRank):
+    pass
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger()
     # configs
     N = 4096
     epochs = 200
-    batch_size = 16
-    lr = 0.1
+    batch_size = 128
+    lr = 0.001
     data_loader_shuffle = False
-    dataset_instance = DataSetInstance.TOY_RELU
-    t_span = 0, 0.6
+    dataset_instance = DataSetInstance.TOY_ODE
+    t_span = 0, 1.0
     train_size_ratio = 0.8
     poly_deg = 3
     basis_type = "poly"
     device = torch.device("cpu")
     tensor_dtype = torch.float32
-    unif_low, unif_high = 0.01, 0.05
-    fixed_tt_rank = 2
+    # ** Important ** Keep weights init like that, it works !!!
+    # https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L122
+
+    unif_low, unif_high = -0.05, 0.05
+    fixed_tt_rank = 3
     ode_func_type = "tt"
     nn_ode_func_hidden_dim = 50
     euler_step_size = 0.1
@@ -176,14 +199,20 @@ if __name__ == '__main__':
                                        output_non_linearity=output_non_linearity)
     loss_fn = MSELoss()
     optimizer = torch.optim.SGD(params=model.parameters(), lr=lr)
-    logger.info(f"Ode-func = {type(ode_func)}")
+    logger.info(f"Ode-func = {type(ode_func)}\n"
+                f"Data = {type(overall_dataset)}\n"
+                f"Batch-Size = {batch_size}\n"
+                f"Uniform low and high = {unif_low, unif_high}\n"
+                f"t_span = {t_span}")
+    # TODO
     for epoch in range(1, epochs + 1):
         batches_loss = []
         for i, (X, y) in enumerate(train_loader):
             optimizer.zero_grad()
             y_hat = model(X)
-            loss = loss_fn(y_hat, y)
-            batches_loss.append(loss.item())
+            residual = loss_fn(y_hat, y)
+            loss = residual
+            batches_loss.append(residual.item())
             loss.backward()
             optimizer.step()
         if epoch % 1 == 0:

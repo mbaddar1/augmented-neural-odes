@@ -54,13 +54,16 @@ class TensorTrainFixedRank(torch.nn.Module):
                   f", {len(self.core_tensors)} != {len(Phi)}"
         n_cores = len(self.core_tensors)
         # first core
-        res_tensor = torch.einsum("ij,bi->bj", self.core_tensors[f"G{0}"], Phi[0])
+        core = self.core_tensors[f"G{0}"]
+        res_tensor = torch.einsum("ij,bi->bj", core, Phi[0])
         # middle cores
         for i in range(1, len(self.core_tensors) - 1):
-            core_basis = torch.einsum("ijk,bj->bik", self.core_tensors[f"G{i}"], Phi[i])
+            core = self.core_tensors[f"G{i}"]
+            core_basis = torch.einsum("ijk,bj->bik", core, Phi[i])
             res_tensor = torch.einsum("bi,bik->bk", res_tensor, core_basis)
         # last core
-        core_basis = torch.einsum("ijl,bj->bil", self.core_tensors[f"G{n_cores - 1}"], Phi[n_cores - 1])
+        core = self.core_tensors[f"G{n_cores - 1}"]
+        core_basis = torch.einsum("ijl,bj->bil", core, Phi[n_cores - 1])
         res_tensor = torch.einsum("bi,bil->bl", res_tensor, core_basis)
         assert res_tensor.size()[1] == self.out_dim, f"output tensor size must = " \
                                                      f"out_dim : {res_tensor.size()}!={self.out_dim}"
