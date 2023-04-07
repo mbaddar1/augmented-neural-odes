@@ -1,0 +1,40 @@
+train:
+  seed: 42
+  N: 4096
+  device: "cpu"
+  epochs: 200
+  batch_size: 128
+  lr: 0.01
+  dataset: "toy-ode"
+  ratio: 0.8
+  shuffle: True
+  dtype: "torch.float32"
+
+model:
+  latent-dim: 2
+  projection:
+    learnable: False
+  output-layer:
+    activation: "tanh"
+    learnable: False
+  init:
+    method: "uniform"
+    low: 0.1
+    high: 0.5
+    #    method: "norm"
+    #    mean : 0.0
+    #    std : 0.1
+
+ode-func:
+  model: "tt"
+  basis:
+    type: "poly"
+    deg: 4
+  rank: "3" # string , if numeric then fixed else the string = "adaptive"
+  # --
+  #  model: "nn"
+  #  hidden-dim: 50
+solver:
+  t-span: [ 0,1 ]
+  method: "torch-euler"
+  step-size: 0.1

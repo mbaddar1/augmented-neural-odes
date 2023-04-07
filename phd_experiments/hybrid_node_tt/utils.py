@@ -6,6 +6,7 @@ from phd_experiments.datasets.custom_dataset import CustomDataSet
 from phd_experiments.datasets.torch_boston_housing import TorchBostonHousingPrices
 from phd_experiments.datasets.toy_ode import ToyODE
 from phd_experiments.datasets.toy_relu import ToyRelu
+from phd_experiments.hybrid_node_tt.models import TensorTrainOdeFunc, NNodeFunc
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 
@@ -84,27 +85,56 @@ class DataSetInstance(Enum):
     BOSTON_HOUSING = 2
 
 
-def get_dataset(dataset_instance: Enum, N: int = 2024, input_dim: int = 2, output_dim: int = 1) -> CustomDataSet:
-    if dataset_instance == DataSetInstance.TOY_ODE:
+def get_dataset(config: dict) -> CustomDataSet:
+    dataset_name = config["train"]["dataset"]
+    N = config["train"]["N"]
+    if dataset_name == "toy-ode":
         return ToyODE(N)
-    elif dataset_instance == DataSetInstance.TOY_RELU:
-        return ToyRelu(N=N, input_dim=input_dim, out_dim=output_dim)
-    elif dataset_instance == DataSetInstance.BOSTON_HOUSING:
+    elif dataset_name == "toy-relu":
+        return ToyRelu(N=N)
+    elif dataset_name == "boston-housing":
         return TorchBostonHousingPrices(csv_file="../datasets/boston.csv")
     else:
-        raise ValueError(f'dataset-name is not known {dataset_instance}')
+        raise ValueError(f'dataset-name is not known {dataset_name}')
 
 
-def get_solver(solver_type: Enum, **kwargs):
-    if solver_type == SolverType.TORCH_EULER:
-        return TorchEulerSolver(step_size=kwargs['step_size'])
-    elif solver_type == SolverType.TORCH_RK45:
-        return TorchRK45(device=torch.device("cpu"), tensor_dtype=torch.float32)
+def get_solver(config: dict):
+    if config["solver"]["method"] == "torch-euler":
+        return TorchEulerSolver(step_size=config["solver"]['step-size'])
+    elif config["solver"]["method"] == "torch-rk45":
+        return TorchRK45(device=torch.device(config["train"]["device"]), tensor_dtype=torch.float32)
     else:
-        raise ValueError(f"Unsupported solver type {solver_type}")
+        raise ValueError(f"Unsupported solver type {config['solver']['method']}")
 
 
-if __name__ == '__main__':
-    dims = [3] * 26
-    einsum_str = generate_tensor_poly_einsum(dims)
-    x = 10
+def get_ode_func(config: dict):
+    assert config["model"]["init"]["method"] == "uniform", "now only support unif. init. "
+    if config["ode-func"]["model"] == "tt":
+        assert config["ode-func"]["rank"].isnumeric(), "Supporting fixed rank now only"
+        tt_rank = int(config["ode-func"]["rank"])
+        return TensorTrainOdeFunc(Dz=config["model"]["latent-dim"], basis_type=config["ode-func"]["basis"]["type"],
+                                  unif_low=config["model"]["init"]["low"], unif_high=config["model"]["init"]["high"],
+                                  tt_rank=tt_rank, poly_deg=config['ode-func']['basis']['deg'])
+    elif config["ode-func"]["model"] == "nn":
+        return NNodeFunc(latent_dim=config["model"]["latent-dim"], nn_hidden_dim=config["ode-func"]["hidden-dim"])
+    else:
+        raise ValueError(f"""Unsupported ode-func model {config["ode-func"]["model"]}""")
+
+
+def get_tensor_dtype(config: dict):
+    if config['train']['dtype'] == "torch.float32":
+        return torch.float32
+    elif config['train']['dtype'] == "torch.float64":
+        return torch.float64
+    else:
+        raise ValueError(f"Unsupported tensor type = {config['train']['dtype']}")
+
+
+def get_activation(activation_name: str):
+    ACTIVATION_DICT = {'tanh': torch.nn.Tanh(), 'relu': torch.nn.ReLU(), 'sigmoid': torch.nn.Sigmoid(),
+                       'identity': torch.nn.Identity()}
+    activation = ACTIVATION_DICT.get(activation_name, None)
+    if activation is None:
+        raise ValueError(f"Unknown activation name {activation_name}")
+    else:
+        return activation

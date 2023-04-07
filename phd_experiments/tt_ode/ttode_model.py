@@ -5,7 +5,7 @@ from torch.nn import Parameter, ParameterList
 from torchdiffeq import odeint
 from anode.models import ODEFunc
 from dlra.tt import TensorTrain
-from phd_experiments.hybrid_node_tt.tt2 import TensorTrainFixedRank
+from phd_experiments.hybrid_node_tt.archive.tt2 import TensorTrainFixedRank
 from torch import Tensor
 from phd_experiments.hybrid_node_tt.basis import Basis
 from phd_experiments.tt_ode.ttode_als import TTOdeAls, Forward2

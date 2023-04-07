@@ -7,7 +7,7 @@ from torch import Tensor
 from dlra.feature_utils import PolyBasis
 from dlra.linearbackend import lb
 from dlra.tt import TensorTrain, Extended_TensorTrain
-from phd_experiments.hybrid_node_tt.tt2 import TensorTrainFixedRank
+from phd_experiments.hybrid_node_tt.archive.tt2 import TensorTrainFixedRank
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 
 """
