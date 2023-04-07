@@ -1,28 +1,17 @@
-import yaml
+import os.path
 
+import pandas as pd
+import yaml
 import logging
 import random
 import numpy as np
 import torch.nn
-from torch.nn import MSELoss
 from torch.utils.data import random_split, DataLoader
-
 from phd_experiments.hybrid_node_tt.models import LearnableOde
-from phd_experiments.hybrid_node_tt.utils import get_dataset, get_solver, get_ode_func, get_tensor_dtype, get_activation
+from phd_experiments.hybrid_node_tt.utils import get_dataset, get_solver, get_ode_func, get_tensor_dtype, \
+    get_activation, get_loss_function, get_logger
 from datetime import datetime
-
-# TODO
-#   * Document 2x3 experiments (tt/nn-odefunc) x ( toy_ode,toy_relu,boston datasets)
-#       - save each experiment dump in a test file under experiments log
-#       - document details in the gdoc
-#   * experiment different weight init. schemes and document them
-#       Steps
-#       - https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L122
-#       - https://pytorch.org/docs/stable/nn.init.html
-#       - add mechanism to experiment different initializers
-#       - document results in the gdoc
-#   gdoc for experiments
-#   https://docs.google.com/document/d/11-13S54BK4fdqMls0yja26wtveMBZQ3G0g9krLXeyG8/edit?usp=share_link
+from tqdm import tqdm
 
 """
 some material
@@ -39,12 +28,20 @@ memory or speed
 dzdt = A.phi([z,t]) that works with complex problems
 """
 
+EXPERIMENTS_LOG_DIR = "./experiments_log"
+EXPERIMENTS_COUNTER_FILE = "./experiment_counter.txt"
+PANDAS_MAX_DISPLAY_ROW = 1000
+LOG_FORMAT = "[%(filename)s:%(lineno)s - %(funcName)10s()] %(asctime)s %(levelname)s %(message)s"
+DATE_TIME_FORMAT = "%Y-%m-%d:%H:%M:%S"
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger()
+    # set pandas config
+    pd.set_option('display.max_rows', PANDAS_MAX_DISPLAY_ROW)
     # load configs
     with open("config.yaml", "r") as f:
         config = yaml.safe_load(f)
+        # get logger
+    logger = get_logger(level=config['train']['log-level'], date_time_format=DATE_TIME_FORMAT, log_format=LOG_FORMAT,
+                        experiments_counter_file_path=EXPERIMENTS_COUNTER_FILE, experiments_log_dir=EXPERIMENTS_LOG_DIR)
     # set seed
     seed = config['train']['seed']
     torch.manual_seed(seed)
@@ -82,7 +79,7 @@ if __name__ == '__main__':
                          output_activation=output_activation,
                          output_linear_learnable=config['model']['output-layer']['learnable'],
                          projection_learnable=config['model']['projection']['learnable'])
-    loss_fn = MSELoss()
+    loss_fn = get_loss_function(loss_name=config['train']['loss'])
     optimizer = torch.optim.SGD(params=model.parameters(), lr=config['train']['lr'])
     logger.info(f"Running with config : \n "
                 f"{config}"
@@ -91,17 +88,23 @@ if __name__ == '__main__':
                 f"\n")
     # TODO
     start_time = datetime.now()
-    for epoch in range(1, config['train']['epochs'] + 1):
-        batches_loss = []
+    epoch_no_list = []
+    epoch_avg_loss = []
+    for epoch in tqdm(range(config['train']['epochs']), desc="epochs"):
+        batches_losses = []
         for i, (X, y) in enumerate(train_loader):
             optimizer.zero_grad()
             y_hat = model(X)
             residual = loss_fn(y_hat, y)
             loss = residual
-            batches_loss.append(residual.item())
+            batches_losses.append(residual.item())
             loss.backward()
             optimizer.step()
-        if epoch % 1 == 0:
-            logger.info(f'epoch = {epoch} -> avg-batches-loss = {np.nanmean(batches_loss)}')
+        if epoch % config['train']['epochs_block'] == 0:
+            epoch_no_list.append(epoch)
+            epoch_avg_loss.append(np.nanmean(batches_losses))
+            logger.debug(f"\t epoch # {epoch} : loss = {np.nanmean(batches_losses)}")
     end_time = datetime.now()
+    epochs_losses_df = pd.DataFrame({'epoch': epoch_no_list, 'loss': epoch_avg_loss})
+    logger.info(f'\n{epochs_losses_df}\n')
     logger.info(f'Training-Time = {(end_time - start_time).seconds} seconds')

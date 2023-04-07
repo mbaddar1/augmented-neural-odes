@@ -1,7 +1,12 @@
+import logging
+import os
 import string
+from datetime import datetime
 from enum import Enum
 from typing import List
 import torch
+from torch.nn import MSELoss
+
 from phd_experiments.datasets.custom_dataset import CustomDataSet
 from phd_experiments.datasets.torch_boston_housing import TorchBostonHousingPrices
 from phd_experiments.datasets.toy_ode import ToyODE
@@ -138,3 +143,41 @@ def get_activation(activation_name: str):
         raise ValueError(f"Unknown activation name {activation_name}")
     else:
         return activation
+
+
+def get_loss_function(loss_name: str):
+    if loss_name == "mse":
+        return MSELoss()
+    else:
+        raise ValueError(f"Unknown loss :{loss_name}")
+
+
+def get_logger(level: str, date_time_format: str, log_format: str, experiments_counter_file_path: str,
+               experiments_log_dir: str):
+    LOG_LEVEL_MAP = {'debug': logging.DEBUG, 'info': logging.INFO, 'warning': logging.WARNING,
+                     'error': logging.WARNING}
+    log_level_enum = LOG_LEVEL_MAP.get(level, None)
+    assert log_level_enum is not None, f"Unknown log-level {level}"
+    tstamp = datetime.now().strftime(date_time_format)
+    logging.basicConfig(level=log_level_enum, format=log_format)
+    logger = logging.getLogger()
+    with open(experiments_counter_file_path, "r") as f:
+        experiment_counter = int(f.readline()) + 1
+        f.close()
+    with open(experiments_counter_file_path, "w") as f:
+        f.write(str(experiment_counter))
+        f.flush()
+        f.close()
+    log_file_path = os.path.join(experiments_log_dir, f"experiment_no_{experiment_counter}_{tstamp}.log")
+    # set handlers
+    formatter = logging.Formatter(fmt=log_format)
+    fh = logging.FileHandler(filename=log_file_path, mode="w")
+    fh.setLevel(level=log_level_enum)
+    fh.setFormatter(fmt=formatter)
+    logger.addHandler(fh)
+
+    # sh = logging.StreamHandler()
+    # sh.setFormatter(fmt=formatter)
+    # sh.setLevel(level=log_level_enum)
+    # logger.addHandler(sh)
+    return logger

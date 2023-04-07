@@ -1,6 +1,8 @@
 train:
+  log-level: "info"
   seed: 42
   N: 4096
+  loss: "mse" # FIXME must add as param
   device: "cpu"
   epochs: 200
   batch_size: 128
@@ -8,12 +10,19 @@ train:
   dataset: "toy-ode"
   ratio: 0.8
   shuffle: True
+  regularization:
+    method: "lp"
+    p: 2
   dtype: "torch.float32"
+  epochs_block: 10
+
+
 
 model:
   latent-dim: 2
   projection:
     learnable: False
+    activation: "identity"
   output-layer:
     activation: "identity"
     learnable: False
