@@ -15,7 +15,7 @@ model:
   projection:
     learnable: False
   output-layer:
-    activation: "tanh"
+    activation: "identity"
     learnable: False
   init:
     method: "uniform"
@@ -27,6 +27,7 @@ model:
 
 ode-func:
   model: "tt"
+  activation: "identity"
   basis:
     type: "poly"
     deg: 4

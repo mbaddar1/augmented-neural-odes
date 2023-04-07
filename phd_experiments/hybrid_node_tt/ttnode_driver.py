@@ -69,7 +69,6 @@ if __name__ == '__main__':
     latent_dim = config["model"]["latent-dim"]
     assert latent_dim == input_dim, "latent-dim must == input-dim, for now"
 
-    # TODO investigate why rk45 solver under-flows
     solver = get_solver(config=config)
     # get ode-func
     ode_func = get_ode_func(config=config)
@@ -84,7 +83,6 @@ if __name__ == '__main__':
                          output_linear_learnable=config['model']['output-layer']['learnable'],
                          projection_learnable=config['model']['projection']['learnable'])
     loss_fn = MSELoss()
-    # TODO , try other optimizers
     optimizer = torch.optim.SGD(params=model.parameters(), lr=config['train']['lr'])
     logger.info(f"Running with config : \n "
                 f"{config}"
