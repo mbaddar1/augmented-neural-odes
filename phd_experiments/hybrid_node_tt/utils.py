@@ -104,24 +104,27 @@ def get_dataset(config: dict) -> CustomDataSet:
 
 
 def get_solver(config: dict):
-    if config["solver"]["method"] == "torch-euler":
-        return TorchEulerSolver(step_size=config["solver"]['step-size'])
-    elif config["solver"]["method"] == "torch-rk45":
+    if config["ode"]["solver"]["method"] == "euler":
+        return TorchEulerSolver(step_size=config["ode"]["solver"]["euler"]['step-size'])
+    elif config["solver"]["method"] == "rk45":
         return TorchRK45(device=torch.device(config["train"]["device"]), tensor_dtype=torch.float32)
     else:
         raise ValueError(f"Unsupported solver type {config['solver']['method']}")
 
 
 def get_ode_func(config: dict):
-    assert config["model"]["init"]["method"] == "uniform", "now only support unif. init. "
-    if config["ode-func"]["model"] == "tt":
-        assert config["ode-func"]["rank"].isnumeric(), "Supporting fixed rank now only"
-        tt_rank = int(config["ode-func"]["rank"])
-        return TensorTrainOdeFunc(Dz=config["model"]["latent-dim"], basis_type=config["ode-func"]["basis"]["type"],
-                                  unif_low=config["model"]["init"]["low"], unif_high=config["model"]["init"]["high"],
-                                  tt_rank=tt_rank, poly_deg=config['ode-func']['basis']['deg'])
-    elif config["ode-func"]["model"] == "nn":
-        return NNodeFunc(latent_dim=config["model"]["latent-dim"], nn_hidden_dim=config["ode-func"]["hidden-dim"])
+    assert config["init"]["method"] == "uniform", "now only support unif. init. "
+    init_method = config["init"]["method"]
+    if config["ode"]["model"] == "tt":
+        assert config["ode"]["tt"]["rank"].isnumeric(), "Supporting fixed rank now only"
+        tt_rank = int(config["ode"]["tt"]["rank"])
+        return TensorTrainOdeFunc(Dz=config["container"]["latent-dim"],
+                                  basis_model=config["ode"]["tt"]["basis"]["model"],
+                                  unif_low=config["init"][init_method]["low"],
+                                  unif_high=config["init"][init_method]["high"],
+                                  tt_rank=tt_rank, poly_deg=config['ode']['tt']['basis']['poly']['deg'])
+    elif config["ode"]["model"] == "nn":
+        return NNodeFunc(latent_dim=config["container"]["latent-dim"], nn_hidden_dim=config["ode"]["nn"]["hidden-dim"])
     else:
         raise ValueError(f"""Unsupported ode-func model {config["ode-func"]["model"]}""")
 

@@ -1,10 +1,23 @@
-import logging
 from typing import List, Tuple
-
 import torch
-
 from phd_experiments.hybrid_node_tt.basis import Basis
 from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchOdeSolver
+
+ACTIVATIONS = (torch.nn.Identity, torch.nn.Sigmoid, torch.nn.Tanh, torch.nn.ReLU)
+
+
+class OdeSolverModel(torch.nn.Module):
+    def __init__(self, solver: TorchOdeSolver, ode_func: torch.nn.Module,
+                 t_span: Tuple):
+        super().__init__()
+        self.t_span = t_span
+        self.ode_func = ode_func
+        self.solver = solver
+
+    def forward(self, z0):
+        soln = self.solver.solve_ivp(func=self.ode_func, t_span=self.t_span, z0=z0, args=None)
+        zT = soln.z_trajectory[-1]
+        return zT
 
 
 class TensorTrainFixedRank(torch.nn.Module):
@@ -75,28 +88,6 @@ class TensorTrainFixedRank(torch.nn.Module):
         self.logger.info(f'Cores : \n{self.core_tensors}\n')
 
 
-if __name__ == '__main__':
-    FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
-    logging.basicConfig(level=logging.INFO, format=FORMAT)
-    main_logger = logging.getLogger()
-    order = 4
-    basis_dim = 3
-    out_dim = 10
-    fixed_rank = 2
-
-    ttxr = TensorTrainFixedRank(order=order, core_input_dim=basis_dim, out_dim=out_dim, fixed_rank=fixed_rank,
-                                requires_grad=True)
-    norm_val = ttxr.norm()
-    ttxr.display_sizes()
-    ttxr.is_parameter()
-    main_logger.info(ttxr.is_parameter())
-
-    basis_ = []
-    for i in range(order):
-        basis_.append(torch.ones(basis_dim))
-    res = ttxr.contract_basis(basis_tensors=basis_)
-
-
 class NNodeFunc(torch.nn.Module):
     # https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L111
     def __init__(self, latent_dim, nn_hidden_dim):
@@ -117,13 +108,13 @@ class NNodeFunc(torch.nn.Module):
 
 class TensorTrainOdeFunc(torch.nn.Module):
 
-    def __init__(self, Dz: int, basis_type: str, unif_low: float, unif_high: float,
+    def __init__(self, Dz: int, basis_model: str, unif_low: float, unif_high: float,
                  tt_rank: str | int | List[int], poly_deg: int):
         super().__init__()
         # check params
         assert isinstance(poly_deg, int), f"deg must be int, got {type(self.deg)}"
         assert isinstance(tt_rank, int), f"Supporting fixed ranks only"
-        assert basis_type == "poly", f"Supporting only poly basis"
+        assert basis_model == "poly", f"Supporting only poly basis"
 
         dims_A = [Dz] + [poly_deg + 1] * (Dz + 1)  # deg+1 as polynomial start from z^0 , z^1 , .. z^deg
         # Dz+1 to append time
@@ -135,47 +126,51 @@ class TensorTrainOdeFunc(torch.nn.Module):
         """
         dzdt = A.Phi([z,t])
         """
-        # dzdt = torch.nn.ReLU()(self.A_TT(t, z, self.deg))
         dzdt = self.A_TT(t, z)
         return dzdt
 
 
-class LearnableOde(torch.nn.Module):
-    ACTIVATIONS = (torch.nn.Identity, torch.nn.Sigmoid, torch.nn.Tanh, torch.nn.ReLU)
-
-    def __init__(self, Dx: int, Dz: int, Dy: int, solver: TorchOdeSolver, t_span: Tuple, tensor_dtype: torch.dtype,
-                 unif_low: float, unif_high: float, ode_func: torch.nn.Module,
-                 output_activation: torch.nn.Module, output_linear_learnable: bool, projection_learnable: bool):
+class ProjectionModel(torch.nn.Module):
+    def __init__(self, Dx: int, Dz: int, activation_module: torch.nn.Module, unif_low: float, unif_high: float,
+                 learnable: bool):
         super().__init__()
-        self.output_activation = output_activation
-        self.ode_func = ode_func
-        self.unif_high = unif_high
-        self.unif_low = unif_low
-        self.tensor_dtype = tensor_dtype
-        self.solver = solver
-        self.t_span = t_span
-        self.Dy = Dy
-        self.Dx = Dx
-        self.Dz = Dz
-        ##
-        self.check_params()
-        self.P = torch.nn.Parameter(torch.distributions.Uniform(unif_low, unif_high).sample(torch.Size([Dx, Dz])),
-                                    requires_grad=projection_learnable)
-        output_linear = torch.nn.Linear(Dz, Dy)
-        output_linear.weight.requires_grad = output_linear_learnable
-        output_linear.bias.requires_grad = output_linear_learnable
+        self.activation_module = activation_module
+        assert isinstance(self.activation_module,
+                          ACTIVATIONS), f"activation module {self.activation_module} " \
+                                        f"is not supported, must be one of {ACTIVATIONS}"
+        assert Dz >= Dx, f"Dz must be >= Dx , got Dx={Dx} and Dz = {Dz}"
+        self.P = torch.nn.Parameter(torch.distributions.Uniform(unif_low, unif_high).sample(torch.Size([Dz, Dx])),
+                                    requires_grad=learnable)
 
-        self.Q = torch.nn.Sequential(self.output_activation, output_linear)
+    def forward(self, x):
+        linear_out = torch.einsum(f"bi,ij->bj", x, self.P)
+        activated_out = self.activation_module(linear_out)
+        return activated_out
+
+
+class OutputModel(torch.nn.Module):
+    def __init__(self, Dz: int, Dy: int, activation_module: torch.nn.Module, learnable: bool):
+        super().__init__()
+        activation_module = activation_module
+        assert isinstance(activation_module, ACTIVATIONS), f"activation-module must be one of {ACTIVATIONS}"
+        assert Dz >= Dy, f"Dz must be > Dy; got Dz = {Dz} and Dy = {Dy}"
+        linear_part = torch.nn.Linear(Dz, Dy)
+        linear_part.weight.requires_grad = learnable
+        linear_part.bias.requires_grad = learnable
+        self.output_layer_model = torch.nn.Sequential(activation_module, linear_part)
+
+    def forward(self, x):
+        return self.output_layer_model(x)
+
+
+class LearnableOde(torch.nn.Module):
+
+    def __init__(self, projection_model: torch.nn.Module,
+                 ode_solver_model: torch.nn.Module,
+                 output_model: torch.nn.Module):
+        super().__init__()
+
+        self.complete_model = torch.nn.Sequential(projection_model, ode_solver_model, output_model)
 
     def forward(self, x: torch.Tensor):
-        z0 = torch.einsum('bi,ij->bj', x, self.P)
-        soln = self.solver.solve_ivp(func=self.ode_func, t_span=self.t_span, z0=z0, args=None)
-        zT = soln.z_trajectory[-1]
-        y_hat = self.Q(zT)
-        return y_hat
-
-    def check_params(self):
-        assert self.Dz >= self.Dx, "latent-dim must be >= input-dima"
-        assert isinstance(self.output_activation,
-                          LearnableOde.ACTIVATIONS), f"output layer non-linearity must be one of " \
-                                                     f"{LearnableOde.ACTIVATIONS}"
+        return self.complete_model(x)

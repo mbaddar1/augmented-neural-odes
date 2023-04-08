@@ -7,7 +7,7 @@ import random
 import numpy as np
 import torch.nn
 from torch.utils.data import random_split, DataLoader
-from phd_experiments.hybrid_node_tt.models import LearnableOde
+from phd_experiments.hybrid_node_tt.models import LearnableOde, ProjectionModel, OutputModel, OdeSolverModel
 from phd_experiments.hybrid_node_tt.utils import get_dataset, get_solver, get_ode_func, get_tensor_dtype, \
     get_activation, get_loss_function, get_logger
 from datetime import datetime
@@ -60,25 +60,28 @@ if __name__ == '__main__':
     test_loader = DataLoader(dataset=test_dataset, batch_size=config["train"]["batch_size"],
                              shuffle=config["train"]["shuffle"])
 
-    # create model
-    # get ode-func
-
-    latent_dim = config["model"]["latent-dim"]
-    assert latent_dim == input_dim, "latent-dim must == input-dim, for now"
-
+    # get ode-solver-model
     solver = get_solver(config=config)
-    # get ode-func
+    latent_dim = config["container"]["latent-dim"]
+    # FIXME remove and test Dz>Dx
+    assert latent_dim == input_dim, "latent-dim must == input-dim, for now"
     ode_func = get_ode_func(config=config)
+    ode_solver_model = OdeSolverModel(solver=solver, ode_func=ode_func, t_span=config['ode']['solver']['t-span'])
+    # get projection-model
+    project_model_activation = get_activation(activation_name=config['projection']['activation'])
+    projection_model = ProjectionModel(Dx=input_dim, Dz=latent_dim,
+                                       activation_module=project_model_activation,
+                                       unif_low=config['init']['uniform']['low'],
+                                       unif_high=config['init']['uniform']['high'],
+                                       learnable=config['projection']['learnable'])
+    # get output-model
+    output_activation_model = get_activation(activation_name=config['output']['activation'])
+    output_model = OutputModel(Dz=latent_dim, Dy=output_dim, activation_module=output_activation_model,
+                               learnable=config['output']['learnable'])
     # get-model
     tensor_dtype = get_tensor_dtype(config=config)
-    output_activation = get_activation(activation_name=config['model']['output-layer']['activation'])
-    model = LearnableOde(Dx=input_dim, Dz=latent_dim, Dy=output_dim, solver=solver, t_span=config['solver']['t-span'],
-                         tensor_dtype=tensor_dtype,
-                         unif_low=config['model']['init']['low'], unif_high=config['model']['init']['high'],
-                         ode_func=ode_func,
-                         output_activation=output_activation,
-                         output_linear_learnable=config['model']['output-layer']['learnable'],
-                         projection_learnable=config['model']['projection']['learnable'])
+    model = LearnableOde(projection_model=projection_model, ode_solver_model=ode_solver_model,
+                         output_model=output_model)
     loss_fn = get_loss_function(loss_name=config['train']['loss'])
     optimizer = torch.optim.SGD(params=model.parameters(), lr=config['train']['lr'])
     logger.info(f"Running with config : \n "
