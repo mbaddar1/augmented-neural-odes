@@ -7,7 +7,7 @@ train:
   epochs: 200
   batch_size: 128
   lr: 0.01
-  dataset: "toy-ode"
+  dataset: "toy-relu"
   ratio: 0.8
   shuffle: True
   regularization:
@@ -19,14 +19,14 @@ train:
 init:
   method: "uniform"
   uniform:
-    low: 0.1
-    high: 0.5
+    low: 0.01
+    high: 0.05
   normal:
     mean: 0.0
     std: 0.1
 
 container:
-  latent-dim: 2
+  latent-dim: 6
 
 
 projection:
@@ -46,7 +46,7 @@ ode:
     rk45:
       rtol: 0.001
   #--
-  model: "tt"
+  model: "nn"
   tt:
     activation: "identity"
     rank: "3" # string , if numeric then fixed else the string = "adaptive"
