@@ -58,9 +58,9 @@ class TensorTrainFixedRank(torch.nn.Module):
             sizes.append(tensor.size())
         self.logger.info(f'TensorTrain sizes = {sizes}')
 
-    def is_parameter(self):
-        requires_grads = list(map(lambda x: x.requires_grad, self.core_tensors))
-        return all(requires_grads)
+    def is_learnable(self):
+        res = all(list(map(lambda x: x.requires_grad, self.core_tensors)))
+        return res
 
     def forward(self, t: float, z: torch.Tensor) -> torch.Tensor:
         Phi = Basis.poly(z=z, t=t, poly_deg=self.poly_deg)
@@ -129,6 +129,9 @@ class TensorTrainOdeFunc(torch.nn.Module):
         dzdt = self.A_TT(t, z)
         return dzdt
 
+    def is_learnable(self):
+        return self.A_TT.is_learnable()
+
 
 class ProjectionModel(torch.nn.Module):
     def __init__(self, Dx: int, Dz: int, activation_module: torch.nn.Module, unif_low: float, unif_high: float,
@@ -147,6 +150,9 @@ class ProjectionModel(torch.nn.Module):
         activated_out = self.activation_module(linear_out)
         return activated_out
 
+    def is_learnable(self):
+        return self.P.requires_grad
+
 
 class OutputModel(torch.nn.Module):
     def __init__(self, Dz: int, Dy: int, activation_module: torch.nn.Module, learnable: bool):
@@ -154,13 +160,19 @@ class OutputModel(torch.nn.Module):
         activation_module = activation_module
         assert isinstance(activation_module, ACTIVATIONS), f"activation-module must be one of {ACTIVATIONS}"
         assert Dz >= Dy, f"Dz must be > Dy; got Dz = {Dz} and Dy = {Dy}"
-        linear_part = torch.nn.Linear(Dz, Dy)
-        linear_part.weight.requires_grad = learnable
-        linear_part.bias.requires_grad = learnable
-        self.output_layer_model = torch.nn.Sequential(activation_module, linear_part)
+        self.linear_part = torch.nn.Linear(Dz, Dy)
+        self.linear_part.weight.requires_grad = learnable
+        self.linear_part.bias.requires_grad = learnable
+        # activation module should be before the linear part (from experiment and neural-ode code
+        # https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L116
+        self.output_layer_model = torch.nn.Sequential(activation_module, self.linear_part)
 
     def forward(self, x):
         return self.output_layer_model(x)
+
+    def is_learnable(self):
+        res = any([self.linear_part.weight.requires_grad, self.linear_part.weight.requires_grad])
+        return res
 
 
 class LearnableOde(torch.nn.Module):

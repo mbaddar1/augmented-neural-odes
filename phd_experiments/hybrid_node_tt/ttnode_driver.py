@@ -9,7 +9,7 @@ import torch.nn
 from torch.utils.data import random_split, DataLoader
 from phd_experiments.hybrid_node_tt.models import LearnableOde, ProjectionModel, OutputModel, OdeSolverModel
 from phd_experiments.hybrid_node_tt.utils import get_dataset, get_solver, get_ode_func, get_tensor_dtype, \
-    get_activation, get_loss_function, get_logger
+    get_activation, get_loss_function, get_logger, assert_models_learnability
 from datetime import datetime
 from tqdm import tqdm
 
@@ -39,9 +39,11 @@ if __name__ == '__main__':
     # load configs
     with open("config.yaml", "r") as f:
         config = yaml.safe_load(f)
-        # get logger
-    logger = get_logger(level=config['train']['log-level'], date_time_format=DATE_TIME_FORMAT, log_format=LOG_FORMAT,
-                        experiments_counter_file_path=EXPERIMENTS_COUNTER_FILE, experiments_log_dir=EXPERIMENTS_LOG_DIR)
+    # get logger
+    logger = get_logger(level=config['train']['log-level'],
+                        date_time_format=DATE_TIME_FORMAT, log_format=LOG_FORMAT,
+                        experiments_counter_file_path=EXPERIMENTS_COUNTER_FILE,
+                        experiments_log_dir=EXPERIMENTS_LOG_DIR)
     # set seed
     seed = config['train']['seed']
     torch.manual_seed(seed)
@@ -78,6 +80,8 @@ if __name__ == '__main__':
     output_activation_model = get_activation(activation_name=config['output']['activation'])
     output_model = OutputModel(Dz=latent_dim, Dy=output_dim, activation_module=output_activation_model,
                                learnable=config['output']['learnable'])
+    # assert learnability to be as configured
+    assert_models_learnability(config=config, projection_model=projection_model, output_model=output_model)
     # get-model
     tensor_dtype = get_tensor_dtype(config=config)
     model = LearnableOde(projection_model=projection_model, ode_solver_model=ode_solver_model,

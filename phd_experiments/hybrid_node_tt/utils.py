@@ -178,9 +178,11 @@ def get_logger(level: str, date_time_format: str, log_format: str, experiments_c
     fh.setLevel(level=log_level_enum)
     fh.setFormatter(fmt=formatter)
     logger.addHandler(fh)
-
-    # sh = logging.StreamHandler()
-    # sh.setFormatter(fmt=formatter)
-    # sh.setLevel(level=log_level_enum)
-    # logger.addHandler(sh)
     return logger
+
+
+def assert_models_learnability(config: dict, projection_model: torch.nn.Module, output_model: torch.nn.Module):
+    assert projection_model.is_learnable() == config['projection']['learnable'], \
+        f"projection-model learnability not as configured"
+    assert output_model.is_learnable() == config['output']['learnable'], \
+        f"output-model learnability not as configured"
