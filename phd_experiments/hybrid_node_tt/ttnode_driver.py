@@ -106,6 +106,7 @@ if __name__ == '__main__':
             loss = residual
             batches_losses.append(residual.item())
             loss.backward()
+            # TODO log A_TT gradient
             optimizer.step()
         if epoch % config['train']['epochs_block'] == 0:
             epoch_no_list.append(epoch)
