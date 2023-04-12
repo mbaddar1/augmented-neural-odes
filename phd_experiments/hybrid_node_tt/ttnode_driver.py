@@ -88,6 +88,7 @@ if __name__ == '__main__':
                          output_model=output_model)
     loss_fn = get_loss_function(loss_name=config['train']['loss'])
     optimizer = torch.optim.SGD(params=model.parameters(), lr=config['train']['lr'])
+    logger.info(f"ODE-FUNC Model = {type(ode_func)} , numel = {ode_func.num_learnable_scalars()}")
     logger.info(f"Running with config : \n "
                 f"{config}"
                 f"\n"
