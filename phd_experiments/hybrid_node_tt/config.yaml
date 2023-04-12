@@ -4,7 +4,7 @@ train:
   N: 4096
   loss: "mse" # FIXME add implementation to code
   device: "cpu"
-  epochs: 10000
+  epochs: 200
   batch_size: 64
   lr: 0.1
   dataset: "boston-housing"
@@ -44,11 +44,11 @@ ode:
     t-span: [ 0,1 ]
     method: "euler"
     euler:
-      step-size: 0.1
+      step-size: 0.5
     rk45:
       rtol: 0.001
   #--
-  model: "nn"
+  model: "tt"
   tt:
     activation: "identity"
     rank: "3" # string , if numeric then fixed else the string = "adaptive"
