@@ -85,10 +85,13 @@ class TensorTrainFixedRank(torch.nn.Module):
         return res_tensor
 
     def gradients(self):
-        pass
+        gradient_list = list(map(lambda core: core.grad, self.core_tensors.values()))
+        return gradient_list
 
     def gradients_sum_norm(self):
-        pass
+        gradient_list = self.gradients()
+        norms_sum = sum(list(map(lambda g: torch.norm(g).item(), gradient_list)))
+        return norms_sum
 
     def num_learnable_scalars(self):
         pass
@@ -115,10 +118,17 @@ class NNodeFunc(torch.nn.Module):
         return self.net(z)
 
     def gradients(self):
-        pass
+        gradient_list = []
+        for layer in self.net:
+            if isinstance(layer, torch.nn.Linear):
+                gradient_list.append(layer.weight.grad)
+                gradient_list.append(layer.bias.grad)
+        return gradient_list
 
     def gradients_sum_norm(self):
-        pass
+        gradient_list = self.gradients()
+        norms_sum = sum(list(map(lambda g: torch.norm(g).item(), gradient_list)))
+        return norms_sum
 
     def num_learnable_scalars(self):
         pass
@@ -151,10 +161,10 @@ class TensorTrainOdeFunc(torch.nn.Module):
         return self.A_TT.is_learnable()
 
     def gradients(self):
-        pass
+        return self.A_TT.gradients()
 
     def gradients_sum_norm(self):
-        pass
+        return self.A_TT.gradients_sum_norm()
 
 
 class ProjectionModel(torch.nn.Module):
