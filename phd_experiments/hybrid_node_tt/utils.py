@@ -165,20 +165,20 @@ def get_logger(level: str, date_time_format: str, log_format: str, experiments_c
     logging.basicConfig(level=log_level_enum, format=log_format)
     logger = logging.getLogger()
     with open(experiments_counter_file_path, "r") as f:
-        experiment_counter = int(f.readline()) + 1
+        experiment_number = int(f.readline()) + 1
         f.close()
     with open(experiments_counter_file_path, "w") as f:
-        f.write(str(experiment_counter))
+        f.write(str(experiment_number))
         f.flush()
         f.close()
-    log_file_path = os.path.join(experiments_log_dir, f"experiment_no_{experiment_counter}_{tstamp}.log")
+    log_file_path = os.path.join(experiments_log_dir, f"experiment_no_{experiment_number}_{tstamp}.log")
     # set handlers
     formatter = logging.Formatter(fmt=log_format)
     fh = logging.FileHandler(filename=log_file_path, mode="w")
     fh.setLevel(level=log_level_enum)
     fh.setFormatter(fmt=formatter)
     logger.addHandler(fh)
-    return logger
+    return logger,experiment_number
 
 
 def assert_models_learnability(config: dict, projection_model: torch.nn.Module, output_model: torch.nn.Module):
