@@ -4,17 +4,17 @@ train:
   N: 4096
   loss: "mse" # FIXME add implementation to code
   device: "cpu"
-  epochs: 200
-  batch_size: 128
-  lr: 0.01
-  dataset: "toy-relu"
+  epochs: 10000
+  batch_size: 256
+  lr: 0.1
+  dataset: "boston-housing"
   ratio: 0.8
   shuffle: True
   regularization:
     method: "lp"
     p: 2
   dtype: "torch.float32"
-  epochs_block: 1
+  epochs_block: 100
 
 init:
   method: "uniform"
@@ -26,7 +26,7 @@ init:
     std: 0.1
 
 container:
-  latent-dim: 6
+  latent-dim: 13 # 13 for boston, 6 for toy-relu
 
 
 projection:
@@ -36,6 +36,8 @@ projection:
 output:
   activation: "identity"
   learnable: False
+  full : 0.1 # if learnable is false, this is the synthetic value used to
+             #  fill the weight matrix for linear-module part
 
 ode:
   solver:
@@ -57,4 +59,4 @@ ode:
       rbf:
         window: 1.0
   nn:
-    hidden-dim: 50
+    hidden-dim: 100
