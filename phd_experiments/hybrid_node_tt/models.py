@@ -84,6 +84,12 @@ class TensorTrainFixedRank(torch.nn.Module):
                                                      f"out_dim : {res_tensor.size()}!={self.out_dim}"
         return res_tensor
 
+    def gradients(self):
+        pass
+
+    def gradients_sum_norm(self):
+        pass
+
     def display_cores(self):
         self.logger.info(f'Cores : \n{self.core_tensors}\n')
 
@@ -104,6 +110,12 @@ class NNodeFunc(torch.nn.Module):
 
     def forward(self, t, z, *args):
         return self.net(z)
+
+    def gradients(self):
+        pass
+
+    def gradients_sum_norm(self):
+        pass
 
 
 class TensorTrainOdeFunc(torch.nn.Module):
@@ -131,6 +143,12 @@ class TensorTrainOdeFunc(torch.nn.Module):
 
     def is_learnable(self):
         return self.A_TT.is_learnable()
+
+    def gradients(self):
+        pass
+
+    def gradients_sum_norm(self):
+        pass
 
 
 class ProjectionModel(torch.nn.Module):
