@@ -94,7 +94,11 @@ class TensorTrainFixedRank(torch.nn.Module):
         return norms_sum
 
     def num_learnable_scalars(self):
-        pass
+        learnable_scalars_numel = 0
+        for core in self.core_tensors.values():
+            counter = core.numel() if core.requires_grad else 0
+            learnable_scalars_numel += counter
+        return learnable_scalars_numel
 
     def display_cores(self):
         self.logger.info(f'Cores : \n{self.core_tensors}\n')
@@ -131,7 +135,14 @@ class NNodeFunc(torch.nn.Module):
         return norms_sum
 
     def num_learnable_scalars(self):
-        pass
+        learnable_numel = 0
+        for layer in self.net:
+            if isinstance(layer, torch.nn.Linear):
+                numel_val = layer.weight.numel() if layer.weight.requires_grad else 0
+                learnable_numel += numel_val
+                numel_val = layer.bias.numel() if layer.bias.requires_grad else 0
+                learnable_numel += numel_val
+        return learnable_numel
 
 
 class TensorTrainOdeFunc(torch.nn.Module):
@@ -165,6 +176,9 @@ class TensorTrainOdeFunc(torch.nn.Module):
 
     def gradients_sum_norm(self):
         return self.A_TT.gradients_sum_norm()
+
+    def num_learnable_scalars(self):
+        return self.A_TT.num_learnable_scalars()
 
 
 class ProjectionModel(torch.nn.Module):
@@ -219,9 +233,6 @@ class OutputModel(torch.nn.Module):
 
     def is_learnable(self):
         return any([self.linear_part.weight.requires_grad, self.linear_part.weight.requires_grad])
-
-    def num_learnable_scalars(self):
-        pass
 
 
 class LearnableOde(torch.nn.Module):
