@@ -5,10 +5,10 @@ train:
   loss: "mse" # FIXME add implementation to code
   device: "cpu"
   epochs: 10000
-  batch_size: 256
+  batch_size: 64
   lr: 0.1
   dataset: "boston-housing"
-  ratio: 0.8
+  ratio: 1.0
   shuffle: True
   regularization:
     method: "lp"
