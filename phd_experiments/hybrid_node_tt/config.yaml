@@ -60,3 +60,5 @@ ode:
         window: 1.0
   nn:
     hidden-dim: 100
+    tt_emulation : True # if True, use nn-trajectory to train A_TT.phi([z,t]) model
+    loss_threshold : 0.01 # loss-threshold for nn-ode-func model to start tt-emulation call
