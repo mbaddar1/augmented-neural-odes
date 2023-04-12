@@ -2,7 +2,6 @@ import os.path
 
 import pandas as pd
 import yaml
-import logging
 import random
 import numpy as np
 import torch.nn
@@ -40,10 +39,10 @@ if __name__ == '__main__':
     with open("config.yaml", "r") as f:
         config = yaml.safe_load(f)
     # get logger
-    logger = get_logger(level=config['train']['log-level'],
-                        date_time_format=DATE_TIME_FORMAT, log_format=LOG_FORMAT,
-                        experiments_counter_file_path=EXPERIMENTS_COUNTER_FILE,
-                        experiments_log_dir=EXPERIMENTS_LOG_DIR)
+    logger, experiment_number = get_logger(level=config['train']['log-level'],
+                                           date_time_format=DATE_TIME_FORMAT, log_format=LOG_FORMAT,
+                                           experiments_counter_file_path=EXPERIMENTS_COUNTER_FILE,
+                                           experiments_log_dir=EXPERIMENTS_LOG_DIR)
     # set seed
     seed = config['train']['seed']
     torch.manual_seed(seed)
@@ -79,7 +78,8 @@ if __name__ == '__main__':
     # get output-model
     output_activation_model = get_activation(activation_name=config['output']['activation'])
     output_model = OutputModel(Dz=latent_dim, Dy=output_dim, activation_module=output_activation_model,
-                               learnable=config['output']['learnable'])
+                               learnable=config['output']['learnable'],
+                               linear_weight_full_value=config['output']['full'])
     # assert learnability to be as configured
     assert_models_learnability(config=config, projection_model=projection_model, output_model=output_model)
     # get-model
@@ -116,3 +116,4 @@ if __name__ == '__main__':
     epochs_losses_df = pd.DataFrame({'epoch': epoch_no_list, 'loss': epoch_avg_loss})
     logger.info(f'\n{epochs_losses_df}\n')
     logger.info(f'Training-Time = {(end_time - start_time).seconds} seconds')
+    logger.info(f'Experiment info is logged under experiment # {experiment_number}')
