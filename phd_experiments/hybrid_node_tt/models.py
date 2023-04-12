@@ -90,6 +90,9 @@ class TensorTrainFixedRank(torch.nn.Module):
     def gradients_sum_norm(self):
         pass
 
+    def num_learnable_scalars(self):
+        pass
+
     def display_cores(self):
         self.logger.info(f'Cores : \n{self.core_tensors}\n')
 
@@ -115,6 +118,9 @@ class NNodeFunc(torch.nn.Module):
         pass
 
     def gradients_sum_norm(self):
+        pass
+
+    def num_learnable_scalars(self):
         pass
 
 
@@ -203,6 +209,9 @@ class OutputModel(torch.nn.Module):
 
     def is_learnable(self):
         return any([self.linear_part.weight.requires_grad, self.linear_part.weight.requires_grad])
+
+    def num_learnable_scalars(self):
+        pass
 
 
 class LearnableOde(torch.nn.Module):
