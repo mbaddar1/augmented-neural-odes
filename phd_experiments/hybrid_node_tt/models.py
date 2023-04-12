@@ -142,8 +142,12 @@ class ProjectionModel(torch.nn.Module):
                           ACTIVATIONS), f"activation module {self.activation_module} " \
                                         f"is not supported, must be one of {ACTIVATIONS}"
         assert Dz >= Dx, f"Dz must be >= Dx , got Dx={Dx} and Dz = {Dz}"
-        self.P = torch.nn.Parameter(torch.distributions.Uniform(unif_low, unif_high).sample(torch.Size([Dz, Dx])),
-                                    requires_grad=learnable)
+        if learnable:
+            self.P = torch.nn.Parameter(torch.distributions.Uniform(unif_low, unif_high).sample(torch.Size([Dz, Dx])),
+                                        requires_grad=True)
+        else:
+            assert Dx == Dz, f"If projection model is not learnable : Dx must ==Dz , got Dx = {Dx} and Dz = {Dz}"
+            self.P = torch.eye(Dz)
 
     def forward(self, x):
         linear_out = torch.einsum(f"bi,ij->bj", x, self.P)
@@ -155,14 +159,23 @@ class ProjectionModel(torch.nn.Module):
 
 
 class OutputModel(torch.nn.Module):
-    def __init__(self, Dz: int, Dy: int, activation_module: torch.nn.Module, learnable: bool):
+    def __init__(self, Dz: int, Dy: int, activation_module: torch.nn.Module, learnable: bool,
+                 linear_weight_full_value: float):
         super().__init__()
         activation_module = activation_module
         assert isinstance(activation_module, ACTIVATIONS), f"activation-module must be one of {ACTIVATIONS}"
         assert Dz >= Dy, f"Dz must be > Dy; got Dz = {Dz} and Dy = {Dy}"
         self.linear_part = torch.nn.Linear(Dz, Dy)
-        self.linear_part.weight.requires_grad = learnable
-        self.linear_part.bias.requires_grad = learnable
+        if not learnable:
+            # set an arbitrary, fixed not-trainable weight
+            weight_size = self.linear_part.weight.size()
+            self.linear_part.weight = torch.nn.Parameter(torch.full(size=weight_size,
+                                                                    fill_value=linear_weight_full_value))
+            self.linear_part.weight.requires_grad = False
+            # set zeros, not trainable bias
+            bias_size = self.linear_part.bias.size()
+            self.linear_part.bias = torch.nn.Parameter(torch.zeros(bias_size))
+            self.linear_part.bias.requires_grad = False
         # activation module should be before the linear part (from experiment and neural-ode code
         # https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L116
         self.output_layer_model = torch.nn.Sequential(activation_module, self.linear_part)
@@ -171,8 +184,7 @@ class OutputModel(torch.nn.Module):
         return self.output_layer_model(x)
 
     def is_learnable(self):
-        res = any([self.linear_part.weight.requires_grad, self.linear_part.weight.requires_grad])
-        return res
+        return any([self.linear_part.weight.requires_grad, self.linear_part.weight.requires_grad])
 
 
 class LearnableOde(torch.nn.Module):
@@ -181,7 +193,6 @@ class LearnableOde(torch.nn.Module):
                  ode_solver_model: torch.nn.Module,
                  output_model: torch.nn.Module):
         super().__init__()
-
         self.complete_model = torch.nn.Sequential(projection_model, ode_solver_model, output_model)
 
     def forward(self, x: torch.Tensor):
