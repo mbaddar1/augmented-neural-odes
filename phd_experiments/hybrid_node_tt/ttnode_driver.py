@@ -58,8 +58,8 @@ if __name__ == '__main__':
     test_dataset = splits[1]
     train_loader = DataLoader(dataset=train_dataset, batch_size=config["train"]["batch_size"],
                               shuffle=config["train"]["shuffle"])
-    test_loader = DataLoader(dataset=test_dataset, batch_size=config["train"]["batch_size"],
-                             shuffle=config["train"]["shuffle"])
+    # test_loader = DataLoader(dataset=test_dataset, batch_size=config["train"]["batch_size"],
+    #                          shuffle=config["train"]["shuffle"])
 
     # get ode-solver-model
     solver = get_solver(config=config)
@@ -106,12 +106,14 @@ if __name__ == '__main__':
             loss = residual
             batches_losses.append(residual.item())
             loss.backward()
-            # TODO log A_TT gradient
             optimizer.step()
         if epoch % config['train']['epochs_block'] == 0:
             epoch_no_list.append(epoch)
             epoch_avg_loss.append(np.nanmean(batches_losses))
-            logger.debug(f"\t epoch # {epoch} : loss = {np.nanmean(batches_losses)}")
+            logger.info(f"\t epoch # {epoch} : loss = {np.nanmean(batches_losses)}")
+            logger.debug(f'\nEpoch # {epoch} =>'
+                         f'Gradients-norm sum of ode_func of type {type(ode_func)} = '
+                         f'{ode_func.gradients_sum_norm()}')
     end_time = datetime.now()
     epochs_losses_df = pd.DataFrame({'epoch': epoch_no_list, 'loss': epoch_avg_loss})
     logger.info(f'\n{epochs_losses_df}\n')
