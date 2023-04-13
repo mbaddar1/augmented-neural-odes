@@ -145,10 +145,10 @@ class TensorTrainFixedRank(torch.nn.Module):
 
 class NNodeFunc(torch.nn.Module):
     # https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L111
-    def __init__(self, latent_dim, nn_hidden_dim):
+    def __init__(self, latent_dim, nn_hidden_dim, emulation):
         super().__init__()
         self.net = torch.nn.Sequential(
-            torch.nn.Linear(latent_dim, nn_hidden_dim),
+            torch.nn.Linear(latent_dim + 1, nn_hidden_dim),  # +1 for time
             torch.nn.Tanh(),
             torch.nn.Linear(nn_hidden_dim, latent_dim),
         )
@@ -156,9 +156,17 @@ class NNodeFunc(torch.nn.Module):
             if isinstance(m, torch.nn.Linear):
                 torch.nn.init.normal_(m.weight, mean=0, std=0.1)
                 torch.nn.init.constant_(m.bias, val=0)
+        self.emulation = emulation
+        self.dzdt_emu = []
+
+        self.z_emu = []
+        self.t_emu = []
 
     def forward(self, t, z, *args):
-        return self.net(z)
+        b = z.size()[0]
+        t_tensor = torch.tensor([t]).repeat([b, 1])
+        z_aug = torch.cat([z, t_tensor], dim=1)
+        return self.net(z_aug)
 
     def gradients(self):
         gradient_list = []

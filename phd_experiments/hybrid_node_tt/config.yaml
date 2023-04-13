@@ -4,7 +4,7 @@ train:
   N: 1024
   loss: "mse" # FIXME add implementation to code
   device: "cpu"
-  epochs: 200
+  epochs: 10000
   batch_size: 64
   lr: 0.1
   dataset: "boston-housing"
@@ -14,8 +14,8 @@ train:
     method: "lp"
     p: 2
   dtype: "torch.float32"
-  epochs_block: 1
-  models_dir : "/home/mbaddar/phd/augmented-neural-odes/phd_experiments/hybrid_node_tt/ode_func_models"
+  epochs_block: 100
+  models_dir: "/home/mbaddar/phd/augmented-neural-odes/phd_experiments/hybrid_node_tt/ode_func_models"
 
 init:
   method: "uniform"
@@ -49,7 +49,8 @@ ode:
     rk45:
       rtol: 0.001
   #--
-  model: "tt"
+  emulation: True
+  model: "nn"
   tt:
     activation: "identity"
     rank: "3" # string , if numeric then fixed else the string = "adaptive"
@@ -61,5 +62,5 @@ ode:
         window: 1.0
   nn:
     hidden-dim: 100
-    tt_emulation: True # if True, use nn-trajectory to train A_TT.phi([z,t]) model
+    save: True # save model
     loss_threshold: 0.01 # loss-threshold for nn-ode-func model to start tt-emulation call

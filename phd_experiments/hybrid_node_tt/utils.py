@@ -124,7 +124,8 @@ def get_ode_func(config: dict):
                                   unif_high=config["init"][init_method]["high"],
                                   tt_rank=tt_rank, poly_deg=config['ode']['tt']['basis']['poly']['deg'])
     elif config["ode"]["model"] == "nn":
-        return NNodeFunc(latent_dim=config["container"]["latent-dim"], nn_hidden_dim=config["ode"]["nn"]["hidden-dim"])
+        return NNodeFunc(latent_dim=config["container"]["latent-dim"], nn_hidden_dim=config["ode"]["nn"]["hidden-dim"],
+                         emulation=False)
     else:
         raise ValueError(f"""Unsupported ode-func model {config["ode-func"]["model"]}""")
 
@@ -178,7 +179,7 @@ def get_logger(level: str, date_time_format: str, log_format: str, experiments_c
     fh.setLevel(level=log_level_enum)
     fh.setFormatter(fmt=formatter)
     logger.addHandler(fh)
-    return logger,experiment_number
+    return logger, experiment_number
 
 
 def assert_models_learnability(config: dict, projection_model: torch.nn.Module, output_model: torch.nn.Module):
