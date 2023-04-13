@@ -112,16 +112,16 @@ if __name__ == '__main__':
     epochs_emu = 500
     N = len(ode_func.dzdt_emu)
     Dz_aug = 14
-    ode_model_emu = TensorTrainOdeFunc(Dz=13, basis_model="poly", unif_low=-0.5, unif_high=0.5, tt_rank=3,
-                                       poly_deg=4)
+    ode_model_emu = TensorTrainOdeFunc(Dz=13, basis_model="poly", unif_low=-0.05, unif_high=0.05, tt_rank=3,
+                                       poly_deg=5)
     # ode_model_emu = NNodeFunc(latent_dim=13,nn_hidden_dim=100,emulation=False)
-    emu_optimizer = torch.optim.SGD(params=ode_model_emu.parameters(), lr=config['train']['lr'])
+    emu_optimizer = torch.optim.SGD(params=ode_model_emu.parameters(), lr=1e-3)
     for epoch_idx in tqdm(range(epochs_emu), desc="epochs"):
         batches_losses = []
         for i in range(N):  # len batches
             emu_optimizer.zero_grad()
             z_aug = ode_func.z_aug_emu[i].detach()
-            dzdt_true = ode_func.dzdt_emu[i].detach()
+            dzdt_true = ode_func.dzdt_emu[i].detach()[:, 0]
             z_batch = z_aug[:, :(Dz_aug - 1)]
             t = z_aug[:, -1].detach().numpy()[0]
             dzdt_hat = ode_model_emu(t, z_batch)

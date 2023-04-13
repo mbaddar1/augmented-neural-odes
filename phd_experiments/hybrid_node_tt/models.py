@@ -51,17 +51,17 @@ class TensorTrainFixedRank(torch.nn.Module):
         tensor_uniform = torch.distributions.Uniform(low=unif_low, high=unif_high)
         # https://pytorch.org/docs/stable/generated/torch.nn.ParameterDict.html
         self.core_tensors = torch.nn.ParameterDict(
-            {'G0': torch.nn.Parameter(tensor_uniform.sample(torch.Size([dims[1], fixed_rank])))})
-        self.out_dim = dims[0]
-        for i in range(2, order - 1):
-            self.core_tensors[f"G{i - 1}"] = torch.nn.Parameter(
+            {'G0': torch.nn.Parameter(tensor_uniform.sample(torch.Size([dims[0], fixed_rank])))})
+        # self.out_dim = dims[0]
+        for i in range(1, order - 1):
+            self.core_tensors[f"G{i}"] = torch.nn.Parameter(
                 tensor_uniform.sample(sample_shape=torch.Size([fixed_rank, dims[i], fixed_rank])))
 
-        self.core_tensors[f"G{order - 2}"] = torch.nn.Parameter(
-            tensor_uniform.sample(sample_shape=torch.Size([fixed_rank, dims[order - 1], self.out_dim])),
+        self.core_tensors[f"G{order - 1}"] = torch.nn.Parameter(
+            tensor_uniform.sample(sample_shape=torch.Size([fixed_rank, dims[order - 1]])),
             requires_grad=requires_grad)
-        assert len(self.core_tensors) == order - 1, \
-            f"# core tensors should == order-1 : {len(self.core_tensors)} != {order - 1}"
+        assert len(self.core_tensors) == order, \
+            f"# core tensors should == order-1 : {len(self.core_tensors)} != {order}"
 
         # FIXME register hooks
         for core in self.core_tensors.values():
@@ -87,7 +87,6 @@ class TensorTrainFixedRank(torch.nn.Module):
         return res
 
     def forward(self, t: float, z: torch.Tensor) -> torch.Tensor:
-        core_activation = torch.nn.Tanh()
         # https://www.sciencedirect.com/science/article/abs/pii/S0893608021003415
         Phi = Basis.poly(z=z, t=t, poly_deg=self.poly_deg)
         assert len(self.core_tensors) == len(
@@ -96,18 +95,18 @@ class TensorTrainFixedRank(torch.nn.Module):
         n_cores = len(self.core_tensors)
         # first core
         core = self.core_tensors[f"G{0}"]
-        res_tensor = torch.einsum("ij,bi->bj", core_activation(core), Phi[0])
+        res_tensor = torch.einsum("ij,bi->bj", core, Phi[0])
         # middle cores
         for i in range(1, len(self.core_tensors) - 1):
             core = self.core_tensors[f"G{i}"]
-            core_basis = torch.einsum("ijk,bj->bik", core_activation(core), Phi[i])
+            core_basis = torch.einsum("ijk,bj->bik", core, Phi[i])
             res_tensor = torch.einsum("bi,bik->bk", res_tensor, core_basis)
         # last core
         core = self.core_tensors[f"G{n_cores - 1}"]
-        core_basis = torch.einsum("ijl,bj->bil", core_activation(core), Phi[n_cores - 1])
-        res_tensor = torch.einsum("bi,bil->bl", res_tensor, core_basis)
-        assert res_tensor.size()[1] == self.out_dim, f"output tensor size must = " \
-                                                     f"out_dim : {res_tensor.size()}!={self.out_dim}"
+        core_basis = torch.einsum("ji,bi->bj", core, Phi[n_cores - 1])
+        res_tensor = torch.einsum("bi,bi->b", res_tensor, core_basis)
+        # assert res_tensor.size()[1] == self.out_dim, f"output tensor size must = " \
+        #                                              f"out_dim : {res_tensor.size()}!={self.out_dim}"
         return res_tensor
 
     @staticmethod
@@ -221,7 +220,8 @@ class TensorTrainOdeFunc(torch.nn.Module):
         assert isinstance(poly_deg, int), f"deg must be int, got {type(self.deg)}"
         assert isinstance(tt_rank, int), f"Supporting fixed ranks only"
         assert basis_model == "poly", f"Supporting only poly basis"
-        dims_A = [Dz] + [poly_deg + 1] * (Dz + 1)  # deg+1 as polynomial start from z^0 , z^1 , .. z^deg
+        # dims_A = [Dz] + [poly_deg + 1] * (Dz + 1)  # deg+1 as polynomial start from z^0 , z^1 , .. z^deg
+        dims_A = [poly_deg + 1] * (Dz + 1)
         # Dz+1 to append time
         self.order = len(dims_A)
         self.A_TT = TensorTrainFixedRank(dims=dims_A, fixed_rank=tt_rank, unif_low=unif_low, unif_high=unif_high,
@@ -232,8 +232,7 @@ class TensorTrainOdeFunc(torch.nn.Module):
         dzdt = A.Phi([z,t])
         """
         dzdt = self.A_TT(t, z)
-        # dzdt.register_hook(TensorTrainOdeFunc.dzdt_hook)
-        return torch.nn.Tanh()(dzdt)
+        return dzdt
 
     @staticmethod
     def dzdt_hook(grad):
