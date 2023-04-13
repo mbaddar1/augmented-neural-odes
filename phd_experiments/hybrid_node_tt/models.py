@@ -158,15 +158,17 @@ class NNodeFunc(torch.nn.Module):
                 torch.nn.init.constant_(m.bias, val=0)
         self.emulation = emulation
         self.dzdt_emu = []
-
-        self.z_emu = []
-        self.t_emu = []
+        self.z_aug_emu = []
 
     def forward(self, t, z, *args):
         b = z.size()[0]
         t_tensor = torch.tensor([t]).repeat([b, 1])
         z_aug = torch.cat([z, t_tensor], dim=1)
-        return self.net(z_aug)
+        dzdt = self.net(z_aug)
+        if self.emulation:
+            self.dzdt_emu.append(dzdt)
+            self.z_aug_emu.append(z_aug)
+        return dzdt
 
     def gradients(self):
         gradient_list = []
