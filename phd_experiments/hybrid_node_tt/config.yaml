@@ -4,7 +4,7 @@ train:
   N: 1024
   loss: "mse" # FIXME add implementation to code
   device: "cpu"
-  epochs: 10000
+  epochs: 1
   batch_size: 64
   lr: 0.1
   dataset: "boston-housing"
@@ -63,4 +63,3 @@ ode:
   nn:
     hidden-dim: 100
     save: True # save model
-    loss_threshold: 0.01 # loss-threshold for nn-ode-func model to start tt-emulation call

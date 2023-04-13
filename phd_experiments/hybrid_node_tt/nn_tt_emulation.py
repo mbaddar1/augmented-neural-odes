@@ -6,17 +6,30 @@ import pandas as pd
 import torch
 import yaml
 from torch.utils.data import random_split, DataLoader
-
-from phd_experiments.hybrid_node_tt.models import ProjectionModel, OdeSolverModel, OutputModel, LearnableOde
-from phd_experiments.hybrid_node_tt.ttnode_driver import PANDAS_MAX_DISPLAY_ROW
+from tqdm import tqdm
+from phd_experiments.hybrid_node_tt.models import ProjectionModel, OdeSolverModel, OutputModel, LearnableOde, NNodeFunc, \
+    TensorTrainOdeFunc
 from phd_experiments.hybrid_node_tt.utils import get_activation, get_logger, get_dataset, get_solver, get_ode_func, \
     assert_models_learnability, get_tensor_dtype, get_loss_function
 
 EXPERIMENTS_LOG_DIR = "./experiments_log"
 EXPERIMENTS_COUNTER_FILE = "./experiment_counter.txt"
-PANDAS_MAX_DISPLAY_ROW = 1000
 LOG_FORMAT = "[%(filename)s:%(lineno)s - %(funcName)10s()] %(asctime)s %(levelname)s %(message)s"
 DATE_TIME_FORMAT = "%Y-%m-%d:%H:%M:%S"
+PANDAS_MAX_DISPLAY_ROW = 1000
+
+
+class TrajectorySynthDataSet(torch.utils.data.Dataset):
+    def __init__(self, X, Y):
+        self.X = X
+        self.Y = Y
+
+    def __getitem__(self, index):
+        return self.X[index], self.Y[index]
+
+    def __len__(self):
+        return self.X.size()[0]
+
 
 if __name__ == '__main__':
     tstamp = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
@@ -55,7 +68,9 @@ if __name__ == '__main__':
     # FIXME remove and test Dz>Dx
     assert latent_dim == input_dim, "latent-dim must == input-dim, for now"
     # ode_func = get_ode_func(config=config)
-    ode_func = torch.load("ode_func_models/ode_func_nn_experiment_no_271_2023-04-13-20:38:00.model")
+    ode_func = torch.load("ode_func_models/ode_func_nn_experiment_no_297_2023-04-13-22:23:33.model")
+    assert isinstance(ode_func, NNodeFunc)
+    ode_func.emulation = True
     ode_solver_model = OdeSolverModel(solver=solver, ode_func=ode_func, t_span=config['ode']['solver']['t-span'])
     # get projection-model
     projection_model_activation = get_activation(activation_name=config['projection']['activation'])
@@ -83,3 +98,46 @@ if __name__ == '__main__':
                 f"\n"
                 f"============="
                 f"\n")
+    logger.info("Generating trajectory dzdt=NN([z,t]) data with trained nn-ode-func")
+    for epoch in tqdm(range(config['train']['epochs']), desc="epochs"):
+        batches_losses = []
+        for i, (X, y) in enumerate(train_loader):
+            optimizer.zero_grad()
+            y_hat = model(X)
+            loss_val = loss_fn(y_hat, y)
+            logger.info(f'Epoch # {epoch} - Batch # {i} = {loss_val}')
+
+    logger.info("============================================")
+    logger.info("Emulation mode : training tt-ode-func over generated trajectory")
+    epochs_emu = 500
+    N = len(ode_func.dzdt_emu)
+    Dz_aug = 14
+    # ode_model_emu = TensorTrainOdeFunc(Dz=13, basis_model="poly", unif_low=-0.5, unif_high=0.5, tt_rank=3,
+    #                                    poly_deg=4)
+    ode_model_emu = NNodeFunc(latent_dim=13,nn_hidden_dim=100,emulation=False)
+    emu_optimizer = torch.optim.SGD(params=ode_model_emu.parameters(), lr=config['train']['lr'])
+    for epoch_idx in tqdm(range(epochs_emu), desc="epochs"):
+        batches_losses = []
+        for i in range(N):  # len batches
+            emu_optimizer.zero_grad()
+            z_aug = ode_func.z_aug_emu[i].detach()
+            dzdt_true = ode_func.dzdt_emu[i].detach()
+            z_batch = z_aug[:, :(Dz_aug - 1)]
+            t = z_aug[:, -1].detach().numpy()[0]
+            dzdt_hat = ode_model_emu(t, z_batch)
+            loss = loss_fn(dzdt_hat, dzdt_true)
+            batches_losses.append(loss.item())
+            loss.backward()
+            emu_optimizer.step()
+        if epoch_idx % 1 == 0:
+            logger.info(f'Emulation - Epoch # {epoch_idx} - loss => {np.nanmean(batches_losses)}')
+
+    # TODO notes, review
+    # 1. tt-ode-func for this training also has the problem of very small gradients
+    # TODO
+    # 1. experiment different basis functions (Non-linear regression)
+    # http://www.cs.toronto.edu/~mbrubake/teaching/C11/Handouts/NonlinearRegression.pdf
+    # https://cedar.buffalo.edu/~srihari/CSE574/Chap6/Chap6.2-RadialBasisFunctions.pdf
+    # http://mccormickml.com/2013/08/15/radial-basis-function-network-rbfn-tutorial/
+    # https://github.com/JeremyLinux/PyTorch-Radial-Basis-Function-Layer
+    # https://github.com/JeremyLinux/PyTorch-Radial-Basis-Function-Layer/blob/master/Torch%20RBF/torch_rbf.py

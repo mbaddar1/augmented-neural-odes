@@ -166,8 +166,8 @@ class NNodeFunc(torch.nn.Module):
         z_aug = torch.cat([z, t_tensor], dim=1)
         dzdt = self.net(z_aug)
         if self.emulation:
-            self.dzdt_emu.append(dzdt)
-            self.z_aug_emu.append(z_aug)
+            self.dzdt_emu.append(dzdt.clone())
+            self.z_aug_emu.append(z_aug.clone())
         return dzdt
 
     def gradients(self):
@@ -232,7 +232,7 @@ class TensorTrainOdeFunc(torch.nn.Module):
         dzdt = A.Phi([z,t])
         """
         dzdt = self.A_TT(t, z)
-        dzdt.register_hook(TensorTrainOdeFunc.dzdt_hook)
+        # dzdt.register_hook(TensorTrainOdeFunc.dzdt_hook)
         return torch.nn.Tanh()(dzdt)
 
     @staticmethod
