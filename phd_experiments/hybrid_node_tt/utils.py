@@ -106,7 +106,7 @@ def get_dataset(config: dict) -> CustomDataSet:
 def get_solver(config: dict):
     if config["ode"]["solver"]["method"] == "euler":
         return TorchEulerSolver(step_size=config["ode"]["solver"]["euler"]['step-size'])
-    elif config["solver"]["method"] == "rk45":
+    elif config["ode"]["solver"]["method"] == "rk45":
         return TorchRK45(device=torch.device(config["train"]["device"]), tensor_dtype=torch.float32)
     else:
         raise ValueError(f"Unsupported solver type {config['solver']['method']}")

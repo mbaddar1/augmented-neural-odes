@@ -7,7 +7,8 @@ import random
 import numpy as np
 import torch.nn
 from torch.utils.data import random_split, DataLoader
-from phd_experiments.hybrid_node_tt.models import LearnableOde, ProjectionModel, OutputModel, OdeSolverModel
+from phd_experiments.hybrid_node_tt.models import LearnableOde, ProjectionModel, OutputModel, OdeSolverModel, NNodeFunc, \
+    TensorTrainOdeFunc
 from phd_experiments.hybrid_node_tt.utils import get_dataset, get_solver, get_ode_func, get_tensor_dtype, \
     get_activation, get_loss_function, get_logger, assert_models_learnability
 from datetime import datetime
@@ -39,7 +40,18 @@ def y_hat_backward_hook(grad):
     pass
 
 
+def save_ode_func_model(ode_func_model: torch.nn.Module, experiment_number: int, tstamp: str, model_dir: str):
+    model_type = None
+    if isinstance(ode_func_model, NNodeFunc):
+        model_type = "ode_func_nn"
+    elif isinstance(ode_func_model, TensorTrainOdeFunc):
+        model_type = "ode_func_tt"
+    model_file_path = os.path.join(model_dir, f"{model_type}_experiment_no_{experiment_number}_{tstamp}.model")
+    torch.save(ode_func_model, model_file_path)
+
+
 if __name__ == '__main__':
+    tstamp = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
     # set pandas config
     pd.set_option('display.max_rows', PANDAS_MAX_DISPLAY_ROW)
     # load configs
@@ -94,7 +106,7 @@ if __name__ == '__main__':
     model = LearnableOde(projection_model=projection_model, ode_solver_model=ode_solver_model,
                          output_model=output_model)
     loss_fn = get_loss_function(loss_name=config['train']['loss'])
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=config['train']['lr'])
+    optimizer = torch.optim.SGD(params=model.parameters(), lr=config['train']['lr'])
     logger.info(f"ODE-FUNC Model = {type(ode_func)} , learnable-numel = {ode_func.num_learnable_scalars()}")
     logger.info(f"Running with config : \n "
                 f"{config}"
@@ -111,6 +123,7 @@ if __name__ == '__main__':
         for i, (X, y) in enumerate(train_loader):
             optimizer.zero_grad()
             y_hat = model(X)
+            # y_hat = torch.nan_to_num(input=y_hat, nan=0.01)
             y_hat.register_hook(y_hat_backward_hook)
             residual = loss_fn(y_hat, y)
             loss = residual
@@ -122,16 +135,22 @@ if __name__ == '__main__':
                 ode_func_params_vec_new = ode_func.flatten().clone()
                 delta_ode_func_params_vec = ode_func_params_vec_new - ode_func_params_vec
                 ode_func_params_vec = ode_func_params_vec_new
+            # logger.debug(f'Epoch {epoch}, batch {i} => loss = {loss.item()}')
             optimizer.step()
         if epoch % config['train']['epochs_block'] == 0:
             epoch_no_list.append(epoch)
             epoch_avg_loss.append(np.nanmean(batches_losses))
             logger.info(f"\t epoch # {epoch} : loss = {np.nanmean(batches_losses)}")
-            logger.debug(f'\nEpoch # {epoch} =>'
-                         f'Gradients-norm sum of ode_func of type {type(ode_func)} = '
-                         f'{ode_func.gradients_sum_norm()}')
+            # logger.debug(f'\nEpoch # {epoch} =>'
+            #              f'Gradients-norm sum of ode_func of type {type(ode_func)} = '
+            #              f'{ode_func.gradients_sum_norm()}')
     end_time = datetime.now()
     epochs_losses_df = pd.DataFrame({'epoch': epoch_no_list, 'loss': epoch_avg_loss})
     logger.info(f'\n{epochs_losses_df}\n')
     logger.info(f'Training-Time = {(end_time - start_time).seconds} seconds')
     logger.info(f'Experiment info is logged under experiment # {experiment_number}')
+
+    ###
+    if config['ode']['model'] == "nn" and config['ode']['nn']['tt_emulation']:
+        save_ode_func_model(ode_func_model=ode_func, experiment_number=experiment_number, tstamp=tstamp,
+                            model_dir=config["train"]["models_dir"])

@@ -6,7 +6,7 @@ from phd_experiments.datasets.custom_dataset import CustomDataSet
 
 class ToyRelu(CustomDataSet):
 
-    def __init__(self, N, input_dim=6, out_dim=1):
+    def __init__(self, N, input_dim=2, out_dim=1):
         self.N = N
         self.input_dim = input_dim
         self.output_dim = out_dim

@@ -1,12 +1,12 @@
 train:
   log-level: "debug"
   seed: 42
-  N: 4096
+  N: 1024
   loss: "mse" # FIXME add implementation to code
   device: "cpu"
-  epochs: 500
-  batch_size: 128
-  lr: 0.0001
+  epochs: 10000
+  batch_size: 64
+  lr: 0.1
   dataset: "boston-housing"
   ratio: 0.8
   shuffle: True
@@ -15,18 +15,19 @@ train:
     p: 2
   dtype: "torch.float32"
   epochs_block: 10
+  models_dir : "/home/mbaddar/phd/augmented-neural-odes/phd_experiments/hybrid_node_tt/ode_func_models"
 
 init:
   method: "uniform"
   uniform:
-    low: -0.001
-    high: 0.001
+    low: -0.5
+    high: 0.5
   normal:
     mean: 0.0
     std: 0.1
 
 container:
-  latent-dim: 13 # 13 for boston, 6 for toy-relu, 2 for toy-ode
+  latent-dim: 13 # 13 for boston, 2 for toy-relu, 2 for toy-ode
 
 
 projection:
@@ -42,15 +43,15 @@ output:
 ode:
   solver:
     t-span: [ 0,1.0 ]
-    method: "euler"
+    method: "rk45"
     euler:
-      step-size: 1.0
+      step-size: 0.1
     rk45:
       rtol: 0.001
   #--
-  model: "tt"
+  model: "nn"
   tt:
-    activation: "identity"
+    activation: "sigmoid"
     rank: "3" # string , if numeric then fixed else the string = "adaptive"
     basis:
       model: "poly"

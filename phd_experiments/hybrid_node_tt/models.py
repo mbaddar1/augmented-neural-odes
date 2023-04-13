@@ -209,7 +209,6 @@ class TensorTrainOdeFunc(torch.nn.Module):
         assert isinstance(poly_deg, int), f"deg must be int, got {type(self.deg)}"
         assert isinstance(tt_rank, int), f"Supporting fixed ranks only"
         assert basis_model == "poly", f"Supporting only poly basis"
-
         dims_A = [Dz] + [poly_deg + 1] * (Dz + 1)  # deg+1 as polynomial start from z^0 , z^1 , .. z^deg
         # Dz+1 to append time
         self.order = len(dims_A)
@@ -222,7 +221,7 @@ class TensorTrainOdeFunc(torch.nn.Module):
         """
         dzdt = self.A_TT(t, z)
         dzdt.register_hook(TensorTrainOdeFunc.dzdt_hook)
-        return dzdt
+        return torch.nn.Tanh()(dzdt)
 
     @staticmethod
     def dzdt_hook(grad):

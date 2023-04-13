@@ -1,0 +1,2010 @@
+[ttnode_driver.py:110 -   <module>()] 2023-04-13 20:38:00,282 INFO ODE-FUNC Model = <class 'phd_experiments.hybrid_node_tt.models.NNodeFunc'> , learnable-numel = 2713
+[ttnode_driver.py:111 -   <module>()] 2023-04-13 20:38:00,282 INFO Running with config : 
+ {'train': {'log-level': 'debug', 'seed': 42, 'N': 1024, 'loss': 'mse', 'device': 'cpu', 'epochs': 10000, 'batch_size': 64, 'lr': 0.1, 'dataset': 'boston-housing', 'ratio': 0.8, 'shuffle': True, 'regularization': {'method': 'lp', 'p': 2}, 'dtype': 'torch.float32', 'epochs_block': 10, 'models_dir': '/home/mbaddar/phd/augmented-neural-odes/phd_experiments/hybrid_node_tt/ode_func_models'}, 'init': {'method': 'uniform', 'uniform': {'low': -0.5, 'high': 0.5}, 'normal': {'mean': 0.0, 'std': 0.1}}, 'container': {'latent-dim': 13}, 'projection': {'learnable': False, 'activation': 'identity'}, 'output': {'activation': 'identity', 'learnable': False, 'full': 0.1}, 'ode': {'solver': {'t-span': [0, 1.0], 'method': 'rk45', 'euler': {'step-size': 0.1}, 'rk45': {'rtol': 0.001}}, 'model': 'nn', 'tt': {'activation': 'sigmoid', 'rank': '3', 'basis': {'model': 'poly', 'poly': {'deg': 4}, 'rbf': {'window': 1.0}}}, 'nn': {'hidden-dim': 100, 'tt_emulation': True, 'loss_threshold': 0.01}}}
+=============
+
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:01,903 INFO 	 epoch # 0 : loss = 0.8826743960380554
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:02,434 INFO 	 epoch # 10 : loss = 0.23851233082158224
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:02,959 INFO 	 epoch # 20 : loss = 0.23172419837542943
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:03,474 INFO 	 epoch # 30 : loss = 0.23736026670251573
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:03,996 INFO 	 epoch # 40 : loss = 0.20398996131760733
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:04,521 INFO 	 epoch # 50 : loss = 0.2001775758607047
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:05,046 INFO 	 epoch # 60 : loss = 0.17886867693492345
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:05,589 INFO 	 epoch # 70 : loss = 0.18789425172976085
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:06,204 INFO 	 epoch # 80 : loss = 0.1380956619977951
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:06,853 INFO 	 epoch # 90 : loss = 0.14624256321362086
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:07,519 INFO 	 epoch # 100 : loss = 0.12179076192634446
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:08,187 INFO 	 epoch # 110 : loss = 0.12248789306197848
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:08,844 INFO 	 epoch # 120 : loss = 0.10793979998145785
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:09,502 INFO 	 epoch # 130 : loss = 0.10688111239245959
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:10,165 INFO 	 epoch # 140 : loss = 0.10425667677606855
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:10,806 INFO 	 epoch # 150 : loss = 0.09529027981417519
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:11,456 INFO 	 epoch # 160 : loss = 0.09209621963756424
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:12,089 INFO 	 epoch # 170 : loss = 0.11216646220002856
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:12,740 INFO 	 epoch # 180 : loss = 0.09086145034858159
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:13,408 INFO 	 epoch # 190 : loss = 0.08293116624866213
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:14,054 INFO 	 epoch # 200 : loss = 0.08114567026495934
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:14,727 INFO 	 epoch # 210 : loss = 0.08060258254408836
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:15,370 INFO 	 epoch # 220 : loss = 0.08490667385714394
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:16,007 INFO 	 epoch # 230 : loss = 0.07188364224774497
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:16,675 INFO 	 epoch # 240 : loss = 0.07300147201333727
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:17,320 INFO 	 epoch # 250 : loss = 0.07167506430830274
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:17,975 INFO 	 epoch # 260 : loss = 0.07743379420467786
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:18,624 INFO 	 epoch # 270 : loss = 0.07352851331233978
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:19,282 INFO 	 epoch # 280 : loss = 0.06478328683546611
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:19,931 INFO 	 epoch # 290 : loss = 0.05924673218812261
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:20,580 INFO 	 epoch # 300 : loss = 0.0584329433207001
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:21,233 INFO 	 epoch # 310 : loss = 0.05892299807497433
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:21,884 INFO 	 epoch # 320 : loss = 0.0639225569154535
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:22,550 INFO 	 epoch # 330 : loss = 0.05150280147790909
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:23,220 INFO 	 epoch # 340 : loss = 0.05380958691239357
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:23,879 INFO 	 epoch # 350 : loss = 0.049318544034446986
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:24,554 INFO 	 epoch # 360 : loss = 0.054170913994312286
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:25,230 INFO 	 epoch # 370 : loss = 0.05200253214154925
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:25,897 INFO 	 epoch # 380 : loss = 0.047674446765865595
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:26,601 INFO 	 epoch # 390 : loss = 0.04938054457306862
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:27,305 INFO 	 epoch # 400 : loss = 0.04569949954748154
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:28,031 INFO 	 epoch # 410 : loss = 0.044704372329371314
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:28,778 INFO 	 epoch # 420 : loss = 0.045709291739123206
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:29,492 INFO 	 epoch # 430 : loss = 0.04616568397198405
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:30,218 INFO 	 epoch # 440 : loss = 0.04614204966596195
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:30,939 INFO 	 epoch # 450 : loss = 0.04782540936555181
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:31,674 INFO 	 epoch # 460 : loss = 0.041944248867886405
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:32,425 INFO 	 epoch # 470 : loss = 0.0437914819589683
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:33,174 INFO 	 epoch # 480 : loss = 0.04117683693766594
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:33,915 INFO 	 epoch # 490 : loss = 0.039244619863373895
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:34,649 INFO 	 epoch # 500 : loss = 0.04008562011378152
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:35,377 INFO 	 epoch # 510 : loss = 0.03792908335370677
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:36,120 INFO 	 epoch # 520 : loss = 0.038924613169261386
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:36,873 INFO 	 epoch # 530 : loss = 0.041887225583195686
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:37,633 INFO 	 epoch # 540 : loss = 0.03649972592081342
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:38,386 INFO 	 epoch # 550 : loss = 0.035538453076566966
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:39,148 INFO 	 epoch # 560 : loss = 0.03765539558870452
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:39,886 INFO 	 epoch # 570 : loss = 0.036471281732831685
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:40,644 INFO 	 epoch # 580 : loss = 0.03439128398895264
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:41,393 INFO 	 epoch # 590 : loss = 0.03173485291855676
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:42,166 INFO 	 epoch # 600 : loss = 0.03219833331448691
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:42,906 INFO 	 epoch # 610 : loss = 0.03284397215715477
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:43,670 INFO 	 epoch # 620 : loss = 0.03521990776062012
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:44,423 INFO 	 epoch # 630 : loss = 0.03189662950379508
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:45,183 INFO 	 epoch # 640 : loss = 0.033735139561550956
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:45,940 INFO 	 epoch # 650 : loss = 0.029446414006607875
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:46,713 INFO 	 epoch # 660 : loss = 0.030739382973739078
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:47,497 INFO 	 epoch # 670 : loss = 0.028275456811700548
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:48,280 INFO 	 epoch # 680 : loss = 0.028209139992083822
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:49,054 INFO 	 epoch # 690 : loss = 0.027013811814997877
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:49,822 INFO 	 epoch # 700 : loss = 0.026804926139967784
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:50,576 INFO 	 epoch # 710 : loss = 0.02940307916807277
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:51,365 INFO 	 epoch # 720 : loss = 0.027504015980022296
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:52,137 INFO 	 epoch # 730 : loss = 0.027478359107460295
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:52,916 INFO 	 epoch # 740 : loss = 0.027336277200707366
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:53,743 INFO 	 epoch # 750 : loss = 0.02481207943388394
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:54,510 INFO 	 epoch # 760 : loss = 0.02431095005678279
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:55,307 INFO 	 epoch # 770 : loss = 0.026297852663057193
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:56,072 INFO 	 epoch # 780 : loss = 0.023534229823521206
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:56,847 INFO 	 epoch # 790 : loss = 0.024307777040771077
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:57,623 INFO 	 epoch # 800 : loss = 0.024564310110041072
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:58,391 INFO 	 epoch # 810 : loss = 0.02398510224052838
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:59,173 INFO 	 epoch # 820 : loss = 0.022646276546376094
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:38:59,950 INFO 	 epoch # 830 : loss = 0.02216645037489278
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:00,736 INFO 	 epoch # 840 : loss = 0.02347314078360796
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:01,498 INFO 	 epoch # 850 : loss = 0.021315829030105045
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:02,298 INFO 	 epoch # 860 : loss = 0.021479897733245577
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:03,066 INFO 	 epoch # 870 : loss = 0.02109079116157123
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:03,838 INFO 	 epoch # 880 : loss = 0.019751622740711485
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:04,601 INFO 	 epoch # 890 : loss = 0.019208727138383046
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:05,374 INFO 	 epoch # 900 : loss = 0.021653778851032257
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:06,138 INFO 	 epoch # 910 : loss = 0.022578956559300423
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:06,910 INFO 	 epoch # 920 : loss = 0.01918220559933356
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:07,684 INFO 	 epoch # 930 : loss = 0.018812044390610287
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:08,453 INFO 	 epoch # 940 : loss = 0.01812311009104763
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:09,235 INFO 	 epoch # 950 : loss = 0.017810296533363208
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:10,010 INFO 	 epoch # 960 : loss = 0.018844269881291047
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:10,800 INFO 	 epoch # 970 : loss = 0.01856133128915514
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:11,575 INFO 	 epoch # 980 : loss = 0.017141684091516902
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:12,369 INFO 	 epoch # 990 : loss = 0.017786542485867227
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:13,180 INFO 	 epoch # 1000 : loss = 0.018068724711026465
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:13,962 INFO 	 epoch # 1010 : loss = 0.01526720096756305
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:14,768 INFO 	 epoch # 1020 : loss = 0.017204930473651205
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:15,569 INFO 	 epoch # 1030 : loss = 0.015346184372901917
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:16,405 INFO 	 epoch # 1040 : loss = 0.014964796602725983
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:17,219 INFO 	 epoch # 1050 : loss = 0.014807043996240412
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:18,047 INFO 	 epoch # 1060 : loss = 0.015223377517291478
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:18,882 INFO 	 epoch # 1070 : loss = 0.01662351350699152
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:19,695 INFO 	 epoch # 1080 : loss = 0.013598487313304628
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:20,491 INFO 	 epoch # 1090 : loss = 0.015328157027917249
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:21,298 INFO 	 epoch # 1100 : loss = 0.013778863740818841
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:22,068 INFO 	 epoch # 1110 : loss = 0.01468648003148181
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:22,867 INFO 	 epoch # 1120 : loss = 0.016121300203459605
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:23,638 INFO 	 epoch # 1130 : loss = 0.014105200235332762
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:24,434 INFO 	 epoch # 1140 : loss = 0.013131857849657536
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:25,220 INFO 	 epoch # 1150 : loss = 0.01279030367732048
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:26,002 INFO 	 epoch # 1160 : loss = 0.013819516636431217
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:26,801 INFO 	 epoch # 1170 : loss = 0.013070818036794662
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:27,577 INFO 	 epoch # 1180 : loss = 0.013114532588848047
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:28,369 INFO 	 epoch # 1190 : loss = 0.01237882487475872
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:29,163 INFO 	 epoch # 1200 : loss = 0.013320208926286017
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:29,960 INFO 	 epoch # 1210 : loss = 0.012841086901192154
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:30,764 INFO 	 epoch # 1220 : loss = 0.011596662790647574
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:31,547 INFO 	 epoch # 1230 : loss = 0.011463260012013572
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:32,376 INFO 	 epoch # 1240 : loss = 0.01188395099182214
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:33,171 INFO 	 epoch # 1250 : loss = 0.011652724285210882
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:33,955 INFO 	 epoch # 1260 : loss = 0.010796824935823679
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:34,824 INFO 	 epoch # 1270 : loss = 0.01075200563562768
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:35,741 INFO 	 epoch # 1280 : loss = 0.0109251399657556
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:36,616 INFO 	 epoch # 1290 : loss = 0.010247503407299519
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:37,442 INFO 	 epoch # 1300 : loss = 0.011333314968006951
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:38,250 INFO 	 epoch # 1310 : loss = 0.00954276037269405
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:39,076 INFO 	 epoch # 1320 : loss = 0.010148782549159867
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:39,905 INFO 	 epoch # 1330 : loss = 0.009647695613758904
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:40,734 INFO 	 epoch # 1340 : loss = 0.010544581870947565
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:41,581 INFO 	 epoch # 1350 : loss = 0.009349210054746695
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:42,417 INFO 	 epoch # 1360 : loss = 0.010189617784427745
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:43,245 INFO 	 epoch # 1370 : loss = 0.010147804327841316
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:44,042 INFO 	 epoch # 1380 : loss = 0.008750474080443382
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:44,846 INFO 	 epoch # 1390 : loss = 0.009058449350829636
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:45,650 INFO 	 epoch # 1400 : loss = 0.009683878959289618
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:46,449 INFO 	 epoch # 1410 : loss = 0.008927206575338329
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:47,273 INFO 	 epoch # 1420 : loss = 0.008779907998229777
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:48,085 INFO 	 epoch # 1430 : loss = 0.008387667925230094
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:48,899 INFO 	 epoch # 1440 : loss = 0.007856519227581365
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:49,708 INFO 	 epoch # 1450 : loss = 0.00852618126996926
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:50,509 INFO 	 epoch # 1460 : loss = 0.008458816180271762
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:51,408 INFO 	 epoch # 1470 : loss = 0.010281660660569156
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:52,207 INFO 	 epoch # 1480 : loss = 0.007528839965483972
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:52,992 INFO 	 epoch # 1490 : loss = 0.008256667094039065
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:53,847 INFO 	 epoch # 1500 : loss = 0.00783225880669696
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:54,730 INFO 	 epoch # 1510 : loss = 0.008598424860143236
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:55,536 INFO 	 epoch # 1520 : loss = 0.008269603164600474
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:56,339 INFO 	 epoch # 1530 : loss = 0.006643298348145825
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:57,138 INFO 	 epoch # 1540 : loss = 0.00830326063026275
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:57,950 INFO 	 epoch # 1550 : loss = 0.008545370772480965
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:58,747 INFO 	 epoch # 1560 : loss = 0.006887788219111306
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:39:59,547 INFO 	 epoch # 1570 : loss = 0.006878039799630642
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:00,354 INFO 	 epoch # 1580 : loss = 0.007113961236817496
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:01,165 INFO 	 epoch # 1590 : loss = 0.006286768808162638
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:01,957 INFO 	 epoch # 1600 : loss = 0.006705612775736621
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:02,774 INFO 	 epoch # 1610 : loss = 0.006142528228727835
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:03,564 INFO 	 epoch # 1620 : loss = 0.007536920519279582
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:04,384 INFO 	 epoch # 1630 : loss = 0.007159920276275703
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:05,186 INFO 	 epoch # 1640 : loss = 0.006235328868829778
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:05,985 INFO 	 epoch # 1650 : loss = 0.007043218040572745
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:06,804 INFO 	 epoch # 1660 : loss = 0.006919837556779385
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:07,596 INFO 	 epoch # 1670 : loss = 0.00630709039978683
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:08,428 INFO 	 epoch # 1680 : loss = 0.00614185119047761
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:09,236 INFO 	 epoch # 1690 : loss = 0.006121070057685886
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:10,025 INFO 	 epoch # 1700 : loss = 0.007277599535882473
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:10,851 INFO 	 epoch # 1710 : loss = 0.006346035083489758
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:11,644 INFO 	 epoch # 1720 : loss = 0.0058600221028817555
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:12,447 INFO 	 epoch # 1730 : loss = 0.005987799726426601
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:13,247 INFO 	 epoch # 1740 : loss = 0.006934583386672395
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:14,037 INFO 	 epoch # 1750 : loss = 0.005534203656549964
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:14,850 INFO 	 epoch # 1760 : loss = 0.005784201535529324
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:15,644 INFO 	 epoch # 1770 : loss = 0.005695279720904571
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:16,433 INFO 	 epoch # 1780 : loss = 0.0057681298016437465
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:17,244 INFO 	 epoch # 1790 : loss = 0.0054282307890909055
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:18,046 INFO 	 epoch # 1800 : loss = 0.005223578407562205
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:18,862 INFO 	 epoch # 1810 : loss = 0.006170091019677264
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:19,718 INFO 	 epoch # 1820 : loss = 0.006427324776138578
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:20,546 INFO 	 epoch # 1830 : loss = 0.00877855671569705
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:21,377 INFO 	 epoch # 1840 : loss = 0.005438352236524224
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:22,191 INFO 	 epoch # 1850 : loss = 0.005914309627509543
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:23,003 INFO 	 epoch # 1860 : loss = 0.004819222958758473
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:23,822 INFO 	 epoch # 1870 : loss = 0.005759160998942596
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:24,621 INFO 	 epoch # 1880 : loss = 0.00536863791889378
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:25,428 INFO 	 epoch # 1890 : loss = 0.005342239347685661
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:26,242 INFO 	 epoch # 1900 : loss = 0.0048587498521166185
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:27,048 INFO 	 epoch # 1910 : loss = 0.004699021644358124
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:27,878 INFO 	 epoch # 1920 : loss = 0.004724297572725585
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:28,713 INFO 	 epoch # 1930 : loss = 0.004615082039630839
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:29,536 INFO 	 epoch # 1940 : loss = 0.005279988881998828
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:30,389 INFO 	 epoch # 1950 : loss = 0.005059174528079373
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:31,263 INFO 	 epoch # 1960 : loss = 0.005289945003044393
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:32,093 INFO 	 epoch # 1970 : loss = 0.0048184681218117476
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:32,956 INFO 	 epoch # 1980 : loss = 0.00446783727966249
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:33,783 INFO 	 epoch # 1990 : loss = 0.004215622254248176
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:34,589 INFO 	 epoch # 2000 : loss = 0.004821660362982324
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:35,405 INFO 	 epoch # 2010 : loss = 0.004101315546514732
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:36,209 INFO 	 epoch # 2020 : loss = 0.004063790896907449
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:37,009 INFO 	 epoch # 2030 : loss = 0.0044050500728189945
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:37,818 INFO 	 epoch # 2040 : loss = 0.005563290191016027
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:38,660 INFO 	 epoch # 2050 : loss = 0.004549516847224108
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:39,463 INFO 	 epoch # 2060 : loss = 0.005008444988301822
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:40,275 INFO 	 epoch # 2070 : loss = 0.0038351056032947133
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:41,055 INFO 	 epoch # 2080 : loss = 0.0040963997266122276
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:41,872 INFO 	 epoch # 2090 : loss = 0.0038640257636351244
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:42,665 INFO 	 epoch # 2100 : loss = 0.005577690965895142
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:43,509 INFO 	 epoch # 2110 : loss = 0.004318379497687731
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:44,353 INFO 	 epoch # 2120 : loss = 0.003940094046161643
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:45,141 INFO 	 epoch # 2130 : loss = 0.005032551341823169
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:45,964 INFO 	 epoch # 2140 : loss = 0.004088974823909146
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:46,773 INFO 	 epoch # 2150 : loss = 0.0035895518958568573
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:47,576 INFO 	 epoch # 2160 : loss = 0.0038127500197983216
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:48,406 INFO 	 epoch # 2170 : loss = 0.0037476584049207823
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:49,218 INFO 	 epoch # 2180 : loss = 0.004249946646658438
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:50,015 INFO 	 epoch # 2190 : loss = 0.003627306848232235
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:50,826 INFO 	 epoch # 2200 : loss = 0.004410578736237117
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:51,634 INFO 	 epoch # 2210 : loss = 0.0032291930401697755
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:52,443 INFO 	 epoch # 2220 : loss = 0.003980313560792378
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:53,298 INFO 	 epoch # 2230 : loss = 0.0036725294443645646
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:54,101 INFO 	 epoch # 2240 : loss = 0.003894310278285827
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:54,905 INFO 	 epoch # 2250 : loss = 0.004898739513009787
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:55,698 INFO 	 epoch # 2260 : loss = 0.003518148258860622
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:56,492 INFO 	 epoch # 2270 : loss = 0.0035954236185976435
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:57,306 INFO 	 epoch # 2280 : loss = 0.003092460400824036
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:58,100 INFO 	 epoch # 2290 : loss = 0.0037560267373919487
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:58,901 INFO 	 epoch # 2300 : loss = 0.0030383452540263534
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:40:59,720 INFO 	 epoch # 2310 : loss = 0.003049345770185547
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:00,523 INFO 	 epoch # 2320 : loss = 0.005958528989659888
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:01,346 INFO 	 epoch # 2330 : loss = 0.00319503407393183
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:02,144 INFO 	 epoch # 2340 : loss = 0.003587813549009817
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:02,967 INFO 	 epoch # 2350 : loss = 0.003073910750182612
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:03,769 INFO 	 epoch # 2360 : loss = 0.0030208942147770096
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:04,578 INFO 	 epoch # 2370 : loss = 0.0031654523752097574
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:05,403 INFO 	 epoch # 2380 : loss = 0.003998832378004279
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:06,222 INFO 	 epoch # 2390 : loss = 0.0028368383646011353
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:07,030 INFO 	 epoch # 2400 : loss = 0.0032771783880889416
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:07,861 INFO 	 epoch # 2410 : loss = 0.0026845657599291633
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:08,685 INFO 	 epoch # 2420 : loss = 0.003327953728980252
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:09,498 INFO 	 epoch # 2430 : loss = 0.0029704326630703042
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:10,309 INFO 	 epoch # 2440 : loss = 0.002544720158247011
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:11,112 INFO 	 epoch # 2450 : loss = 0.002949174709751138
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:11,920 INFO 	 epoch # 2460 : loss = 0.004077517992949912
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:12,755 INFO 	 epoch # 2470 : loss = 0.0028000436390617062
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:13,615 INFO 	 epoch # 2480 : loss = 0.004188899915399296
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:14,427 INFO 	 epoch # 2490 : loss = 0.002742246791188206
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:15,231 INFO 	 epoch # 2500 : loss = 0.0025846720174221055
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:16,029 INFO 	 epoch # 2510 : loss = 0.0030519358614193542
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:16,831 INFO 	 epoch # 2520 : loss = 0.002967227516429765
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:17,636 INFO 	 epoch # 2530 : loss = 0.0025796747234250817
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:18,446 INFO 	 epoch # 2540 : loss = 0.002873334933870605
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:19,259 INFO 	 epoch # 2550 : loss = 0.0032930822510804448
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:20,051 INFO 	 epoch # 2560 : loss = 0.002763880799258394
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:20,875 INFO 	 epoch # 2570 : loss = 0.0024510061567915337
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:21,678 INFO 	 epoch # 2580 : loss = 0.003309534995683602
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:22,495 INFO 	 epoch # 2590 : loss = 0.002801807863371713
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:23,311 INFO 	 epoch # 2600 : loss = 0.0024450578992920263
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:24,218 INFO 	 epoch # 2610 : loss = 0.003156467207840511
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:25,029 INFO 	 epoch # 2620 : loss = 0.002360861814979996
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:25,860 INFO 	 epoch # 2630 : loss = 0.0022137122162218604
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:26,690 INFO 	 epoch # 2640 : loss = 0.002633296585242663
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:27,509 INFO 	 epoch # 2650 : loss = 0.002294849371537566
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:28,325 INFO 	 epoch # 2660 : loss = 0.0030281412016068187
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:29,125 INFO 	 epoch # 2670 : loss = 0.0023263406474143267
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:29,959 INFO 	 epoch # 2680 : loss = 0.0028381216772166745
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:30,784 INFO 	 epoch # 2690 : loss = 0.0023101016912343247
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:31,598 INFO 	 epoch # 2700 : loss = 0.003132890460879675
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:32,452 INFO 	 epoch # 2710 : loss = 0.002553593217661338
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:33,283 INFO 	 epoch # 2720 : loss = 0.0021862914020727786
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:34,101 INFO 	 epoch # 2730 : loss = 0.002421506115102342
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:34,927 INFO 	 epoch # 2740 : loss = 0.0026861141668632627
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:35,762 INFO 	 epoch # 2750 : loss = 0.0023948769750339644
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:36,573 INFO 	 epoch # 2760 : loss = 0.0024532843880089267
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:37,395 INFO 	 epoch # 2770 : loss = 0.0027536392444744706
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:38,249 INFO 	 epoch # 2780 : loss = 0.002352012745437345
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:39,095 INFO 	 epoch # 2790 : loss = 0.0021824280099411097
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:39,945 INFO 	 epoch # 2800 : loss = 0.002096035301552287
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:40,808 INFO 	 epoch # 2810 : loss = 0.002020391569073711
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:41,657 INFO 	 epoch # 2820 : loss = 0.0031408401971150723
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:42,529 INFO 	 epoch # 2830 : loss = 0.0019590252943869147
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:43,403 INFO 	 epoch # 2840 : loss = 0.0025331963053239243
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:44,254 INFO 	 epoch # 2850 : loss = 0.002244993262658162
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:45,091 INFO 	 epoch # 2860 : loss = 0.0019818226906604002
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:45,916 INFO 	 epoch # 2870 : loss = 0.002102848075862442
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:46,760 INFO 	 epoch # 2880 : loss = 0.0019022042397409678
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:47,581 INFO 	 epoch # 2890 : loss = 0.001973164500668645
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:48,441 INFO 	 epoch # 2900 : loss = 0.0017664152047862963
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:49,284 INFO 	 epoch # 2910 : loss = 0.0032852781670434134
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:50,115 INFO 	 epoch # 2920 : loss = 0.0019428454272981202
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:50,943 INFO 	 epoch # 2930 : loss = 0.0016429402250131325
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:51,787 INFO 	 epoch # 2940 : loss = 0.0018022742754380619
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:52,601 INFO 	 epoch # 2950 : loss = 0.0025388369103893638
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:53,455 INFO 	 epoch # 2960 : loss = 0.0018211226311645337
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:54,308 INFO 	 epoch # 2970 : loss = 0.0018230967772459345
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:55,125 INFO 	 epoch # 2980 : loss = 0.0020350021409935187
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:55,948 INFO 	 epoch # 2990 : loss = 0.0018028837429093464
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:56,763 INFO 	 epoch # 3000 : loss = 0.0018131602389205778
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:57,594 INFO 	 epoch # 3010 : loss = 0.0016136304225905665
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:58,433 INFO 	 epoch # 3020 : loss = 0.0019341399227934225
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:41:59,246 INFO 	 epoch # 3030 : loss = 0.001579695347962635
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:00,072 INFO 	 epoch # 3040 : loss = 0.0015582370937668852
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:00,899 INFO 	 epoch # 3050 : loss = 0.0015415389872422175
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:01,744 INFO 	 epoch # 3060 : loss = 0.001674923563509115
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:02,581 INFO 	 epoch # 3070 : loss = 0.0020463254269478576
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:03,426 INFO 	 epoch # 3080 : loss = 0.0020599280750112875
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:04,268 INFO 	 epoch # 3090 : loss = 0.0019113099801221064
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:05,109 INFO 	 epoch # 3100 : loss = 0.001713587312094335
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:05,951 INFO 	 epoch # 3110 : loss = 0.0023200287500263323
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:06,790 INFO 	 epoch # 3120 : loss = 0.0015793618180656008
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:07,612 INFO 	 epoch # 3130 : loss = 0.0014642360537046833
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:08,439 INFO 	 epoch # 3140 : loss = 0.0016775859486577766
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:09,266 INFO 	 epoch # 3150 : loss = 0.0023610557961676803
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:10,093 INFO 	 epoch # 3160 : loss = 0.002179182109622551
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:10,916 INFO 	 epoch # 3170 : loss = 0.001885339867190591
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:11,760 INFO 	 epoch # 3180 : loss = 0.0014698737733332174
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:12,579 INFO 	 epoch # 3190 : loss = 0.0016718630629059459
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:13,424 INFO 	 epoch # 3200 : loss = 0.0017560915106774441
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:14,261 INFO 	 epoch # 3210 : loss = 0.0019009378239778535
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:15,081 INFO 	 epoch # 3220 : loss = 0.0014199617019455349
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:15,908 INFO 	 epoch # 3230 : loss = 0.0014913258408861501
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:16,741 INFO 	 epoch # 3240 : loss = 0.0014103524070898338
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:17,562 INFO 	 epoch # 3250 : loss = 0.0015390451215872808
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:18,393 INFO 	 epoch # 3260 : loss = 0.003691657612632428
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:19,223 INFO 	 epoch # 3270 : loss = 0.0014548419608867594
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:20,057 INFO 	 epoch # 3280 : loss = 0.0014589466986113361
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:20,885 INFO 	 epoch # 3290 : loss = 0.0016094677516126207
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:21,724 INFO 	 epoch # 3300 : loss = 0.001465987289390926
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:22,553 INFO 	 epoch # 3310 : loss = 0.0013598217046819627
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:23,388 INFO 	 epoch # 3320 : loss = 0.0012504714749021722
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:24,211 INFO 	 epoch # 3330 : loss = 0.0015685333803828274
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:25,029 INFO 	 epoch # 3340 : loss = 0.0019784070318564773
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:25,853 INFO 	 epoch # 3350 : loss = 0.0014495435752905905
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:26,681 INFO 	 epoch # 3360 : loss = 0.0012981386888506158
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:27,503 INFO 	 epoch # 3370 : loss = 0.0013710086516636824
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:28,331 INFO 	 epoch # 3380 : loss = 0.0012211719461317574
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:29,143 INFO 	 epoch # 3390 : loss = 0.0015405460227546947
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:29,980 INFO 	 epoch # 3400 : loss = 0.0011370223946869373
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:30,798 INFO 	 epoch # 3410 : loss = 0.0010817065818368324
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:31,625 INFO 	 epoch # 3420 : loss = 0.002870908855194492
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:32,483 INFO 	 epoch # 3430 : loss = 0.0011466700567065605
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:33,314 INFO 	 epoch # 3440 : loss = 0.0011459829319002373
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:34,129 INFO 	 epoch # 3450 : loss = 0.0014962318486401013
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:34,965 INFO 	 epoch # 3460 : loss = 0.001993728377523699
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:35,795 INFO 	 epoch # 3470 : loss = 0.0012205300320472037
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:36,623 INFO 	 epoch # 3480 : loss = 0.0009523233041233782
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:37,452 INFO 	 epoch # 3490 : loss = 0.0011606980364636651
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:38,279 INFO 	 epoch # 3500 : loss = 0.0011980509984173945
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:39,111 INFO 	 epoch # 3510 : loss = 0.0012183786436383212
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:39,934 INFO 	 epoch # 3520 : loss = 0.001516633787624804
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:40,765 INFO 	 epoch # 3530 : loss = 0.0013627401619617427
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:41,583 INFO 	 epoch # 3540 : loss = 0.0011542151914909482
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:42,399 INFO 	 epoch # 3550 : loss = 0.0009444900788366795
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:43,246 INFO 	 epoch # 3560 : loss = 0.0009452750839825187
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:44,054 INFO 	 epoch # 3570 : loss = 0.000998446360296969
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:44,886 INFO 	 epoch # 3580 : loss = 0.0011476814480764525
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:45,701 INFO 	 epoch # 3590 : loss = 0.0021911461288774653
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:46,527 INFO 	 epoch # 3600 : loss = 0.0012737704382743686
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:47,352 INFO 	 epoch # 3610 : loss = 0.0011033633886004931
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:48,181 INFO 	 epoch # 3620 : loss = 0.0010377550996573909
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:49,025 INFO 	 epoch # 3630 : loss = 0.0012940321965808316
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:49,871 INFO 	 epoch # 3640 : loss = 0.0012361223884259484
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:50,710 INFO 	 epoch # 3650 : loss = 0.0009961660585499235
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:51,560 INFO 	 epoch # 3660 : loss = 0.0011801013939215668
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:52,446 INFO 	 epoch # 3670 : loss = 0.001062360201363585
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:53,319 INFO 	 epoch # 3680 : loss = 0.0012425600850422467
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:54,173 INFO 	 epoch # 3690 : loss = 0.0010822307168772177
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:55,018 INFO 	 epoch # 3700 : loss = 0.001201645063702017
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:55,858 INFO 	 epoch # 3710 : loss = 0.0008281423194733049
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:56,683 INFO 	 epoch # 3720 : loss = 0.0008991122345573135
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:57,518 INFO 	 epoch # 3730 : loss = 0.0009247342448881162
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:58,371 INFO 	 epoch # 3740 : loss = 0.001016074583666133
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:42:59,205 INFO 	 epoch # 3750 : loss = 0.0008253247527006481
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:00,045 INFO 	 epoch # 3760 : loss = 0.0009558104045156922
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:00,869 INFO 	 epoch # 3770 : loss = 0.0009697148094086774
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:01,710 INFO 	 epoch # 3780 : loss = 0.0010725839653917188
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:02,549 INFO 	 epoch # 3790 : loss = 0.0008050167068306889
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:03,394 INFO 	 epoch # 3800 : loss = 0.0008925069747160055
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:04,225 INFO 	 epoch # 3810 : loss = 0.0007681482779194734
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:05,057 INFO 	 epoch # 3820 : loss = 0.001560713048093021
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:05,943 INFO 	 epoch # 3830 : loss = 0.0007922924290012036
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:06,915 INFO 	 epoch # 3840 : loss = 0.002598923144562702
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:07,944 INFO 	 epoch # 3850 : loss = 0.0008968726781729076
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:08,950 INFO 	 epoch # 3860 : loss = 0.001061421527992934
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:10,384 INFO 	 epoch # 3870 : loss = 0.0007634912077004888
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:11,519 INFO 	 epoch # 3880 : loss = 0.0007945292163640261
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:12,546 INFO 	 epoch # 3890 : loss = 0.000741230440326035
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:13,564 INFO 	 epoch # 3900 : loss = 0.0007643791032023728
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:14,651 INFO 	 epoch # 3910 : loss = 0.0009886083592261588
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:15,649 INFO 	 epoch # 3920 : loss = 0.0008443480640250657
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:16,631 INFO 	 epoch # 3930 : loss = 0.0009227868369115251
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:18,126 INFO 	 epoch # 3940 : loss = 0.0007483187156529831
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:19,388 INFO 	 epoch # 3950 : loss = 0.0014719080229822015
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:20,535 INFO 	 epoch # 3960 : loss = 0.0009251633891835809
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:21,693 INFO 	 epoch # 3970 : loss = 0.0009035460201890341
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:23,164 INFO 	 epoch # 3980 : loss = 0.0007428384311164596
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:24,366 INFO 	 epoch # 3990 : loss = 0.0006995709928950029
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:25,299 INFO 	 epoch # 4000 : loss = 0.0007335329677776567
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:26,347 INFO 	 epoch # 4010 : loss = 0.001026005916563528
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:27,161 INFO 	 epoch # 4020 : loss = 0.0006883162007267986
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:28,155 INFO 	 epoch # 4030 : loss = 0.0007456362031267158
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:29,041 INFO 	 epoch # 4040 : loss = 0.0007604390266351402
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:30,145 INFO 	 epoch # 4050 : loss = 0.0011598811626234756
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:31,161 INFO 	 epoch # 4060 : loss = 0.0007315725670196116
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:32,173 INFO 	 epoch # 4070 : loss = 0.000872405366473166
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:33,106 INFO 	 epoch # 4080 : loss = 0.0007503215539535242
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:34,129 INFO 	 epoch # 4090 : loss = 0.0007038634544837155
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:35,003 INFO 	 epoch # 4100 : loss = 0.0009724321425892413
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:35,806 INFO 	 epoch # 4110 : loss = 0.0007085802956550781
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:36,679 INFO 	 epoch # 4120 : loss = 0.0008420568026070084
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:37,787 INFO 	 epoch # 4130 : loss = 0.000749999690534813
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:39,136 INFO 	 epoch # 4140 : loss = 0.0006760897272865155
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:40,299 INFO 	 epoch # 4150 : loss = 0.0007436423288059554
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:41,451 INFO 	 epoch # 4160 : loss = 0.0006360535127376872
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:42,565 INFO 	 epoch # 4170 : loss = 0.0006514035714124995
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:43,823 INFO 	 epoch # 4180 : loss = 0.0005528300285472401
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:45,009 INFO 	 epoch # 4190 : loss = 0.0011437371265076632
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:46,221 INFO 	 epoch # 4200 : loss = 0.0005666269737827991
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:47,172 INFO 	 epoch # 4210 : loss = 0.0005688624140540404
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:47,986 INFO 	 epoch # 4220 : loss = 0.0006704669753422163
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:48,837 INFO 	 epoch # 4230 : loss = 0.0005479254448021363
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:49,773 INFO 	 epoch # 4240 : loss = 0.0006174243005391743
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:50,667 INFO 	 epoch # 4250 : loss = 0.000700561496030007
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:51,676 INFO 	 epoch # 4260 : loss = 0.0006502767043587353
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:52,490 INFO 	 epoch # 4270 : loss = 0.0006417993822001985
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:53,353 INFO 	 epoch # 4280 : loss = 0.0007626507181807288
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:54,380 INFO 	 epoch # 4290 : loss = 0.0005937141956694956
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:55,286 INFO 	 epoch # 4300 : loss = 0.0005839618513294097
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:56,559 INFO 	 epoch # 4310 : loss = 0.0005455833701749466
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:57,868 INFO 	 epoch # 4320 : loss = 0.0005959419816333268
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:58,829 INFO 	 epoch # 4330 : loss = 0.0008349669681462858
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:43:59,832 INFO 	 epoch # 4340 : loss = 0.0006175858683751098
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:00,947 INFO 	 epoch # 4350 : loss = 0.0006077308914557632
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:02,106 INFO 	 epoch # 4360 : loss = 0.0005934524275029876
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:03,312 INFO 	 epoch # 4370 : loss = 0.00049792998886135
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:04,428 INFO 	 epoch # 4380 : loss = 0.00060871327877976
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:05,414 INFO 	 epoch # 4390 : loss = 0.0004798008469931249
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:06,362 INFO 	 epoch # 4400 : loss = 0.0005552080609569592
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:07,300 INFO 	 epoch # 4410 : loss = 0.0005901154571412397
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:08,197 INFO 	 epoch # 4420 : loss = 0.0006014006025257654
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:09,067 INFO 	 epoch # 4430 : loss = 0.0004930243345110544
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:09,959 INFO 	 epoch # 4440 : loss = 0.0005561720172408968
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:11,068 INFO 	 epoch # 4450 : loss = 0.0006017997636393245
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:12,570 INFO 	 epoch # 4460 : loss = 0.0005272551996832979
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:13,672 INFO 	 epoch # 4470 : loss = 0.00048098972807305733
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:14,522 INFO 	 epoch # 4480 : loss = 0.00048442153118750345
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:15,394 INFO 	 epoch # 4490 : loss = 0.0005454344292437392
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:16,444 INFO 	 epoch # 4500 : loss = 0.0005559163816672351
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:17,267 INFO 	 epoch # 4510 : loss = 0.00061152467554036
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:18,169 INFO 	 epoch # 4520 : loss = 0.0007055320727106716
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:19,152 INFO 	 epoch # 4530 : loss = 0.0004402081363618241
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:20,326 INFO 	 epoch # 4540 : loss = 0.0008233439376843828
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:21,619 INFO 	 epoch # 4550 : loss = 0.0005061067682358303
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:23,018 INFO 	 epoch # 4560 : loss = 0.0006028328144956115
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:24,093 INFO 	 epoch # 4570 : loss = 0.0005075574694533966
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:25,231 INFO 	 epoch # 4580 : loss = 0.000552928152111625
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:26,425 INFO 	 epoch # 4590 : loss = 0.0005792602730382766
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:27,655 INFO 	 epoch # 4600 : loss = 0.00045693372002071034
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:28,987 INFO 	 epoch # 4610 : loss = 0.0005789672016232673
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:30,531 INFO 	 epoch # 4620 : loss = 0.0006950189396905314
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:31,671 INFO 	 epoch # 4630 : loss = 0.0006135273350602281
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:32,700 INFO 	 epoch # 4640 : loss = 0.000504495927348866
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:33,635 INFO 	 epoch # 4650 : loss = 0.0005004619140111442
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:34,675 INFO 	 epoch # 4660 : loss = 0.0005839915081326451
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:35,688 INFO 	 epoch # 4670 : loss = 0.0005428622036041426
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:36,594 INFO 	 epoch # 4680 : loss = 0.00046690383377218884
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:37,672 INFO 	 epoch # 4690 : loss = 0.0006451236674495574
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:38,636 INFO 	 epoch # 4700 : loss = 0.0007883798181345421
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:39,722 INFO 	 epoch # 4710 : loss = 0.0004727674032827573
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:40,694 INFO 	 epoch # 4720 : loss = 0.00041595955138161244
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:41,760 INFO 	 epoch # 4730 : loss = 0.0004591934183346374
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:42,985 INFO 	 epoch # 4740 : loss = 0.0006002347217872739
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:44,419 INFO 	 epoch # 4750 : loss = 0.0004059400816913694
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:45,306 INFO 	 epoch # 4760 : loss = 0.0004138292507767411
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:46,179 INFO 	 epoch # 4770 : loss = 0.0004304000218066254
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:47,064 INFO 	 epoch # 4780 : loss = 0.00042151485104113817
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:47,910 INFO 	 epoch # 4790 : loss = 0.0007079767612075168
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:48,759 INFO 	 epoch # 4800 : loss = 0.0004298130910943395
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:49,597 INFO 	 epoch # 4810 : loss = 0.00038781805778853595
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:50,446 INFO 	 epoch # 4820 : loss = 0.0004811653135610478
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:51,324 INFO 	 epoch # 4830 : loss = 0.0005307798689630415
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:52,165 INFO 	 epoch # 4840 : loss = 0.00042722698916415017
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:52,982 INFO 	 epoch # 4850 : loss = 0.0003821039291714052
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:53,814 INFO 	 epoch # 4860 : loss = 0.0004667505480548633
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:54,641 INFO 	 epoch # 4870 : loss = 0.00048622189621840207
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:55,457 INFO 	 epoch # 4880 : loss = 0.0004195034146375422
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:56,292 INFO 	 epoch # 4890 : loss = 0.0004149164929653385
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:57,122 INFO 	 epoch # 4900 : loss = 0.00047680087819961566
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:57,960 INFO 	 epoch # 4910 : loss = 0.0007432649934863937
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:58,782 INFO 	 epoch # 4920 : loss = 0.000386132812959009
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:44:59,620 INFO 	 epoch # 4930 : loss = 0.0004172865945812581
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:00,463 INFO 	 epoch # 4940 : loss = 0.00038028905899929147
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:01,490 INFO 	 epoch # 4950 : loss = 0.0004274808244580137
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:02,759 INFO 	 epoch # 4960 : loss = 0.00042416376319514323
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:03,875 INFO 	 epoch # 4970 : loss = 0.0004390412151613938
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:04,980 INFO 	 epoch # 4980 : loss = 0.0003555564388599513
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:05,846 INFO 	 epoch # 4990 : loss = 0.0005111821935445603
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:06,821 INFO 	 epoch # 5000 : loss = 0.00036054405375450315
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:08,025 INFO 	 epoch # 5010 : loss = 0.00037047941129588125
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:08,875 INFO 	 epoch # 5020 : loss = 0.0006270240576538656
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:09,822 INFO 	 epoch # 5030 : loss = 0.00039759867026337555
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:10,985 INFO 	 epoch # 5040 : loss = 0.00037830152099819055
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:12,054 INFO 	 epoch # 5050 : loss = 0.00039163746987469494
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:13,083 INFO 	 epoch # 5060 : loss = 0.00039033437289098013
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:14,082 INFO 	 epoch # 5070 : loss = 0.0005861846719718804
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:14,973 INFO 	 epoch # 5080 : loss = 0.0003603678903475936
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:15,858 INFO 	 epoch # 5090 : loss = 0.0003582643153744617
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:16,770 INFO 	 epoch # 5100 : loss = 0.0004135364911884868
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:17,963 INFO 	 epoch # 5110 : loss = 0.0004223336561283629
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:18,879 INFO 	 epoch # 5120 : loss = 0.0003777099731710872
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:19,911 INFO 	 epoch # 5130 : loss = 0.00034253170555790087
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:20,923 INFO 	 epoch # 5140 : loss = 0.0003542688999524606
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:21,767 INFO 	 epoch # 5150 : loss = 0.0004754425961956648
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:22,711 INFO 	 epoch # 5160 : loss = 0.00035589283756313046
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:24,012 INFO 	 epoch # 5170 : loss = 0.0003507040736232219
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:24,995 INFO 	 epoch # 5180 : loss = 0.00040414170611516705
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:26,112 INFO 	 epoch # 5190 : loss = 0.00034366212327898083
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:27,048 INFO 	 epoch # 5200 : loss = 0.0003563654775332127
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:27,902 INFO 	 epoch # 5210 : loss = 0.0005097588395333982
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:28,937 INFO 	 epoch # 5220 : loss = 0.00029801810991817286
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:29,893 INFO 	 epoch # 5230 : loss = 0.0003519088911291744
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:30,860 INFO 	 epoch # 5240 : loss = 0.0003881765712451722
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:31,825 INFO 	 epoch # 5250 : loss = 0.00033060514085393934
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:33,076 INFO 	 epoch # 5260 : loss = 0.0004591045206845073
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:34,045 INFO 	 epoch # 5270 : loss = 0.0003389798740889611
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:34,886 INFO 	 epoch # 5280 : loss = 0.0003152985092518585
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:35,744 INFO 	 epoch # 5290 : loss = 0.00037756282628314305
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:36,622 INFO 	 epoch # 5300 : loss = 0.0004172325404527198
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:37,580 INFO 	 epoch # 5310 : loss = 0.0004431808047229424
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:38,686 INFO 	 epoch # 5320 : loss = 0.00032519044595704017
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:39,780 INFO 	 epoch # 5330 : loss = 0.0003854932708366375
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:41,319 INFO 	 epoch # 5340 : loss = 0.00032240186140240567
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:42,326 INFO 	 epoch # 5350 : loss = 0.00037419396228090463
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:43,232 INFO 	 epoch # 5360 : loss = 0.0003922843378469614
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:44,431 INFO 	 epoch # 5370 : loss = 0.00034721714993273575
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:45,935 INFO 	 epoch # 5380 : loss = 0.00033941552932706794
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:47,441 INFO 	 epoch # 5390 : loss = 0.00033252715781730203
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:48,896 INFO 	 epoch # 5400 : loss = 0.00031500715288400116
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:50,517 INFO 	 epoch # 5410 : loss = 0.0003057871217606589
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:51,644 INFO 	 epoch # 5420 : loss = 0.00029360458678898534
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:52,770 INFO 	 epoch # 5430 : loss = 0.0003068432124564424
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:53,797 INFO 	 epoch # 5440 : loss = 0.000302609199674667
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:54,826 INFO 	 epoch # 5450 : loss = 0.00040269396309408227
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:55,783 INFO 	 epoch # 5460 : loss = 0.00029891384474467486
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:56,782 INFO 	 epoch # 5470 : loss = 0.0003096356979637806
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:57,802 INFO 	 epoch # 5480 : loss = 0.0003624296805355698
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:45:58,915 INFO 	 epoch # 5490 : loss = 0.0002750718142903809
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:00,071 INFO 	 epoch # 5500 : loss = 0.00028467230523736883
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:01,221 INFO 	 epoch # 5510 : loss = 0.00033747965894040784
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:02,156 INFO 	 epoch # 5520 : loss = 0.00029258399029328885
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:03,218 INFO 	 epoch # 5530 : loss = 0.0003052899514191917
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:04,754 INFO 	 epoch # 5540 : loss = 0.00030219106910018515
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:06,561 INFO 	 epoch # 5550 : loss = 0.0002978298725793138
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:08,130 INFO 	 epoch # 5560 : loss = 0.0003196636909186574
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:09,356 INFO 	 epoch # 5570 : loss = 0.00033538636385596225
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:10,429 INFO 	 epoch # 5580 : loss = 0.0003132884344917589
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:11,399 INFO 	 epoch # 5590 : loss = 0.00028769437735068744
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:12,375 INFO 	 epoch # 5600 : loss = 0.0002959178964374587
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:13,777 INFO 	 epoch # 5610 : loss = 0.00026942788463202305
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:15,351 INFO 	 epoch # 5620 : loss = 0.0003173463254435254
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:17,042 INFO 	 epoch # 5630 : loss = 0.0002852829368618716
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:18,295 INFO 	 epoch # 5640 : loss = 0.000301321478868236
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:19,305 INFO 	 epoch # 5650 : loss = 0.00031674496546786813
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:20,370 INFO 	 epoch # 5660 : loss = 0.000263819658097678
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:21,409 INFO 	 epoch # 5670 : loss = 0.00029011729306408336
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:22,433 INFO 	 epoch # 5680 : loss = 0.00026268786522060897
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:23,551 INFO 	 epoch # 5690 : loss = 0.0003338972944350514
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:24,720 INFO 	 epoch # 5700 : loss = 0.00031769477729020376
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:25,788 INFO 	 epoch # 5710 : loss = 0.00023938135148325403
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:26,835 INFO 	 epoch # 5720 : loss = 0.00029630281954138937
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:27,907 INFO 	 epoch # 5730 : loss = 0.000289935090612354
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:28,926 INFO 	 epoch # 5740 : loss = 0.0002891430485760793
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:29,971 INFO 	 epoch # 5750 : loss = 0.0003160778828065044
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:31,008 INFO 	 epoch # 5760 : loss = 0.0002813599504796522
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:32,076 INFO 	 epoch # 5770 : loss = 0.0002645172457310504
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:33,178 INFO 	 epoch # 5780 : loss = 0.00030766697039195733
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:34,485 INFO 	 epoch # 5790 : loss = 0.0002682294268327366
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:35,462 INFO 	 epoch # 5800 : loss = 0.0003692933782336435
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:36,657 INFO 	 epoch # 5810 : loss = 0.0003255316467922447
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:37,728 INFO 	 epoch # 5820 : loss = 0.0002691493178385177
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:38,713 INFO 	 epoch # 5830 : loss = 0.00039896455876130076
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:39,662 INFO 	 epoch # 5840 : loss = 0.0002477296532431085
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:40,586 INFO 	 epoch # 5850 : loss = 0.0002742994713896353
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:41,542 INFO 	 epoch # 5860 : loss = 0.00028324373020690734
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:42,499 INFO 	 epoch # 5870 : loss = 0.00029063260236788277
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:43,470 INFO 	 epoch # 5880 : loss = 0.00029716778122487346
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:44,414 INFO 	 epoch # 5890 : loss = 0.0002667498857980328
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:45,537 INFO 	 epoch # 5900 : loss = 0.0004281687974331102
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:46,558 INFO 	 epoch # 5910 : loss = 0.0004315294583128499
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:47,541 INFO 	 epoch # 5920 : loss = 0.00024485982326690907
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:48,522 INFO 	 epoch # 5930 : loss = 0.0003226260274199636
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:49,485 INFO 	 epoch # 5940 : loss = 0.0002597499863311116
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:50,474 INFO 	 epoch # 5950 : loss = 0.0003563635909813456
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:51,449 INFO 	 epoch # 5960 : loss = 0.0002721031986376537
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:52,413 INFO 	 epoch # 5970 : loss = 0.0002907157707211029
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:53,394 INFO 	 epoch # 5980 : loss = 0.0002851197163441351
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:54,391 INFO 	 epoch # 5990 : loss = 0.0003364047775643745
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:55,356 INFO 	 epoch # 6000 : loss = 0.0002609229600888544
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:56,336 INFO 	 epoch # 6010 : loss = 0.0002312387919768558
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:57,324 INFO 	 epoch # 6020 : loss = 0.00021773928892798722
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:58,317 INFO 	 epoch # 6030 : loss = 0.00030213505254193606
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:46:59,416 INFO 	 epoch # 6040 : loss = 0.00023795782596737678
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:00,495 INFO 	 epoch # 6050 : loss = 0.00025994649955204556
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:01,533 INFO 	 epoch # 6060 : loss = 0.0002352118566964886
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:02,533 INFO 	 epoch # 6070 : loss = 0.00024336230749863068
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:03,524 INFO 	 epoch # 6080 : loss = 0.00022015710107682805
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:04,547 INFO 	 epoch # 6090 : loss = 0.00022320409438439777
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:05,543 INFO 	 epoch # 6100 : loss = 0.0002602943526913545
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:06,585 INFO 	 epoch # 6110 : loss = 0.00028484559152275324
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:07,574 INFO 	 epoch # 6120 : loss = 0.0006452441323615078
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:08,631 INFO 	 epoch # 6130 : loss = 0.0002329743022398491
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:09,652 INFO 	 epoch # 6140 : loss = 0.00024624724444168223
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:10,620 INFO 	 epoch # 6150 : loss = 0.0003274234903593814
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:11,573 INFO 	 epoch # 6160 : loss = 0.000244540093782624
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:12,549 INFO 	 epoch # 6170 : loss = 0.0002508056952917416
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:13,516 INFO 	 epoch # 6180 : loss = 0.00031766267576521
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:14,522 INFO 	 epoch # 6190 : loss = 0.0003074462666908013
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:15,503 INFO 	 epoch # 6200 : loss = 0.00024307118396141699
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:16,469 INFO 	 epoch # 6210 : loss = 0.00022037708030049025
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:17,462 INFO 	 epoch # 6220 : loss = 0.00029553682127568336
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:18,453 INFO 	 epoch # 6230 : loss = 0.0005121382689269792
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:19,481 INFO 	 epoch # 6240 : loss = 0.00022878630469287082
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:20,510 INFO 	 epoch # 6250 : loss = 0.00019358774391418722
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:21,489 INFO 	 epoch # 6260 : loss = 0.0003092220285907388
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:22,462 INFO 	 epoch # 6270 : loss = 0.0002445180746560384
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:23,450 INFO 	 epoch # 6280 : loss = 0.00031480996715669917
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:24,436 INFO 	 epoch # 6290 : loss = 0.0001963716172862665
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:25,384 INFO 	 epoch # 6300 : loss = 0.0002818403778032267
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:26,330 INFO 	 epoch # 6310 : loss = 0.0003084743657382205
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:27,308 INFO 	 epoch # 6320 : loss = 0.00023449724332229898
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:28,249 INFO 	 epoch # 6330 : loss = 0.0002349458695139869
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:29,213 INFO 	 epoch # 6340 : loss = 0.00030063368779207977
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:30,152 INFO 	 epoch # 6350 : loss = 0.00018557459458991486
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:31,125 INFO 	 epoch # 6360 : loss = 0.00023063291778921017
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:32,077 INFO 	 epoch # 6370 : loss = 0.00020975110081573284
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:33,101 INFO 	 epoch # 6380 : loss = 0.00019793305026334046
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:34,095 INFO 	 epoch # 6390 : loss = 0.0002420799365998911
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:35,134 INFO 	 epoch # 6400 : loss = 0.0002189509801350401
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:36,098 INFO 	 epoch # 6410 : loss = 0.00020656610442009487
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:37,057 INFO 	 epoch # 6420 : loss = 0.00027543091398131637
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:38,046 INFO 	 epoch # 6430 : loss = 0.00021836684754816815
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:38,995 INFO 	 epoch # 6440 : loss = 0.0001975666761739246
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:39,939 INFO 	 epoch # 6450 : loss = 0.00017812397501464666
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:40,893 INFO 	 epoch # 6460 : loss = 0.0002107224302432899
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:41,860 INFO 	 epoch # 6470 : loss = 0.0002704188061345901
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:42,838 INFO 	 epoch # 6480 : loss = 0.00023905005010809482
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:43,856 INFO 	 epoch # 6490 : loss = 0.0002083657460129221
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:44,918 INFO 	 epoch # 6500 : loss = 0.00020225023867429366
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:45,941 INFO 	 epoch # 6510 : loss = 0.00018838300353049168
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:46,900 INFO 	 epoch # 6520 : loss = 0.00020157146250962147
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:47,871 INFO 	 epoch # 6530 : loss = 0.00027048085757996887
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:48,815 INFO 	 epoch # 6540 : loss = 0.00046729875404188145
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:49,927 INFO 	 epoch # 6550 : loss = 0.00018562533140149235
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:50,996 INFO 	 epoch # 6560 : loss = 0.00023084617870543816
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:51,865 INFO 	 epoch # 6570 : loss = 0.0002788929435025368
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:52,714 INFO 	 epoch # 6580 : loss = 0.0002152722071124507
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:53,563 INFO 	 epoch # 6590 : loss = 0.0002175108134646767
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:54,404 INFO 	 epoch # 6600 : loss = 0.00020497648074524477
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:55,242 INFO 	 epoch # 6610 : loss = 0.0002584887915872969
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:56,148 INFO 	 epoch # 6620 : loss = 0.00018325319823426462
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:57,226 INFO 	 epoch # 6630 : loss = 0.00023428344138665125
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:58,225 INFO 	 epoch # 6640 : loss = 0.00018314302828262692
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:59,053 INFO 	 epoch # 6650 : loss = 0.00018627992644074505
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:47:59,898 INFO 	 epoch # 6660 : loss = 0.00025533307052683085
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:00,739 INFO 	 epoch # 6670 : loss = 0.0002368092245887965
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:01,586 INFO 	 epoch # 6680 : loss = 0.00018839071604556272
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:02,456 INFO 	 epoch # 6690 : loss = 0.00018363860934706672
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:03,301 INFO 	 epoch # 6700 : loss = 0.0002185976502784927
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:04,148 INFO 	 epoch # 6710 : loss = 0.00024176007406952391
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:04,981 INFO 	 epoch # 6720 : loss = 0.00026477718035623966
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:05,824 INFO 	 epoch # 6730 : loss = 0.00021697800028570264
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:06,653 INFO 	 epoch # 6740 : loss = 0.00021463915514427105
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:07,518 INFO 	 epoch # 6750 : loss = 0.0001887443327827246
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:08,389 INFO 	 epoch # 6760 : loss = 0.00024140375483381961
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:09,210 INFO 	 epoch # 6770 : loss = 0.00019230721643128033
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:10,042 INFO 	 epoch # 6780 : loss = 0.0002134702361737644
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:10,884 INFO 	 epoch # 6790 : loss = 0.00017372232728770802
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:11,712 INFO 	 epoch # 6800 : loss = 0.00020020027399628555
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:12,549 INFO 	 epoch # 6810 : loss = 0.0002587269783751773
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:13,379 INFO 	 epoch # 6820 : loss = 0.00019430655395678644
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:14,198 INFO 	 epoch # 6830 : loss = 0.000256308660027571
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:15,027 INFO 	 epoch # 6840 : loss = 0.00020285413484089077
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:15,861 INFO 	 epoch # 6850 : loss = 0.0001685872339294292
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:16,682 INFO 	 epoch # 6860 : loss = 0.0001684421076788567
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:17,526 INFO 	 epoch # 6870 : loss = 0.00020607931011389674
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:18,372 INFO 	 epoch # 6880 : loss = 0.00019619112156630893
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:19,200 INFO 	 epoch # 6890 : loss = 0.0001849338623287622
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:20,031 INFO 	 epoch # 6900 : loss = 0.00023265857141398425
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:20,882 INFO 	 epoch # 6910 : loss = 0.00019769097187755897
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:21,722 INFO 	 epoch # 6920 : loss = 0.0001714504583755375
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:22,552 INFO 	 epoch # 6930 : loss = 0.0001738247790074508
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:23,370 INFO 	 epoch # 6940 : loss = 0.00016104815378119902
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:24,198 INFO 	 epoch # 6950 : loss = 0.0001807018041810287
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:25,026 INFO 	 epoch # 6960 : loss = 0.00021913892539617206
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:25,860 INFO 	 epoch # 6970 : loss = 0.00016431411807259013
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:26,696 INFO 	 epoch # 6980 : loss = 0.00019721817391525422
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:27,537 INFO 	 epoch # 6990 : loss = 0.0001681591456872411
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:28,363 INFO 	 epoch # 7000 : loss = 0.00020183139921365573
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:29,194 INFO 	 epoch # 7010 : loss = 0.00021035311718670919
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:30,022 INFO 	 epoch # 7020 : loss = 0.0001719580707556036
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:30,868 INFO 	 epoch # 7030 : loss = 0.0001661360147409141
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:31,696 INFO 	 epoch # 7040 : loss = 0.00014787378209543282
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:32,537 INFO 	 epoch # 7050 : loss = 0.00016610007878625765
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:33,391 INFO 	 epoch # 7060 : loss = 0.00017486773971800825
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:34,231 INFO 	 epoch # 7070 : loss = 0.0001639536531001795
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:35,066 INFO 	 epoch # 7080 : loss = 0.000144703482094753
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:35,892 INFO 	 epoch # 7090 : loss = 0.00014898435724067634
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:36,715 INFO 	 epoch # 7100 : loss = 0.00021859670336458033
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:37,557 INFO 	 epoch # 7110 : loss = 0.00016441748240530224
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:38,404 INFO 	 epoch # 7120 : loss = 0.0002603609640833123
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:39,234 INFO 	 epoch # 7130 : loss = 0.0001783949784502121
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:40,078 INFO 	 epoch # 7140 : loss = 0.00019854684069287032
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:40,918 INFO 	 epoch # 7150 : loss = 0.0001641585144430532
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:41,753 INFO 	 epoch # 7160 : loss = 0.00016724752848468988
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:42,626 INFO 	 epoch # 7170 : loss = 0.001327165074014504
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:43,473 INFO 	 epoch # 7180 : loss = 0.00015570111593530913
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:44,352 INFO 	 epoch # 7190 : loss = 0.00015325661973162954
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:45,217 INFO 	 epoch # 7200 : loss = 0.00016244506904123618
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:46,071 INFO 	 epoch # 7210 : loss = 0.00020267864601919428
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:46,925 INFO 	 epoch # 7220 : loss = 0.00022168108781832934
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:47,765 INFO 	 epoch # 7230 : loss = 0.000186429190632355
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:48,614 INFO 	 epoch # 7240 : loss = 0.0001450233581376129
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:49,450 INFO 	 epoch # 7250 : loss = 0.00017572995212893666
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:50,277 INFO 	 epoch # 7260 : loss = 0.0001562071920488961
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:51,125 INFO 	 epoch # 7270 : loss = 0.00019893751907927384
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:51,964 INFO 	 epoch # 7280 : loss = 0.00022775805700803176
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:52,792 INFO 	 epoch # 7290 : loss = 0.00015119799198665923
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:53,630 INFO 	 epoch # 7300 : loss = 0.00017352610718392367
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:54,474 INFO 	 epoch # 7310 : loss = 0.00013897792190878784
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:55,315 INFO 	 epoch # 7320 : loss = 0.0001436906708737037
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:56,149 INFO 	 epoch # 7330 : loss = 0.00020414518075995147
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:56,977 INFO 	 epoch # 7340 : loss = 0.00016756513962588673
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:57,824 INFO 	 epoch # 7350 : loss = 0.00013249757674722268
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:58,671 INFO 	 epoch # 7360 : loss = 0.00015845281242426218
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:48:59,529 INFO 	 epoch # 7370 : loss = 0.00014525340208950053
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:00,365 INFO 	 epoch # 7380 : loss = 0.00016710644974539588
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:01,212 INFO 	 epoch # 7390 : loss = 0.0001729435586769666
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:02,058 INFO 	 epoch # 7400 : loss = 0.00016577595618270737
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:02,903 INFO 	 epoch # 7410 : loss = 0.00034259344309767973
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:03,736 INFO 	 epoch # 7420 : loss = 0.00013258756371214986
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:04,580 INFO 	 epoch # 7430 : loss = 0.0001492756174619509
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:05,424 INFO 	 epoch # 7440 : loss = 0.00015353049353247376
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:06,261 INFO 	 epoch # 7450 : loss = 0.00020871366619498337
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:07,104 INFO 	 epoch # 7460 : loss = 0.00017821241116117953
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:07,943 INFO 	 epoch # 7470 : loss = 0.00028767365022628965
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:08,795 INFO 	 epoch # 7480 : loss = 0.00015684399581264837
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:09,616 INFO 	 epoch # 7490 : loss = 0.00014217014385004795
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:10,471 INFO 	 epoch # 7500 : loss = 0.00016827695071697235
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:11,311 INFO 	 epoch # 7510 : loss = 0.00016124315048468167
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:12,148 INFO 	 epoch # 7520 : loss = 0.00012186983024418754
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:12,983 INFO 	 epoch # 7530 : loss = 0.00029236983079629553
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:13,805 INFO 	 epoch # 7540 : loss = 0.00013024071501734267
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:14,637 INFO 	 epoch # 7550 : loss = 0.00018677076669908793
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:15,471 INFO 	 epoch # 7560 : loss = 0.00013963949355197007
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:16,312 INFO 	 epoch # 7570 : loss = 0.00017784835758253133
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:17,155 INFO 	 epoch # 7580 : loss = 0.00012938099514160837
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:17,996 INFO 	 epoch # 7590 : loss = 0.00028022920637990216
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:18,842 INFO 	 epoch # 7600 : loss = 0.0001846890029680383
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:19,668 INFO 	 epoch # 7610 : loss = 0.00013794516416965052
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:20,509 INFO 	 epoch # 7620 : loss = 0.00018226231830859824
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:21,348 INFO 	 epoch # 7630 : loss = 0.00011867967077705543
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:22,193 INFO 	 epoch # 7640 : loss = 0.00013141089064967154
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:23,033 INFO 	 epoch # 7650 : loss = 0.0001911713313477646
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:23,874 INFO 	 epoch # 7660 : loss = 0.00012782512775239802
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:24,707 INFO 	 epoch # 7670 : loss = 0.0001255056834322334
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:25,556 INFO 	 epoch # 7680 : loss = 0.0002599478035075923
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:26,392 INFO 	 epoch # 7690 : loss = 0.0001918321977427695
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:27,240 INFO 	 epoch # 7700 : loss = 0.00012269295257283375
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:28,076 INFO 	 epoch # 7710 : loss = 0.00013266926959788959
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:28,921 INFO 	 epoch # 7720 : loss = 0.00013547768633413528
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:29,761 INFO 	 epoch # 7730 : loss = 0.0001605213068874686
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:30,601 INFO 	 epoch # 7740 : loss = 0.00012581060842161866
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:31,454 INFO 	 epoch # 7750 : loss = 0.00013443914836638475
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:32,311 INFO 	 epoch # 7760 : loss = 0.00013960776258110336
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:33,150 INFO 	 epoch # 7770 : loss = 0.00014349795986033444
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:33,996 INFO 	 epoch # 7780 : loss = 0.00013449718296344924
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:34,833 INFO 	 epoch # 7790 : loss = 0.00012187529448835579
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:35,675 INFO 	 epoch # 7800 : loss = 0.00023313905278752957
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:36,520 INFO 	 epoch # 7810 : loss = 0.00010785548771049694
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:37,371 INFO 	 epoch # 7820 : loss = 0.00015898579554881768
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:38,209 INFO 	 epoch # 7830 : loss = 0.00018493142956036275
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:39,062 INFO 	 epoch # 7840 : loss = 0.0001242187894864141
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:39,898 INFO 	 epoch # 7850 : loss = 0.00014894727272413938
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:40,736 INFO 	 epoch # 7860 : loss = 0.000168115840226944
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:41,577 INFO 	 epoch # 7870 : loss = 0.00012198746844660491
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:42,433 INFO 	 epoch # 7880 : loss = 0.00016634659342733876
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:43,270 INFO 	 epoch # 7890 : loss = 0.00011803785777634143
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:44,102 INFO 	 epoch # 7900 : loss = 0.00017737793885836645
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:44,946 INFO 	 epoch # 7910 : loss = 0.00033343270167409046
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:45,818 INFO 	 epoch # 7920 : loss = 0.00012432224788686393
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:46,658 INFO 	 epoch # 7930 : loss = 0.00013585218195138232
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:47,515 INFO 	 epoch # 7940 : loss = 0.00016251297659307186
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:48,371 INFO 	 epoch # 7950 : loss = 0.00014027419300483807
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:49,232 INFO 	 epoch # 7960 : loss = 0.00011228765496135955
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:50,113 INFO 	 epoch # 7970 : loss = 0.00013989347332556332
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:51,015 INFO 	 epoch # 7980 : loss = 0.00018195937861621912
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:51,911 INFO 	 epoch # 7990 : loss = 0.00012463096001218737
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:52,796 INFO 	 epoch # 8000 : loss = 0.0001375185196853376
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:53,662 INFO 	 epoch # 8010 : loss = 0.00016054374594075073
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:54,518 INFO 	 epoch # 8020 : loss = 0.00016115084352869808
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:55,378 INFO 	 epoch # 8030 : loss = 0.00012023249811526122
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:56,238 INFO 	 epoch # 8040 : loss = 0.00011281387144533386
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:57,075 INFO 	 epoch # 8050 : loss = 0.0001213244509667025
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:57,935 INFO 	 epoch # 8060 : loss = 0.0001873283222916403
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:58,774 INFO 	 epoch # 8070 : loss = 0.00011093872100380915
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:49:59,611 INFO 	 epoch # 8080 : loss = 0.00012139212101049322
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:00,449 INFO 	 epoch # 8090 : loss = 0.00013830137790396942
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:01,299 INFO 	 epoch # 8100 : loss = 0.00022983583247488632
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:02,139 INFO 	 epoch # 8110 : loss = 0.00011726339601279636
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:02,979 INFO 	 epoch # 8120 : loss = 0.00014740782717126422
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:03,824 INFO 	 epoch # 8130 : loss = 0.00010582829937837752
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:04,666 INFO 	 epoch # 8140 : loss = 0.00012080648489895143
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:05,525 INFO 	 epoch # 8150 : loss = 0.00010688692704466771
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:06,362 INFO 	 epoch # 8160 : loss = 0.00021905760825445344
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:07,210 INFO 	 epoch # 8170 : loss = 0.00010332734720058008
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:08,046 INFO 	 epoch # 8180 : loss = 0.00011942799080445963
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:08,892 INFO 	 epoch # 8190 : loss = 0.000138109818051037
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:09,728 INFO 	 epoch # 8200 : loss = 0.00015162064716735455
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:10,572 INFO 	 epoch # 8210 : loss = 0.00010823503232261698
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:11,408 INFO 	 epoch # 8220 : loss = 0.00011710677686746099
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:12,257 INFO 	 epoch # 8230 : loss = 9.97460457646022e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:13,113 INFO 	 epoch # 8240 : loss = 0.0001132644631850001
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:13,957 INFO 	 epoch # 8250 : loss = 0.00013761080585287085
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:14,809 INFO 	 epoch # 8260 : loss = 0.00010670796785104488
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:15,625 INFO 	 epoch # 8270 : loss = 0.00011241056355564589
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:16,472 INFO 	 epoch # 8280 : loss = 0.00010412778751093097
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:17,330 INFO 	 epoch # 8290 : loss = 9.980299000744708e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:18,166 INFO 	 epoch # 8300 : loss = 0.00012558609211867276
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:18,997 INFO 	 epoch # 8310 : loss = 0.00013402062125221294
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:19,852 INFO 	 epoch # 8320 : loss = 0.00011718535928853921
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:20,685 INFO 	 epoch # 8330 : loss = 0.00010756335619329807
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:21,537 INFO 	 epoch # 8340 : loss = 0.00011547430040081963
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:22,373 INFO 	 epoch # 8350 : loss = 0.0001020900412446021
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:23,203 INFO 	 epoch # 8360 : loss = 0.00010012300273436787
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:24,051 INFO 	 epoch # 8370 : loss = 0.00010842336113065747
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:24,900 INFO 	 epoch # 8380 : loss = 0.00016518435066765442
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:25,741 INFO 	 epoch # 8390 : loss = 9.839543885651178e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:26,583 INFO 	 epoch # 8400 : loss = 0.00011401391956107026
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:27,422 INFO 	 epoch # 8410 : loss = 0.00012764420015238493
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:28,258 INFO 	 epoch # 8420 : loss = 9.881325656481619e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:29,097 INFO 	 epoch # 8430 : loss = 0.00017249422048085501
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:29,943 INFO 	 epoch # 8440 : loss = 0.00010595780882535369
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:30,769 INFO 	 epoch # 8450 : loss = 0.00012644598505825603
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:31,615 INFO 	 epoch # 8460 : loss = 0.0001245317658426107
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:32,460 INFO 	 epoch # 8470 : loss = 0.00010126923734787852
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:33,313 INFO 	 epoch # 8480 : loss = 0.00010055160445127902
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:34,152 INFO 	 epoch # 8490 : loss = 0.0001013286954340791
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:34,997 INFO 	 epoch # 8500 : loss = 9.88400456013291e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:35,852 INFO 	 epoch # 8510 : loss = 0.00020844867166098474
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:36,699 INFO 	 epoch # 8520 : loss = 9.722460682886387e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:37,535 INFO 	 epoch # 8530 : loss = 0.00014817199657305276
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:38,396 INFO 	 epoch # 8540 : loss = 0.00016867706498097896
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:39,246 INFO 	 epoch # 8550 : loss = 0.00010893434747621151
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:40,096 INFO 	 epoch # 8560 : loss = 0.00011464251240665493
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:41,123 INFO 	 epoch # 8570 : loss = 0.00011213157787486645
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:42,042 INFO 	 epoch # 8580 : loss = 0.00010142661683078456
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:42,928 INFO 	 epoch # 8590 : loss = 0.0001005994386754797
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:43,810 INFO 	 epoch # 8600 : loss = 0.0001081175531518446
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:44,662 INFO 	 epoch # 8610 : loss = 0.0001035721309433159
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:45,526 INFO 	 epoch # 8620 : loss = 0.00010135002438411382
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:46,403 INFO 	 epoch # 8630 : loss = 0.00014376345227771838
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:47,247 INFO 	 epoch # 8640 : loss = 8.529460787290841e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:48,165 INFO 	 epoch # 8650 : loss = 0.00014777585290305848
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:49,035 INFO 	 epoch # 8660 : loss = 0.00010035012279071711
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:49,900 INFO 	 epoch # 8670 : loss = 9.850446700251528e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:50,757 INFO 	 epoch # 8680 : loss = 0.00011296792737474399
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:51,613 INFO 	 epoch # 8690 : loss = 8.840264594514988e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:52,461 INFO 	 epoch # 8700 : loss = 9.36214039809004e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:53,315 INFO 	 epoch # 8710 : loss = 0.00012591393481540893
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:54,161 INFO 	 epoch # 8720 : loss = 7.759392935570628e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:55,006 INFO 	 epoch # 8730 : loss = 8.620904139076759e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:55,871 INFO 	 epoch # 8740 : loss = 0.00010796905449491792
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:56,737 INFO 	 epoch # 8750 : loss = 0.00011825464493345603
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:57,582 INFO 	 epoch # 8760 : loss = 0.00010321790042715813
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:58,448 INFO 	 epoch # 8770 : loss = 9.569316327023054e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:50:59,324 INFO 	 epoch # 8780 : loss = 8.26466343174356e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:00,198 INFO 	 epoch # 8790 : loss = 0.00011355890663773087
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:01,132 INFO 	 epoch # 8800 : loss = 9.102788499149028e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:02,061 INFO 	 epoch # 8810 : loss = 0.00010894189056541239
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:02,962 INFO 	 epoch # 8820 : loss = 0.00010224576596686217
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:03,865 INFO 	 epoch # 8830 : loss = 0.00010007002908553529
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:04,728 INFO 	 epoch # 8840 : loss = 0.00012627810480937894
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:05,586 INFO 	 epoch # 8850 : loss = 9.220949349193168e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:06,445 INFO 	 epoch # 8860 : loss = 9.247088071008745e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:07,302 INFO 	 epoch # 8870 : loss = 7.199345028701438e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:08,142 INFO 	 epoch # 8880 : loss = 8.67676992908985e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:09,003 INFO 	 epoch # 8890 : loss = 8.773732146697253e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:09,858 INFO 	 epoch # 8900 : loss = 0.00018844673052496676
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:10,704 INFO 	 epoch # 8910 : loss = 8.680764923545732e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:11,561 INFO 	 epoch # 8920 : loss = 9.598755890952557e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:12,410 INFO 	 epoch # 8930 : loss = 8.905440180179929e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:13,252 INFO 	 epoch # 8940 : loss = 8.42565259517869e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:14,129 INFO 	 epoch # 8950 : loss = 9.307801883551292e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:15,001 INFO 	 epoch # 8960 : loss = 8.1353939874264e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:15,861 INFO 	 epoch # 8970 : loss = 9.047488908566135e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:16,696 INFO 	 epoch # 8980 : loss = 9.638416668167338e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:17,560 INFO 	 epoch # 8990 : loss = 0.00015729876031400636
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:18,408 INFO 	 epoch # 9000 : loss = 8.34053878082029e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:19,261 INFO 	 epoch # 9010 : loss = 7.736627230769955e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:20,099 INFO 	 epoch # 9020 : loss = 7.910314265505544e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:20,955 INFO 	 epoch # 9030 : loss = 0.0001104581034659142
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:21,814 INFO 	 epoch # 9040 : loss = 7.73549233729552e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:22,651 INFO 	 epoch # 9050 : loss = 0.00010289810234098695
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:23,558 INFO 	 epoch # 9060 : loss = 7.5329947971373e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:24,628 INFO 	 epoch # 9070 : loss = 8.046706612471357e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:25,553 INFO 	 epoch # 9080 : loss = 6.992895136396069e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:26,547 INFO 	 epoch # 9090 : loss = 9.234245797935208e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:27,469 INFO 	 epoch # 9100 : loss = 0.00012509749285527505
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:28,366 INFO 	 epoch # 9110 : loss = 8.679936425843542e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:29,291 INFO 	 epoch # 9120 : loss = 9.259240947098338e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:30,164 INFO 	 epoch # 9130 : loss = 8.113970605856074e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:31,016 INFO 	 epoch # 9140 : loss = 8.720734175377791e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:31,861 INFO 	 epoch # 9150 : loss = 9.157188365601801e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:32,718 INFO 	 epoch # 9160 : loss = 7.624479284069301e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:33,573 INFO 	 epoch # 9170 : loss = 9.660644250938535e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:34,442 INFO 	 epoch # 9180 : loss = 6.851162626324887e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:35,319 INFO 	 epoch # 9190 : loss = 7.756799459457397e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:36,160 INFO 	 epoch # 9200 : loss = 9.194244194077328e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:36,994 INFO 	 epoch # 9210 : loss = 7.321718697182535e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:37,836 INFO 	 epoch # 9220 : loss = 0.0001230457377719826
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:38,674 INFO 	 epoch # 9230 : loss = 0.0001141493053832424
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:39,530 INFO 	 epoch # 9240 : loss = 9.112935523652206e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:40,402 INFO 	 epoch # 9250 : loss = 8.34559523354983e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:41,252 INFO 	 epoch # 9260 : loss = 7.495473515258968e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:42,106 INFO 	 epoch # 9270 : loss = 9.163986396742985e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:42,960 INFO 	 epoch # 9280 : loss = 7.728375515268584e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:43,821 INFO 	 epoch # 9290 : loss = 9.224112311910306e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:44,683 INFO 	 epoch # 9300 : loss = 7.780011843091675e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:45,547 INFO 	 epoch # 9310 : loss = 8.445052299066447e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:46,413 INFO 	 epoch # 9320 : loss = 0.00010428413848525711
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:47,254 INFO 	 epoch # 9330 : loss = 6.52448427769871e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:48,090 INFO 	 epoch # 9340 : loss = 7.038261095918383e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:48,939 INFO 	 epoch # 9350 : loss = 7.870069332836595e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:49,824 INFO 	 epoch # 9360 : loss = 7.234968610906176e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:50,704 INFO 	 epoch # 9370 : loss = 8.209237369425994e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:51,562 INFO 	 epoch # 9380 : loss = 7.030056622170378e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:52,423 INFO 	 epoch # 9390 : loss = 0.00011035673716313405
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:53,258 INFO 	 epoch # 9400 : loss = 6.203174832210477e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:54,115 INFO 	 epoch # 9410 : loss = 7.155120666928789e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:54,954 INFO 	 epoch # 9420 : loss = 9.422987984310436e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:55,784 INFO 	 epoch # 9430 : loss = 7.994754196261056e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:56,633 INFO 	 epoch # 9440 : loss = 0.00010724706901653138
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:57,478 INFO 	 epoch # 9450 : loss = 7.08539534701101e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:58,317 INFO 	 epoch # 9460 : loss = 0.00010340740196365264
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:51:59,187 INFO 	 epoch # 9470 : loss = 7.583162628829346e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:00,022 INFO 	 epoch # 9480 : loss = 6.957241930649616e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:00,855 INFO 	 epoch # 9490 : loss = 0.00011096165274336402
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:01,707 INFO 	 epoch # 9500 : loss = 6.652793230646889e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:02,552 INFO 	 epoch # 9510 : loss = 6.94468716184409e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:03,399 INFO 	 epoch # 9520 : loss = 8.145775011923564e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:04,248 INFO 	 epoch # 9530 : loss = 7.127018138167582e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:05,102 INFO 	 epoch # 9540 : loss = 7.729427982537475e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:05,959 INFO 	 epoch # 9550 : loss = 7.259900667122565e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:06,823 INFO 	 epoch # 9560 : loss = 6.353357769382586e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:07,687 INFO 	 epoch # 9570 : loss = 8.087290033082744e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:08,558 INFO 	 epoch # 9580 : loss = 8.525125979628813e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:09,454 INFO 	 epoch # 9590 : loss = 8.923967314850805e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:10,327 INFO 	 epoch # 9600 : loss = 6.348278943083383e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:11,227 INFO 	 epoch # 9610 : loss = 8.900092091477876e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:12,122 INFO 	 epoch # 9620 : loss = 0.00010111090029697931
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:12,997 INFO 	 epoch # 9630 : loss = 8.3854743154786e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:13,915 INFO 	 epoch # 9640 : loss = 8.734929152914057e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:14,785 INFO 	 epoch # 9650 : loss = 9.802812824740872e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:15,649 INFO 	 epoch # 9660 : loss = 7.982446290303155e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:16,491 INFO 	 epoch # 9670 : loss = 0.00014089880746074153
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:17,350 INFO 	 epoch # 9680 : loss = 9.158660447740528e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:18,175 INFO 	 epoch # 9690 : loss = 6.170342099462037e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:19,023 INFO 	 epoch # 9700 : loss = 8.69555447674689e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:19,870 INFO 	 epoch # 9710 : loss = 6.022908720686766e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:20,718 INFO 	 epoch # 9720 : loss = 6.657324619092313e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:21,554 INFO 	 epoch # 9730 : loss = 8.277313125810386e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:22,417 INFO 	 epoch # 9740 : loss = 6.0129508450959944e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:23,250 INFO 	 epoch # 9750 : loss = 6.293614777470273e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:24,096 INFO 	 epoch # 9760 : loss = 7.890788245796492e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:24,950 INFO 	 epoch # 9770 : loss = 7.48018262259263e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:25,781 INFO 	 epoch # 9780 : loss = 7.350687103878175e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:26,609 INFO 	 epoch # 9790 : loss = 9.361858246847987e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:27,472 INFO 	 epoch # 9800 : loss = 7.413142079063359e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:28,310 INFO 	 epoch # 9810 : loss = 6.546738118881226e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:29,163 INFO 	 epoch # 9820 : loss = 6.575936926570389e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:30,031 INFO 	 epoch # 9830 : loss = 7.527994603151456e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:30,874 INFO 	 epoch # 9840 : loss = 7.331162279505017e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:31,704 INFO 	 epoch # 9850 : loss = 8.540788205989105e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:32,550 INFO 	 epoch # 9860 : loss = 0.0001034075659325546
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:33,398 INFO 	 epoch # 9870 : loss = 7.621833512010718e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:34,229 INFO 	 epoch # 9880 : loss = 7.000239669910766e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:35,065 INFO 	 epoch # 9890 : loss = 9.282743225672416e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:35,912 INFO 	 epoch # 9900 : loss = 8.118197573432033e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:36,736 INFO 	 epoch # 9910 : loss = 5.7017684542058434e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:37,567 INFO 	 epoch # 9920 : loss = 8.367854466736649e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:38,423 INFO 	 epoch # 9930 : loss = 6.371950803440996e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:39,263 INFO 	 epoch # 9940 : loss = 6.478674081985705e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:40,101 INFO 	 epoch # 9950 : loss = 0.00010150142095101598
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:40,947 INFO 	 epoch # 9960 : loss = 6.880808151825997e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:41,776 INFO 	 epoch # 9970 : loss = 6.749250158983549e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:42,615 INFO 	 epoch # 9980 : loss = 6.352811474893574e-05
+[ttnode_driver.py:143 -   <module>()] 2023-04-13 20:52:43,450 INFO 	 epoch # 9990 : loss = 6.547389498986636e-05
+[ttnode_driver.py:149 -   <module>()] 2023-04-13 20:52:44,227 INFO 
+     epoch      loss
+0        0  0.882674
+1       10  0.238512
+2       20  0.231724
+3       30  0.237360
+4       40  0.203990
+5       50  0.200178
+6       60  0.178869
+7       70  0.187894
+8       80  0.138096
+9       90  0.146243
+10     100  0.121791
+11     110  0.122488
+12     120  0.107940
+13     130  0.106881
+14     140  0.104257
+15     150  0.095290
+16     160  0.092096
+17     170  0.112166
+18     180  0.090861
+19     190  0.082931
+20     200  0.081146
+21     210  0.080603
+22     220  0.084907
+23     230  0.071884
+24     240  0.073001
+25     250  0.071675
+26     260  0.077434
+27     270  0.073529
+28     280  0.064783
+29     290  0.059247
+30     300  0.058433
+31     310  0.058923
+32     320  0.063923
+33     330  0.051503
+34     340  0.053810
+35     350  0.049319
+36     360  0.054171
+37     370  0.052003
+38     380  0.047674
+39     390  0.049381
+40     400  0.045699
+41     410  0.044704
+42     420  0.045709
+43     430  0.046166
+44     440  0.046142
+45     450  0.047825
+46     460  0.041944
+47     470  0.043791
+48     480  0.041177
+49     490  0.039245
+50     500  0.040086
+51     510  0.037929
+52     520  0.038925
+53     530  0.041887
+54     540  0.036500
+55     550  0.035538
+56     560  0.037655
+57     570  0.036471
+58     580  0.034391
+59     590  0.031735
+60     600  0.032198
+61     610  0.032844
+62     620  0.035220
+63     630  0.031897
+64     640  0.033735
+65     650  0.029446
+66     660  0.030739
+67     670  0.028275
+68     680  0.028209
+69     690  0.027014
+70     700  0.026805
+71     710  0.029403
+72     720  0.027504
+73     730  0.027478
+74     740  0.027336
+75     750  0.024812
+76     760  0.024311
+77     770  0.026298
+78     780  0.023534
+79     790  0.024308
+80     800  0.024564
+81     810  0.023985
+82     820  0.022646
+83     830  0.022166
+84     840  0.023473
+85     850  0.021316
+86     860  0.021480
+87     870  0.021091
+88     880  0.019752
+89     890  0.019209
+90     900  0.021654
+91     910  0.022579
+92     920  0.019182
+93     930  0.018812
+94     940  0.018123
+95     950  0.017810
+96     960  0.018844
+97     970  0.018561
+98     980  0.017142
+99     990  0.017787
+100   1000  0.018069
+101   1010  0.015267
+102   1020  0.017205
+103   1030  0.015346
+104   1040  0.014965
+105   1050  0.014807
+106   1060  0.015223
+107   1070  0.016624
+108   1080  0.013598
+109   1090  0.015328
+110   1100  0.013779
+111   1110  0.014686
+112   1120  0.016121
+113   1130  0.014105
+114   1140  0.013132
+115   1150  0.012790
+116   1160  0.013820
+117   1170  0.013071
+118   1180  0.013115
+119   1190  0.012379
+120   1200  0.013320
+121   1210  0.012841
+122   1220  0.011597
+123   1230  0.011463
+124   1240  0.011884
+125   1250  0.011653
+126   1260  0.010797
+127   1270  0.010752
+128   1280  0.010925
+129   1290  0.010248
+130   1300  0.011333
+131   1310  0.009543
+132   1320  0.010149
+133   1330  0.009648
+134   1340  0.010545
+135   1350  0.009349
+136   1360  0.010190
+137   1370  0.010148
+138   1380  0.008750
+139   1390  0.009058
+140   1400  0.009684
+141   1410  0.008927
+142   1420  0.008780
+143   1430  0.008388
+144   1440  0.007857
+145   1450  0.008526
+146   1460  0.008459
+147   1470  0.010282
+148   1480  0.007529
+149   1490  0.008257
+150   1500  0.007832
+151   1510  0.008598
+152   1520  0.008270
+153   1530  0.006643
+154   1540  0.008303
+155   1550  0.008545
+156   1560  0.006888
+157   1570  0.006878
+158   1580  0.007114
+159   1590  0.006287
+160   1600  0.006706
+161   1610  0.006143
+162   1620  0.007537
+163   1630  0.007160
+164   1640  0.006235
+165   1650  0.007043
+166   1660  0.006920
+167   1670  0.006307
+168   1680  0.006142
+169   1690  0.006121
+170   1700  0.007278
+171   1710  0.006346
+172   1720  0.005860
+173   1730  0.005988
+174   1740  0.006935
+175   1750  0.005534
+176   1760  0.005784
+177   1770  0.005695
+178   1780  0.005768
+179   1790  0.005428
+180   1800  0.005224
+181   1810  0.006170
+182   1820  0.006427
+183   1830  0.008779
+184   1840  0.005438
+185   1850  0.005914
+186   1860  0.004819
+187   1870  0.005759
+188   1880  0.005369
+189   1890  0.005342
+190   1900  0.004859
+191   1910  0.004699
+192   1920  0.004724
+193   1930  0.004615
+194   1940  0.005280
+195   1950  0.005059
+196   1960  0.005290
+197   1970  0.004818
+198   1980  0.004468
+199   1990  0.004216
+200   2000  0.004822
+201   2010  0.004101
+202   2020  0.004064
+203   2030  0.004405
+204   2040  0.005563
+205   2050  0.004550
+206   2060  0.005008
+207   2070  0.003835
+208   2080  0.004096
+209   2090  0.003864
+210   2100  0.005578
+211   2110  0.004318
+212   2120  0.003940
+213   2130  0.005033
+214   2140  0.004089
+215   2150  0.003590
+216   2160  0.003813
+217   2170  0.003748
+218   2180  0.004250
+219   2190  0.003627
+220   2200  0.004411
+221   2210  0.003229
+222   2220  0.003980
+223   2230  0.003673
+224   2240  0.003894
+225   2250  0.004899
+226   2260  0.003518
+227   2270  0.003595
+228   2280  0.003092
+229   2290  0.003756
+230   2300  0.003038
+231   2310  0.003049
+232   2320  0.005959
+233   2330  0.003195
+234   2340  0.003588
+235   2350  0.003074
+236   2360  0.003021
+237   2370  0.003165
+238   2380  0.003999
+239   2390  0.002837
+240   2400  0.003277
+241   2410  0.002685
+242   2420  0.003328
+243   2430  0.002970
+244   2440  0.002545
+245   2450  0.002949
+246   2460  0.004078
+247   2470  0.002800
+248   2480  0.004189
+249   2490  0.002742
+250   2500  0.002585
+251   2510  0.003052
+252   2520  0.002967
+253   2530  0.002580
+254   2540  0.002873
+255   2550  0.003293
+256   2560  0.002764
+257   2570  0.002451
+258   2580  0.003310
+259   2590  0.002802
+260   2600  0.002445
+261   2610  0.003156
+262   2620  0.002361
+263   2630  0.002214
+264   2640  0.002633
+265   2650  0.002295
+266   2660  0.003028
+267   2670  0.002326
+268   2680  0.002838
+269   2690  0.002310
+270   2700  0.003133
+271   2710  0.002554
+272   2720  0.002186
+273   2730  0.002422
+274   2740  0.002686
+275   2750  0.002395
+276   2760  0.002453
+277   2770  0.002754
+278   2780  0.002352
+279   2790  0.002182
+280   2800  0.002096
+281   2810  0.002020
+282   2820  0.003141
+283   2830  0.001959
+284   2840  0.002533
+285   2850  0.002245
+286   2860  0.001982
+287   2870  0.002103
+288   2880  0.001902
+289   2890  0.001973
+290   2900  0.001766
+291   2910  0.003285
+292   2920  0.001943
+293   2930  0.001643
+294   2940  0.001802
+295   2950  0.002539
+296   2960  0.001821
+297   2970  0.001823
+298   2980  0.002035
+299   2990  0.001803
+300   3000  0.001813
+301   3010  0.001614
+302   3020  0.001934
+303   3030  0.001580
+304   3040  0.001558
+305   3050  0.001542
+306   3060  0.001675
+307   3070  0.002046
+308   3080  0.002060
+309   3090  0.001911
+310   3100  0.001714
+311   3110  0.002320
+312   3120  0.001579
+313   3130  0.001464
+314   3140  0.001678
+315   3150  0.002361
+316   3160  0.002179
+317   3170  0.001885
+318   3180  0.001470
+319   3190  0.001672
+320   3200  0.001756
+321   3210  0.001901
+322   3220  0.001420
+323   3230  0.001491
+324   3240  0.001410
+325   3250  0.001539
+326   3260  0.003692
+327   3270  0.001455
+328   3280  0.001459
+329   3290  0.001609
+330   3300  0.001466
+331   3310  0.001360
+332   3320  0.001250
+333   3330  0.001569
+334   3340  0.001978
+335   3350  0.001450
+336   3360  0.001298
+337   3370  0.001371
+338   3380  0.001221
+339   3390  0.001541
+340   3400  0.001137
+341   3410  0.001082
+342   3420  0.002871
+343   3430  0.001147
+344   3440  0.001146
+345   3450  0.001496
+346   3460  0.001994
+347   3470  0.001221
+348   3480  0.000952
+349   3490  0.001161
+350   3500  0.001198
+351   3510  0.001218
+352   3520  0.001517
+353   3530  0.001363
+354   3540  0.001154
+355   3550  0.000944
+356   3560  0.000945
+357   3570  0.000998
+358   3580  0.001148
+359   3590  0.002191
+360   3600  0.001274
+361   3610  0.001103
+362   3620  0.001038
+363   3630  0.001294
+364   3640  0.001236
+365   3650  0.000996
+366   3660  0.001180
+367   3670  0.001062
+368   3680  0.001243
+369   3690  0.001082
+370   3700  0.001202
+371   3710  0.000828
+372   3720  0.000899
+373   3730  0.000925
+374   3740  0.001016
+375   3750  0.000825
+376   3760  0.000956
+377   3770  0.000970
+378   3780  0.001073
+379   3790  0.000805
+380   3800  0.000893
+381   3810  0.000768
+382   3820  0.001561
+383   3830  0.000792
+384   3840  0.002599
+385   3850  0.000897
+386   3860  0.001061
+387   3870  0.000763
+388   3880  0.000795
+389   3890  0.000741
+390   3900  0.000764
+391   3910  0.000989
+392   3920  0.000844
+393   3930  0.000923
+394   3940  0.000748
+395   3950  0.001472
+396   3960  0.000925
+397   3970  0.000904
+398   3980  0.000743
+399   3990  0.000700
+400   4000  0.000734
+401   4010  0.001026
+402   4020  0.000688
+403   4030  0.000746
+404   4040  0.000760
+405   4050  0.001160
+406   4060  0.000732
+407   4070  0.000872
+408   4080  0.000750
+409   4090  0.000704
+410   4100  0.000972
+411   4110  0.000709
+412   4120  0.000842
+413   4130  0.000750
+414   4140  0.000676
+415   4150  0.000744
+416   4160  0.000636
+417   4170  0.000651
+418   4180  0.000553
+419   4190  0.001144
+420   4200  0.000567
+421   4210  0.000569
+422   4220  0.000670
+423   4230  0.000548
+424   4240  0.000617
+425   4250  0.000701
+426   4260  0.000650
+427   4270  0.000642
+428   4280  0.000763
+429   4290  0.000594
+430   4300  0.000584
+431   4310  0.000546
+432   4320  0.000596
+433   4330  0.000835
+434   4340  0.000618
+435   4350  0.000608
+436   4360  0.000593
+437   4370  0.000498
+438   4380  0.000609
+439   4390  0.000480
+440   4400  0.000555
+441   4410  0.000590
+442   4420  0.000601
+443   4430  0.000493
+444   4440  0.000556
+445   4450  0.000602
+446   4460  0.000527
+447   4470  0.000481
+448   4480  0.000484
+449   4490  0.000545
+450   4500  0.000556
+451   4510  0.000612
+452   4520  0.000706
+453   4530  0.000440
+454   4540  0.000823
+455   4550  0.000506
+456   4560  0.000603
+457   4570  0.000508
+458   4580  0.000553
+459   4590  0.000579
+460   4600  0.000457
+461   4610  0.000579
+462   4620  0.000695
+463   4630  0.000614
+464   4640  0.000504
+465   4650  0.000500
+466   4660  0.000584
+467   4670  0.000543
+468   4680  0.000467
+469   4690  0.000645
+470   4700  0.000788
+471   4710  0.000473
+472   4720  0.000416
+473   4730  0.000459
+474   4740  0.000600
+475   4750  0.000406
+476   4760  0.000414
+477   4770  0.000430
+478   4780  0.000422
+479   4790  0.000708
+480   4800  0.000430
+481   4810  0.000388
+482   4820  0.000481
+483   4830  0.000531
+484   4840  0.000427
+485   4850  0.000382
+486   4860  0.000467
+487   4870  0.000486
+488   4880  0.000420
+489   4890  0.000415
+490   4900  0.000477
+491   4910  0.000743
+492   4920  0.000386
+493   4930  0.000417
+494   4940  0.000380
+495   4950  0.000427
+496   4960  0.000424
+497   4970  0.000439
+498   4980  0.000356
+499   4990  0.000511
+500   5000  0.000361
+501   5010  0.000370
+502   5020  0.000627
+503   5030  0.000398
+504   5040  0.000378
+505   5050  0.000392
+506   5060  0.000390
+507   5070  0.000586
+508   5080  0.000360
+509   5090  0.000358
+510   5100  0.000414
+511   5110  0.000422
+512   5120  0.000378
+513   5130  0.000343
+514   5140  0.000354
+515   5150  0.000475
+516   5160  0.000356
+517   5170  0.000351
+518   5180  0.000404
+519   5190  0.000344
+520   5200  0.000356
+521   5210  0.000510
+522   5220  0.000298
+523   5230  0.000352
+524   5240  0.000388
+525   5250  0.000331
+526   5260  0.000459
+527   5270  0.000339
+528   5280  0.000315
+529   5290  0.000378
+530   5300  0.000417
+531   5310  0.000443
+532   5320  0.000325
+533   5330  0.000385
+534   5340  0.000322
+535   5350  0.000374
+536   5360  0.000392
+537   5370  0.000347
+538   5380  0.000339
+539   5390  0.000333
+540   5400  0.000315
+541   5410  0.000306
+542   5420  0.000294
+543   5430  0.000307
+544   5440  0.000303
+545   5450  0.000403
+546   5460  0.000299
+547   5470  0.000310
+548   5480  0.000362
+549   5490  0.000275
+550   5500  0.000285
+551   5510  0.000337
+552   5520  0.000293
+553   5530  0.000305
+554   5540  0.000302
+555   5550  0.000298
+556   5560  0.000320
+557   5570  0.000335
+558   5580  0.000313
+559   5590  0.000288
+560   5600  0.000296
+561   5610  0.000269
+562   5620  0.000317
+563   5630  0.000285
+564   5640  0.000301
+565   5650  0.000317
+566   5660  0.000264
+567   5670  0.000290
+568   5680  0.000263
+569   5690  0.000334
+570   5700  0.000318
+571   5710  0.000239
+572   5720  0.000296
+573   5730  0.000290
+574   5740  0.000289
+575   5750  0.000316
+576   5760  0.000281
+577   5770  0.000265
+578   5780  0.000308
+579   5790  0.000268
+580   5800  0.000369
+581   5810  0.000326
+582   5820  0.000269
+583   5830  0.000399
+584   5840  0.000248
+585   5850  0.000274
+586   5860  0.000283
+587   5870  0.000291
+588   5880  0.000297
+589   5890  0.000267
+590   5900  0.000428
+591   5910  0.000432
+592   5920  0.000245
+593   5930  0.000323
+594   5940  0.000260
+595   5950  0.000356
+596   5960  0.000272
+597   5970  0.000291
+598   5980  0.000285
+599   5990  0.000336
+600   6000  0.000261
+601   6010  0.000231
+602   6020  0.000218
+603   6030  0.000302
+604   6040  0.000238
+605   6050  0.000260
+606   6060  0.000235
+607   6070  0.000243
+608   6080  0.000220
+609   6090  0.000223
+610   6100  0.000260
+611   6110  0.000285
+612   6120  0.000645
+613   6130  0.000233
+614   6140  0.000246
+615   6150  0.000327
+616   6160  0.000245
+617   6170  0.000251
+618   6180  0.000318
+619   6190  0.000307
+620   6200  0.000243
+621   6210  0.000220
+622   6220  0.000296
+623   6230  0.000512
+624   6240  0.000229
+625   6250  0.000194
+626   6260  0.000309
+627   6270  0.000245
+628   6280  0.000315
+629   6290  0.000196
+630   6300  0.000282
+631   6310  0.000308
+632   6320  0.000234
+633   6330  0.000235
+634   6340  0.000301
+635   6350  0.000186
+636   6360  0.000231
+637   6370  0.000210
+638   6380  0.000198
+639   6390  0.000242
+640   6400  0.000219
+641   6410  0.000207
+642   6420  0.000275
+643   6430  0.000218
+644   6440  0.000198
+645   6450  0.000178
+646   6460  0.000211
+647   6470  0.000270
+648   6480  0.000239
+649   6490  0.000208
+650   6500  0.000202
+651   6510  0.000188
+652   6520  0.000202
+653   6530  0.000270
+654   6540  0.000467
+655   6550  0.000186
+656   6560  0.000231
+657   6570  0.000279
+658   6580  0.000215
+659   6590  0.000218
+660   6600  0.000205
+661   6610  0.000258
+662   6620  0.000183
+663   6630  0.000234
+664   6640  0.000183
+665   6650  0.000186
+666   6660  0.000255
+667   6670  0.000237
+668   6680  0.000188
+669   6690  0.000184
+670   6700  0.000219
+671   6710  0.000242
+672   6720  0.000265
+673   6730  0.000217
+674   6740  0.000215
+675   6750  0.000189
+676   6760  0.000241
+677   6770  0.000192
+678   6780  0.000213
+679   6790  0.000174
+680   6800  0.000200
+681   6810  0.000259
+682   6820  0.000194
+683   6830  0.000256
+684   6840  0.000203
+685   6850  0.000169
+686   6860  0.000168
+687   6870  0.000206
+688   6880  0.000196
+689   6890  0.000185
+690   6900  0.000233
+691   6910  0.000198
+692   6920  0.000171
+693   6930  0.000174
+694   6940  0.000161
+695   6950  0.000181
+696   6960  0.000219
+697   6970  0.000164
+698   6980  0.000197
+699   6990  0.000168
+700   7000  0.000202
+701   7010  0.000210
+702   7020  0.000172
+703   7030  0.000166
+704   7040  0.000148
+705   7050  0.000166
+706   7060  0.000175
+707   7070  0.000164
+708   7080  0.000145
+709   7090  0.000149
+710   7100  0.000219
+711   7110  0.000164
+712   7120  0.000260
+713   7130  0.000178
+714   7140  0.000199
+715   7150  0.000164
+716   7160  0.000167
+717   7170  0.001327
+718   7180  0.000156
+719   7190  0.000153
+720   7200  0.000162
+721   7210  0.000203
+722   7220  0.000222
+723   7230  0.000186
+724   7240  0.000145
+725   7250  0.000176
+726   7260  0.000156
+727   7270  0.000199
+728   7280  0.000228
+729   7290  0.000151
+730   7300  0.000174
+731   7310  0.000139
+732   7320  0.000144
+733   7330  0.000204
+734   7340  0.000168
+735   7350  0.000132
+736   7360  0.000158
+737   7370  0.000145
+738   7380  0.000167
+739   7390  0.000173
+740   7400  0.000166
+741   7410  0.000343
+742   7420  0.000133
+743   7430  0.000149
+744   7440  0.000154
+745   7450  0.000209
+746   7460  0.000178
+747   7470  0.000288
+748   7480  0.000157
+749   7490  0.000142
+750   7500  0.000168
+751   7510  0.000161
+752   7520  0.000122
+753   7530  0.000292
+754   7540  0.000130
+755   7550  0.000187
+756   7560  0.000140
+757   7570  0.000178
+758   7580  0.000129
+759   7590  0.000280
+760   7600  0.000185
+761   7610  0.000138
+762   7620  0.000182
+763   7630  0.000119
+764   7640  0.000131
+765   7650  0.000191
+766   7660  0.000128
+767   7670  0.000126
+768   7680  0.000260
+769   7690  0.000192
+770   7700  0.000123
+771   7710  0.000133
+772   7720  0.000135
+773   7730  0.000161
+774   7740  0.000126
+775   7750  0.000134
+776   7760  0.000140
+777   7770  0.000143
+778   7780  0.000134
+779   7790  0.000122
+780   7800  0.000233
+781   7810  0.000108
+782   7820  0.000159
+783   7830  0.000185
+784   7840  0.000124
+785   7850  0.000149
+786   7860  0.000168
+787   7870  0.000122
+788   7880  0.000166
+789   7890  0.000118
+790   7900  0.000177
+791   7910  0.000333
+792   7920  0.000124
+793   7930  0.000136
+794   7940  0.000163
+795   7950  0.000140
+796   7960  0.000112
+797   7970  0.000140
+798   7980  0.000182
+799   7990  0.000125
+800   8000  0.000138
+801   8010  0.000161
+802   8020  0.000161
+803   8030  0.000120
+804   8040  0.000113
+805   8050  0.000121
+806   8060  0.000187
+807   8070  0.000111
+808   8080  0.000121
+809   8090  0.000138
+810   8100  0.000230
+811   8110  0.000117
+812   8120  0.000147
+813   8130  0.000106
+814   8140  0.000121
+815   8150  0.000107
+816   8160  0.000219
+817   8170  0.000103
+818   8180  0.000119
+819   8190  0.000138
+820   8200  0.000152
+821   8210  0.000108
+822   8220  0.000117
+823   8230  0.000100
+824   8240  0.000113
+825   8250  0.000138
+826   8260  0.000107
+827   8270  0.000112
+828   8280  0.000104
+829   8290  0.000100
+830   8300  0.000126
+831   8310  0.000134
+832   8320  0.000117
+833   8330  0.000108
+834   8340  0.000115
+835   8350  0.000102
+836   8360  0.000100
+837   8370  0.000108
+838   8380  0.000165
+839   8390  0.000098
+840   8400  0.000114
+841   8410  0.000128
+842   8420  0.000099
+843   8430  0.000172
+844   8440  0.000106
+845   8450  0.000126
+846   8460  0.000125
+847   8470  0.000101
+848   8480  0.000101
+849   8490  0.000101
+850   8500  0.000099
+851   8510  0.000208
+852   8520  0.000097
+853   8530  0.000148
+854   8540  0.000169
+855   8550  0.000109
+856   8560  0.000115
+857   8570  0.000112
+858   8580  0.000101
+859   8590  0.000101
+860   8600  0.000108
+861   8610  0.000104
+862   8620  0.000101
+863   8630  0.000144
+864   8640  0.000085
+865   8650  0.000148
+866   8660  0.000100
+867   8670  0.000099
+868   8680  0.000113
+869   8690  0.000088
+870   8700  0.000094
+871   8710  0.000126
+872   8720  0.000078
+873   8730  0.000086
+874   8740  0.000108
+875   8750  0.000118
+876   8760  0.000103
+877   8770  0.000096
+878   8780  0.000083
+879   8790  0.000114
+880   8800  0.000091
+881   8810  0.000109
+882   8820  0.000102
+883   8830  0.000100
+884   8840  0.000126
+885   8850  0.000092
+886   8860  0.000092
+887   8870  0.000072
+888   8880  0.000087
+889   8890  0.000088
+890   8900  0.000188
+891   8910  0.000087
+892   8920  0.000096
+893   8930  0.000089
+894   8940  0.000084
+895   8950  0.000093
+896   8960  0.000081
+897   8970  0.000090
+898   8980  0.000096
+899   8990  0.000157
+900   9000  0.000083
+901   9010  0.000077
+902   9020  0.000079
+903   9030  0.000110
+904   9040  0.000077
+905   9050  0.000103
+906   9060  0.000075
+907   9070  0.000080
+908   9080  0.000070
+909   9090  0.000092
+910   9100  0.000125
+911   9110  0.000087
+912   9120  0.000093
+913   9130  0.000081
+914   9140  0.000087
+915   9150  0.000092
+916   9160  0.000076
+917   9170  0.000097
+918   9180  0.000069
+919   9190  0.000078
+920   9200  0.000092
+921   9210  0.000073
+922   9220  0.000123
+923   9230  0.000114
+924   9240  0.000091
+925   9250  0.000083
+926   9260  0.000075
+927   9270  0.000092
+928   9280  0.000077
+929   9290  0.000092
+930   9300  0.000078
+931   9310  0.000084
+932   9320  0.000104
+933   9330  0.000065
+934   9340  0.000070
+935   9350  0.000079
+936   9360  0.000072
+937   9370  0.000082
+938   9380  0.000070
+939   9390  0.000110
+940   9400  0.000062
+941   9410  0.000072
+942   9420  0.000094
+943   9430  0.000080
+944   9440  0.000107
+945   9450  0.000071
+946   9460  0.000103
+947   9470  0.000076
+948   9480  0.000070
+949   9490  0.000111
+950   9500  0.000067
+951   9510  0.000069
+952   9520  0.000081
+953   9530  0.000071
+954   9540  0.000077
+955   9550  0.000073
+956   9560  0.000064
+957   9570  0.000081
+958   9580  0.000085
+959   9590  0.000089
+960   9600  0.000063
+961   9610  0.000089
+962   9620  0.000101
+963   9630  0.000084
+964   9640  0.000087
+965   9650  0.000098
+966   9660  0.000080
+967   9670  0.000141
+968   9680  0.000092
+969   9690  0.000062
+970   9700  0.000087
+971   9710  0.000060
+972   9720  0.000067
+973   9730  0.000083
+974   9740  0.000060
+975   9750  0.000063
+976   9760  0.000079
+977   9770  0.000075
+978   9780  0.000074
+979   9790  0.000094
+980   9800  0.000074
+981   9810  0.000065
+982   9820  0.000066
+983   9830  0.000075
+984   9840  0.000073
+985   9850  0.000085
+986   9860  0.000103
+987   9870  0.000076
+988   9880  0.000070
+989   9890  0.000093
+990   9900  0.000081
+991   9910  0.000057
+992   9920  0.000084
+993   9930  0.000064
+994   9940  0.000065
+995   9950  0.000102
+996   9960  0.000069
+997   9970  0.000067
+998   9980  0.000064
+999   9990  0.000065
+
+[ttnode_driver.py:150 -   <module>()] 2023-04-13 20:52:44,227 INFO Training-Time = 883 seconds
+[ttnode_driver.py:151 -   <module>()] 2023-04-13 20:52:44,227 INFO Experiment info is logged under experiment # 271
