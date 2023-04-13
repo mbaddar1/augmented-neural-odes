@@ -4,11 +4,11 @@ train:
   N: 4096
   loss: "mse" # FIXME add implementation to code
   device: "cpu"
-  epochs: 200
-  batch_size: 64
-  lr: 0.1
+  epochs: 500
+  batch_size: 128
+  lr: 0.0001
   dataset: "boston-housing"
-  ratio: 1.0
+  ratio: 0.8
   shuffle: True
   regularization:
     method: "lp"
@@ -19,14 +19,14 @@ train:
 init:
   method: "uniform"
   uniform:
-    low: 0.01
-    high: 0.05
+    low: -0.001
+    high: 0.001
   normal:
     mean: 0.0
     std: 0.1
 
 container:
-  latent-dim: 13 # 13 for boston, 6 for toy-relu
+  latent-dim: 13 # 13 for boston, 6 for toy-relu, 2 for toy-ode
 
 
 projection:
@@ -36,15 +36,15 @@ projection:
 output:
   activation: "identity"
   learnable: False
-  full : 0.1 # if learnable is false, this is the synthetic value used to
-             #  fill the weight matrix for linear-module part
+  full: 0.1 # if learnable is false, this is the synthetic value used to
+  #  fill the weight matrix for linear-module part
 
 ode:
   solver:
-    t-span: [ 0,1 ]
+    t-span: [ 0,1.0 ]
     method: "euler"
     euler:
-      step-size: 0.5
+      step-size: 0.1
     rk45:
       rtol: 0.001
   #--
@@ -60,5 +60,5 @@ ode:
         window: 1.0
   nn:
     hidden-dim: 100
-    tt_emulation : True # if True, use nn-trajectory to train A_TT.phi([z,t]) model
-    loss_threshold : 0.01 # loss-threshold for nn-ode-func model to start tt-emulation call
+    tt_emulation: True # if True, use nn-trajectory to train A_TT.phi([z,t]) model
+    loss_threshold: 0.01 # loss-threshold for nn-ode-func model to start tt-emulation call

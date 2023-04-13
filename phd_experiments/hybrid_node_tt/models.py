@@ -88,6 +88,11 @@ class TensorTrainFixedRank(torch.nn.Module):
         gradient_list = list(map(lambda core: core.grad, self.core_tensors.values()))
         return gradient_list
 
+    def flat_gradients(self):
+        # TODO debug
+        grad_vec = torch.cat(list(map(lambda core: torch.flatten(core.grad), self.core_tensors.values())))
+        return grad_vec
+
     def gradients_sum_norm(self):
         gradient_list = self.gradients()
         norms_sum = sum(list(map(lambda g: torch.norm(g).item(), gradient_list)))
@@ -102,6 +107,10 @@ class TensorTrainFixedRank(torch.nn.Module):
 
     def display_cores(self):
         self.logger.info(f'Cores : \n{self.core_tensors}\n')
+
+    def flatten(self):
+        params_vec = torch.cat(list(map(lambda core: torch.flatten(core), self.core_tensors.values())))
+        return params_vec
 
 
 class NNodeFunc(torch.nn.Module):
@@ -129,6 +138,11 @@ class NNodeFunc(torch.nn.Module):
                 gradient_list.append(layer.bias.grad)
         return gradient_list
 
+    def flat_gradients(self):
+        gradients = self.gradients()
+        gradients_vec = torch.cat(list(map(lambda g: torch.flatten(g), gradients)))
+        return gradients_vec
+
     def gradients_sum_norm(self):
         gradient_list = self.gradients()
         norms_sum = sum(list(map(lambda g: torch.norm(g).item(), gradient_list)))
@@ -143,6 +157,17 @@ class NNodeFunc(torch.nn.Module):
                 numel_val = layer.bias.numel() if layer.bias.requires_grad else 0
                 learnable_numel += numel_val
         return learnable_numel
+
+    def flatten(self):
+        params_ = []
+        for layer in self.net:
+            if isinstance(layer, torch.nn.Linear):
+                if layer.weight.requires_grad:
+                    params_.append(layer.weight)
+                if layer.bias.requires_grad:
+                    params_.append(layer.bias)
+        vec = torch.cat(list(map(lambda param: torch.flatten(param), params_)))
+        return vec
 
 
 class TensorTrainOdeFunc(torch.nn.Module):
@@ -179,6 +204,12 @@ class TensorTrainOdeFunc(torch.nn.Module):
 
     def num_learnable_scalars(self):
         return self.A_TT.num_learnable_scalars()
+
+    def flatten(self):
+        return self.A_TT.flatten()
+
+    def flat_gradients(self):
+        return self.A_TT.flat_gradients()
 
 
 class ProjectionModel(torch.nn.Module):

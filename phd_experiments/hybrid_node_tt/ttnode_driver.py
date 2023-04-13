@@ -1,3 +1,4 @@
+import logging
 import os.path
 
 import pandas as pd
@@ -87,17 +88,18 @@ if __name__ == '__main__':
     model = LearnableOde(projection_model=projection_model, ode_solver_model=ode_solver_model,
                          output_model=output_model)
     loss_fn = get_loss_function(loss_name=config['train']['loss'])
-    optimizer = torch.optim.SGD(params=model.parameters(), lr=config['train']['lr'])
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=config['train']['lr'])
     logger.info(f"ODE-FUNC Model = {type(ode_func)} , learnable-numel = {ode_func.num_learnable_scalars()}")
     logger.info(f"Running with config : \n "
                 f"{config}"
                 f"\n"
                 f"============="
                 f"\n")
-    # TODO
     start_time = datetime.now()
     epoch_no_list = []
     epoch_avg_loss = []
+    if logger.level == logging.DEBUG:
+        ode_func_params_vec = ode_func.flatten().clone()
     for epoch in tqdm(range(config['train']['epochs']), desc="epochs"):
         batches_losses = []
         for i, (X, y) in enumerate(train_loader):
@@ -109,6 +111,12 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
         if epoch % config['train']['epochs_block'] == 0:
+            if logger.level == logging.DEBUG:
+                ode_func_grad_vec = ode_func.flat_gradients()
+                ode_func_params_vec_new = ode_func.flatten().clone()
+                delta_ode_func_params_vec = ode_func_params_vec_new - ode_func_params_vec
+                ode_func_params_vec = ode_func_params_vec_new
+                logger.debug(f'delta ode-func-params-vec = {delta_ode_func_params_vec}')
             epoch_no_list.append(epoch)
             epoch_avg_loss.append(np.nanmean(batches_losses))
             logger.info(f"\t epoch # {epoch} : loss = {np.nanmean(batches_losses)}")
