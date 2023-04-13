@@ -33,6 +33,12 @@ EXPERIMENTS_COUNTER_FILE = "./experiment_counter.txt"
 PANDAS_MAX_DISPLAY_ROW = 1000
 LOG_FORMAT = "[%(filename)s:%(lineno)s - %(funcName)10s()] %(asctime)s %(levelname)s %(message)s"
 DATE_TIME_FORMAT = "%Y-%m-%d:%H:%M:%S"
+
+
+def y_hat_backward_hook(grad):
+    pass
+
+
 if __name__ == '__main__':
     # set pandas config
     pd.set_option('display.max_rows', PANDAS_MAX_DISPLAY_ROW)
@@ -105,18 +111,19 @@ if __name__ == '__main__':
         for i, (X, y) in enumerate(train_loader):
             optimizer.zero_grad()
             y_hat = model(X)
+            y_hat.register_hook(y_hat_backward_hook)
             residual = loss_fn(y_hat, y)
             loss = residual
             batches_losses.append(residual.item())
             loss.backward()
-            optimizer.step()
-        if epoch % config['train']['epochs_block'] == 0:
+            # debug gradient of ode-func
             if logger.level == logging.DEBUG:
                 ode_func_grad_vec = ode_func.flat_gradients()
                 ode_func_params_vec_new = ode_func.flatten().clone()
                 delta_ode_func_params_vec = ode_func_params_vec_new - ode_func_params_vec
                 ode_func_params_vec = ode_func_params_vec_new
-                logger.debug(f'delta ode-func-params-vec = {delta_ode_func_params_vec}')
+            optimizer.step()
+        if epoch % config['train']['epochs_block'] == 0:
             epoch_no_list.append(epoch)
             epoch_avg_loss.append(np.nanmean(batches_losses))
             logger.info(f"\t epoch # {epoch} : loss = {np.nanmean(batches_losses)}")

@@ -44,7 +44,7 @@ ode:
     t-span: [ 0,1.0 ]
     method: "euler"
     euler:
-      step-size: 0.1
+      step-size: 1.0
     rk45:
       rtol: 0.001
   #--

@@ -6,6 +6,17 @@ from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchOdeSolver
 ACTIVATIONS = (torch.nn.Identity, torch.nn.Sigmoid, torch.nn.Tanh, torch.nn.ReLU)
 
 
+# hooks
+
+def tensor_train_ode_func_hook(module, grad_input, grad_output):
+    # https://pytorch.org/docs/stable/generated/torch.nn.modules.module.register_module_full_backward_hook.html#torch.nn.modules.module.register_module_full_backward_hook
+    pass
+
+
+def tensor_train_hook(module, grad_input, grad_output):
+    pass
+
+
 class OdeSolverModel(torch.nn.Module):
     def __init__(self, solver: TorchOdeSolver, ode_func: torch.nn.Module,
                  t_span: Tuple):
@@ -17,7 +28,12 @@ class OdeSolverModel(torch.nn.Module):
     def forward(self, z0):
         soln = self.solver.solve_ivp(func=self.ode_func, t_span=self.t_span, z0=z0, args=None)
         zT = soln.z_trajectory[-1]
+        zT.register_hook(OdeSolverModel.zT_hook)
         return zT
+
+    @staticmethod
+    def zT_hook(grad):
+        pass
 
 
 class TensorTrainFixedRank(torch.nn.Module):
@@ -27,6 +43,8 @@ class TensorTrainFixedRank(torch.nn.Module):
         dims : dims[0]-> output dim
         dims[1:order] -> input dims
         """
+        # register hooks
+
         super().__init__()
         self.poly_deg = poly_deg
         order = len(dims)
@@ -44,6 +62,12 @@ class TensorTrainFixedRank(torch.nn.Module):
             requires_grad=requires_grad)
         assert len(self.core_tensors) == order - 1, \
             f"# core tensors should == order-1 : {len(self.core_tensors)} != {order - 1}"
+
+        # FIXME register hooks
+        for core in self.core_tensors.values():
+            core.register_hook(TensorTrainFixedRank.core_hook)
+
+        self.register_backward_hook(tensor_train_hook)
 
     def norm(self):
         tot_norm = 0
@@ -83,6 +107,10 @@ class TensorTrainFixedRank(torch.nn.Module):
         assert res_tensor.size()[1] == self.out_dim, f"output tensor size must = " \
                                                      f"out_dim : {res_tensor.size()}!={self.out_dim}"
         return res_tensor
+
+    @staticmethod
+    def core_hook(grad):
+        pass
 
     def gradients(self):
         gradient_list = list(map(lambda core: core.grad, self.core_tensors.values()))
@@ -175,6 +203,8 @@ class TensorTrainOdeFunc(torch.nn.Module):
     def __init__(self, Dz: int, basis_model: str, unif_low: float, unif_high: float,
                  tt_rank: str | int | List[int], poly_deg: int):
         super().__init__()
+        # register hooks for debugging
+        self.register_full_backward_hook(tensor_train_ode_func_hook)
         # check params
         assert isinstance(poly_deg, int), f"deg must be int, got {type(self.deg)}"
         assert isinstance(tt_rank, int), f"Supporting fixed ranks only"
@@ -191,7 +221,12 @@ class TensorTrainOdeFunc(torch.nn.Module):
         dzdt = A.Phi([z,t])
         """
         dzdt = self.A_TT(t, z)
+        dzdt.register_hook(TensorTrainOdeFunc.dzdt_hook)
         return dzdt
+
+    @staticmethod
+    def dzdt_hook(grad):
+        pass
 
     def is_learnable(self):
         return self.A_TT.is_learnable()
