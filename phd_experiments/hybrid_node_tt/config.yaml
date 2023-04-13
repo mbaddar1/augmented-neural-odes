@@ -4,7 +4,7 @@ train:
   N: 1024
   loss: "mse" # FIXME add implementation to code
   device: "cpu"
-  epochs: 10000
+  epochs: 200
   batch_size: 64
   lr: 0.1
   dataset: "boston-housing"
@@ -14,14 +14,14 @@ train:
     method: "lp"
     p: 2
   dtype: "torch.float32"
-  epochs_block: 10
+  epochs_block: 1
   models_dir : "/home/mbaddar/phd/augmented-neural-odes/phd_experiments/hybrid_node_tt/ode_func_models"
 
 init:
   method: "uniform"
   uniform:
-    low: -0.5
-    high: 0.5
+    low: -0.05
+    high: 0.05
   normal:
     mean: 0.0
     std: 0.1
@@ -42,16 +42,16 @@ output:
 
 ode:
   solver:
-    t-span: [ 0,1.0 ]
+    t-span: [ 0,0.6 ]
     method: "rk45"
     euler:
       step-size: 0.1
     rk45:
       rtol: 0.001
   #--
-  model: "nn"
+  model: "tt"
   tt:
-    activation: "sigmoid"
+    activation: "identity"
     rank: "3" # string , if numeric then fixed else the string = "adaptive"
     basis:
       model: "poly"
