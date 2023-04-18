@@ -138,6 +138,8 @@ if __name__ == '__main__':
                 ode_func_params_vec = ode_func_params_vec_new
             # logger.debug(f'Epoch {epoch}, batch {i} => loss = {loss.item()}')
             optimizer.step()
+            # TODO add core orthog. step
+            #   https://arxiv.org/pdf/2101.09184.pdf p 5 last two lines
         if epoch % config['train']['epochs_block'] == 0:
             epoch_no_list.append(epoch)
             epoch_avg_loss.append(np.nanmean(batches_losses))
