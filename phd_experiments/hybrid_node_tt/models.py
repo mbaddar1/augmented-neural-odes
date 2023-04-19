@@ -1,7 +1,10 @@
+import string
 from typing import List, Tuple
 import torch
 from phd_experiments.hybrid_node_tt.basis import Basis
 from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchOdeSolver
+import torch
+from torchviz import make_dot
 
 ACTIVATIONS = (torch.nn.Identity, torch.nn.Sigmoid, torch.nn.Tanh, torch.nn.ReLU)
 
@@ -47,27 +50,36 @@ class TensorTrainFixedRank(torch.nn.Module):
 
         super().__init__()
         self.poly_deg = poly_deg
-        order = len(dims)
+        self.fixed_rank = fixed_rank
+        self.learnable_core_idx = None
+        self.order = len(dims)
         tensor_uniform = torch.distributions.Uniform(low=unif_low, high=unif_high)
         # https://pytorch.org/docs/stable/generated/torch.nn.ParameterDict.html
         self.core_tensors = torch.nn.ParameterDict(
-            {'G0': torch.nn.Parameter(tensor_uniform.sample(torch.Size([dims[0], fixed_rank])))})
+            {'G0': torch.nn.Parameter(tensor_uniform.sample(torch.Size([dims[0], fixed_rank])), requires_grad=False)})
         # self.out_dim = dims[0]
-        for i in range(1, order - 1):
+        for i in range(1, self.order - 1):
             self.core_tensors[f"G{i}"] = torch.nn.Parameter(
-                tensor_uniform.sample(sample_shape=torch.Size([fixed_rank, dims[i], fixed_rank])))
+                tensor_uniform.sample(sample_shape=torch.Size([fixed_rank, dims[i], fixed_rank])), requires_grad=False)
 
-        self.core_tensors[f"G{order - 1}"] = torch.nn.Parameter(
-            tensor_uniform.sample(sample_shape=torch.Size([fixed_rank, dims[order - 1]])),
-            requires_grad=requires_grad)
-        assert len(self.core_tensors) == order, \
-            f"# core tensors should == order-1 : {len(self.core_tensors)} != {order}"
+        self.core_tensors[f"G{self.order - 1}"] = torch.nn.Parameter(
+            tensor_uniform.sample(sample_shape=torch.Size([fixed_rank, dims[self.order - 1]])),
+            requires_grad=False)
+        assert len(self.core_tensors) == self.order, \
+            f"# core tensors should == order-1 : {len(self.core_tensors)} != {self.order}"
 
         # FIXME register hooks
-        for core in self.core_tensors.values():
-            core.register_hook(TensorTrainFixedRank.core_hook)
+        # for core in self.core_tensors.values():
+        #     core.register_hook(TensorTrainFixedRank.core_hook)
+        # self.core_tensors[f"G{order - 1}"].register_hook(TensorTrainFixedRank.core_hook)
 
         self.register_backward_hook(tensor_train_hook)
+
+    def set_learnable_core(self, i, req_grad: bool):
+        self.learnable_core_idx = i
+        self.core_tensors[f"G{self.learnable_core_idx}"].requires_grad = req_grad
+        num_learnable_cores = sum(list(map(lambda x: x.requires_grad, self.core_tensors.values())))
+        x = 10
 
     def norm(self):
         tot_norm = 0
@@ -88,6 +100,7 @@ class TensorTrainFixedRank(torch.nn.Module):
 
     def forward(self, t: float, z: torch.Tensor) -> torch.Tensor:
         # https://www.sciencedirect.com/science/article/abs/pii/S0893608021003415
+
         Phi = Basis.poly(z=z, t=t, poly_deg=self.poly_deg)
         assert len(self.core_tensors) == len(
             Phi), f"# of core-tensors must == number of basis tensors " \
@@ -96,22 +109,124 @@ class TensorTrainFixedRank(torch.nn.Module):
         # first core
         core = self.core_tensors[f"G{0}"]
         res_tensor = torch.einsum("ij,bi->bj", core, Phi[0])
+
         # middle cores
-        for i in range(1, len(self.core_tensors) - 1):
-            core = self.core_tensors[f"G{i}"]
-            core_basis = torch.einsum("ijk,bj->bik", core, Phi[i])
-            res_tensor = torch.einsum("bi,bik->bk", res_tensor, core_basis)
-        # last core
-        core = self.core_tensors[f"G{n_cores - 1}"]
-        core_basis = torch.einsum("ji,bi->bj", core, Phi[n_cores - 1])
-        res_tensor = torch.einsum("bi,bi->b", res_tensor, core_basis)
+        with torch.no_grad():
+            for i in range(1, len(self.core_tensors) - 1):
+                core = self.core_tensors[f"G{i}"]
+                core_basis = torch.einsum("ijk,bj->bik", core, Phi[i])
+                res_tensor = torch.einsum("bi,bik->bk", res_tensor, core_basis)
+            # last core
+            core = self.core_tensors[f"G{n_cores - 1}"]
+            core_basis = torch.einsum("ji,bi->bj", core, Phi[n_cores - 1])
+            res_tensor = torch.einsum("bi,bi->b", res_tensor, core_basis)
         # assert res_tensor.size()[1] == self.out_dim, f"output tensor size must = " \
         #                                              f"out_dim : {res_tensor.size()}!={self.out_dim}"
+        # make_dot(res_tensor).render("fw", format="png")
         return res_tensor
+
+    def calculate_R_i_minus_1(self, Phi: List[torch.Tensor]) -> torch.Tensor | None:
+        chars = string.ascii_lowercase.replace("b", "")  # b for batches
+        if self.learnable_core_idx == 0:
+            return None
+        params = []
+        torch_einsum_str_comps = []
+        chr_idx = 0
+        r2idx = chars[chr_idx]  # no r1idex at the beginning
+        chr_idx += 1
+
+        for i in range(self.learnable_core_idx):
+            d_idx = chars[chr_idx]
+            chr_idx += 1
+            params.append(self.core_tensors[f"G{i}"])
+            params.append(Phi[i])
+            if i == 0:
+                torch_einsum_str_comps.append(f"{d_idx}{r2idx},b{d_idx}")
+            else:
+                r1idx = r2idx
+                r2idx = chars[chr_idx]
+                chr_idx += 1
+                torch_einsum_str_comps.append(f"{r1idx}{d_idx}{r2idx},b{d_idx}")
+
+        torch_einsum_str = ','.join(torch_einsum_str_comps) + f"->b{r2idx}"
+        res = torch.einsum(torch_einsum_str, params)
+        return res
+
+    def calculate_R_i_plus_1(self, Phi: List[torch.Tensor]) -> torch.Tensor | None:
+        chars = string.ascii_lowercase.replace("b", "")  # b for batches
+        if self.learnable_core_idx == self.order - 1:
+            return None
+        params = []
+        torch_einsum_str_comps = []
+        #
+        chr_idx = 0
+        r1idx = chars[chr_idx]
+        first_r1idx = r1idx
+        chr_idx += 1
+        for i in range(self.learnable_core_idx + 1, self.order):
+            d_idx = chars[chr_idx]
+            chr_idx += 1
+            params.append(self.core_tensors[f"G{i}"])
+            params.append(Phi[i])
+            if i < self.order - 1:
+                r2idx = chars[chr_idx]
+                chr_idx += 1
+                torch_einsum_str_comps.append(f"{r1idx}{d_idx}{r2idx},b{d_idx}")
+                r1idx = r2idx
+            else:  # self.learnable_core_idx == self.order - 1:
+                torch_einsum_str_comps.append(f"{r1idx}{d_idx},b{d_idx}")
+
+        torch_einsum_str = ','.join(torch_einsum_str_comps) + f"->{first_r1idx}b"
+        res = torch.einsum(torch_einsum_str, params)
+        return res
+
+    def calculate_R_i(self, Phi_i: torch.Tensor) -> torch.Tensor:
+        if self.learnable_core_idx == 0:
+            return torch.einsum('dj,bd->bj', self.core_tensors[f"G{self.learnable_core_idx}"], Phi_i)
+        if self.learnable_core_idx == self.order - 1:
+            return torch.einsum('jd,bd->bj', self.core_tensors[f"G{self.learnable_core_idx}"], Phi_i)
+        else:
+            return torch.einsum('idj,bd->ibj', self.core_tensors[f"G{self.learnable_core_idx}"], Phi_i)
+
+    def forward2(self, t: float, z: torch.Tensor):
+        # order = len(self.core_tensors)
+        Phi = Basis.poly(z=z, t=t, poly_deg=self.poly_deg)
+        assert len(self.core_tensors) == len(
+            Phi), f"# of core-tensors must == number of basis tensors " \
+                  f", {len(self.core_tensors)} != {len(Phi)}"
+        # # mock
+        # b = z.size()[0]
+        # r = self.fixed_rank
+        # with torch.no_grad():
+        #     Ri_minus_1 = torch.distributions.Uniform(0, 1).sample(torch.Size([b, r]))
+        #     Ri_plus_1 = torch.distributions.Uniform(0, 1).sample(torch.Size([b, r]))
+        # assert self.core_tensors[f"G{self.learnable_core_idx}"].requires_grad
+        # Ri = torch.einsum("idj,bd->ibj", self.core_tensors[f"G{self.learnable_core_idx}"], Phi[self.learnable_core_idx])
+        with torch.no_grad():
+            Ri_minus_1 = self.calculate_R_i_minus_1(Phi=Phi)
+            Ri_plus_1 = self.calculate_R_i_plus_1(Phi=Phi)
+
+        # we want computation graph to depend only on G[self.learnable_core_idx]
+        if Ri_minus_1 is not None:
+            assert not Ri_minus_1.requires_grad
+        if Ri_plus_1 is not None:
+            assert not Ri_plus_1.requires_grad
+
+        assert self.core_tensors[f"G{self.learnable_core_idx}"].requires_grad
+        Ri = self.calculate_R_i(Phi[self.learnable_core_idx])
+        if self.learnable_core_idx == 0:
+            res = torch.einsum('bj,jb->b', Ri, Ri_plus_1)
+        elif self.learnable_core_idx == self.order - 1:
+            res = torch.einsum('bj,bj->b', Ri_minus_1, Ri)
+        else:
+            res = torch.einsum('bi,ibj,jb->b', Ri_minus_1, Ri, Ri_plus_1)
+        return res
 
     @staticmethod
     def core_hook(grad):
         pass
+        # new_grad = grad#*1000
+        # return new_grad
 
     def gradients(self):
         gradient_list = list(map(lambda core: core.grad, self.core_tensors.values()))
@@ -164,6 +279,10 @@ class NNodeFunc(torch.nn.Module):
         t_tensor = torch.tensor([t]).repeat([b, 1])
         z_aug = torch.cat([z, t_tensor], dim=1)
         dzdt = self.net(z_aug)
+        # fixme for debugging only
+        v1 = self.net[0](z_aug)
+        v2 = self.net[1](v1)
+        v3 = self.net[2](v2)
         if self.emulation:
             self.dzdt_emu.append(dzdt.clone())
             self.z_aug_emu.append(z_aug.clone())
@@ -233,6 +352,9 @@ class TensorTrainOdeFunc(torch.nn.Module):
         """
         dzdt = self.A_TT(t, z)
         return dzdt
+
+    def set_learnable_core(self, i):
+        self.A_TT.set_learnable_core(i)
 
     @staticmethod
     def dzdt_hook(grad):

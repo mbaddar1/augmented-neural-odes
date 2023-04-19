@@ -112,10 +112,11 @@ if __name__ == '__main__':
     epochs_emu = 500
     N = len(ode_func.dzdt_emu)
     Dz_aug = 14
-    ode_model_emu = TensorTrainOdeFunc(Dz=13, basis_model="poly", unif_low=-0.05, unif_high=0.05, tt_rank=3,
+    ode_model_emu = TensorTrainOdeFunc(Dz=13, basis_model="poly", unif_low=-0.1, unif_high=0.1, tt_rank=4,
                                        poly_deg=5)
     # ode_model_emu = NNodeFunc(latent_dim=13,nn_hidden_dim=100,emulation=False)
-    emu_optimizer = torch.optim.SGD(params=ode_model_emu.parameters(), lr=1e-3)
+    emu_optimizer = torch.optim.SGD(params=ode_model_emu.parameters(), lr=0.5)
+    core_train_idx = 0
     for epoch_idx in tqdm(range(epochs_emu), desc="epochs"):
         batches_losses = []
         for i in range(N):  # len batches
@@ -124,13 +125,19 @@ if __name__ == '__main__':
             dzdt_true = ode_func.dzdt_emu[i].detach()[:, 0]
             z_batch = z_aug[:, :(Dz_aug - 1)]
             t = z_aug[:, -1].detach().numpy()[0]
+            ode_model_emu.set_learnable_core(core_train_idx)
+
             dzdt_hat = ode_model_emu(t, z_batch)
             loss = loss_fn(dzdt_hat, dzdt_true)
             batches_losses.append(loss.item())
             loss.backward()
+            core_grad = ode_model_emu.A_TT.core_tensors[f"G{core_train_idx}"].grad
+            core_train_idx = core_train_idx + 1
+            core_train_idx = core_train_idx % Dz_aug
             emu_optimizer.step()
-        if epoch_idx % 1 == 0:
-            logger.info(f'Emulation - Epoch # {epoch_idx} - loss => {np.nanmean(batches_losses)}')
+            logger.info(f'Emulation : epoch # {epoch_idx} - batch # {i} => loss = {loss}')
+        # if epoch_idx % 1 == 0:
+        #     logger.info(f'Emulation - Epoch # {epoch_idx} - loss => {np.nanmean(batches_losses)}')
 
     # TODO notes, review
     # 1. tt-ode-func for this training also has the problem of very small gradients
