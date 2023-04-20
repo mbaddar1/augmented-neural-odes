@@ -41,17 +41,14 @@ class ToyData1(Dataset):
                   2: torch.tensor([0.1, -0.2]).view(1, 2),
                   4: torch.tensor([0.1, -0.2, 0.3, -0.8]).view(1, 4)}
         W = W_dict[Dx]
-        X = torch.distributions.Normal(0, 1).sample(torch.Size([N, Dx]))
-        X_nl = torch.sin(X)
-        y = torch.einsum('ij,bj->b', W, X_nl).view(-1, 1)
-        self.X = X_nl
-        self.Y = y
+        self.X = torch.distributions.Normal(0, 1).sample(torch.Size([N, Dx]))
+        self.y = torch.einsum('ij,bj->b', W, torch.sin(self.X)).view(-1, 1)
 
     def __len__(self):
         return self.N
 
     def __getitem__(self, idx):
-        return self.X[idx], self.Y[idx]
+        return self.X[idx], self.y[idx]
 
 
 class FullTensorPoly4dim(torch.nn.Module):
@@ -113,21 +110,21 @@ class TTpoly4dim(torch.nn.Module):
         self.rank = rank
         assert in_dim == 4
         self.order = in_dim
-        u_low = -0.5
-        u_high = 0.5
-        self.G0 = torch.nn.Parameter(torch.distributions.Uniform(u_low, u_high).sample(torch.Size([deg + 1, rank])))
-        self.G1 = torch.nn.Parameter(
-            torch.distributions.Uniform(u_low, u_high).sample(torch.Size([rank, deg + 1, rank])))
-        self.G2 = torch.nn.Parameter(
-            torch.distributions.Uniform(u_low, u_high).sample(torch.Size([rank, deg + 1, rank])))
-        self.G3 = torch.nn.Parameter(torch.distributions.Uniform(u_low, u_high).sample(torch.Size([rank, deg + 1])))
+        self.G0 = torch.nn.Parameter(torch.empty(deg + 1, rank))
+        self.G1 = torch.nn.Parameter(torch.empty(rank, deg + 1, rank))
+        self.G2 = torch.nn.Parameter(torch.empty(rank, deg + 1, rank))
+        self.G3 = torch.nn.Parameter(torch.empty(rank, deg + 1))
+        torch.nn.init.uniform_(self.G0, -0.5, 0.5)
+        torch.nn.init.uniform_(self.G1, -0.5, 0.5)
+        torch.nn.init.uniform_(self.G2, -0.5, 0.5)
+        torch.nn.init.uniform_(self.G3, -0.5, 0.5)
+        ####
 
     def forward(self, X):
         # generate Phi
         poly_basis_list = get_poly_basis_list(X, self.deg)
         einsum_params = [self.G0, poly_basis_list[0], self.G1, poly_basis_list[1], self.G2, poly_basis_list[2], self.G3,
                          poly_basis_list[3]]
-        # ValueError: Size of label 'i' for operand 6 (3) does not match previous terms (4).
         einsum_str = "ac,ba,cfe,bf,ehi,bh,iq,bq->b"
         res = torch.einsum(einsum_str, einsum_params)
         return res.view(-1, 1)
@@ -267,12 +264,12 @@ if __name__ == '__main__':
     # model = LinearModel(in_dim=Dx, out_dim=1)
     # model = TensorTrainFixedRank(dims=[poly_deg + 1] * Dx, fixed_rank=rank, requires_grad=True, unif_low=-0.01,
     #                              unif_high=0.01, poly_deg=poly_deg)
-    # model = PolyReg(in_dim=Dx, out_dim=output_dim, deg=poly_deg)
+    # model = PolyReg(in_dim=Dx, out_dim=output_dim, deg=3)
     # model = LinearModeEinSum(in_dim=Dx, out_dim=1)
     # model = PolyLinearEinsum(in_dim=Dx, out_dim=output_dim, deg=poly_deg)
-    model = TTpoly4dim(in_dim=Dx, out_dim=output_dim, deg=poly_deg, rank=20)
+    model = TTpoly4dim(in_dim=Dx, out_dim=output_dim, deg=2, rank=4)
     # model = FullTensorPoly4dim(input_dim=Dx, out_dim=output_dim, deg=poly_deg)
-    # model = TTpoly1dim(in_dim=1, out_dim=1, deg=poly_deg)
+    # model = TTpoly1dim(in_dim=1, out_dim=1, deg=3)
     # model = TTpoly2dim(in_dim=Dx, out_dim=1, deg=poly_deg,rank=3)
     ###########################
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
