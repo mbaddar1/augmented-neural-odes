@@ -39,10 +39,43 @@ class ToyData1(Dataset):
         return self.X[idx], self.Y[idx]
 
 
-class TTxr(torch.nn.Module):
-    def __init__(self, in_dim, out_dim):
+class TTpoly4dim(torch.nn.Module):
+    # https://soham.dev/posts/polynomial-regression-pytorch/
+    # https://vamsibrp.github.io/pytorch-learning-tutorial/
+    def __init__(self, in_dim, out_dim, rank, deg):
         super().__init__()
+        # fixme, specific test case
+        self.deg = deg
+        self.rank = rank
+        assert in_dim == 4
+        self.order = in_dim
+        u_low = -0.05
+        u_high = 0.05
+        self.G0 = torch.nn.Parameter(torch.distributions.Uniform(u_low, u_high).sample(torch.Size([deg + 1, rank])))
+        self.G1 = torch.nn.Parameter(
+            torch.distributions.Uniform(u_low, u_high).sample(torch.Size([rank, deg + 1, rank])))
+        self.G2 = torch.nn.Parameter(
+            torch.distributions.Uniform(u_low, u_high).sample(torch.Size([rank, deg + 1, rank])))
+        self.G3 = torch.nn.Parameter(torch.distributions.Uniform(u_low, u_high).sample(torch.Size([rank, deg + 1])))
 
+    def forward(self, X):
+        # generate Phi
+        Phi = []
+        b = X.size()[0]
+        dim = X.size()[1]
+        for dim_idx in range(dim):
+            X_d = X[:, dim_idx]
+            x_list = []
+            for deg_idx in range(self.deg + 1):
+                x_list.append(torch.pow(X_d, deg_idx).view(-1, 1))
+            Phi_tensor = torch.cat(x_list, dim=1)
+            Phi.append(Phi_tensor)
+
+        einsum_params = [self.G0, Phi[0], self.G1, Phi[1], self.G2, Phi[2], self.G3, Phi[3]]
+        # ValueError: Size of label 'i' for operand 6 (3) does not match previous terms (4).
+        einsum_str = "ac,ba,cfe,bf,ehi,bh,iq,bq->b"
+        res = torch.einsum(einsum_str,einsum_params)
+        return res.view(-1,1)
 
 class LinearModeEinSum(torch.nn.Module):
     # TODO
@@ -66,6 +99,23 @@ class LinearModeEinSum(torch.nn.Module):
 
     def forward(self, X):
         term = torch.einsum("bi,ij->bj", X, self.A)
+        y_hat = term + self.b
+        return y_hat
+
+
+class PolyLinearEinsum(LinearModeEinSum):
+    def __init__(self, in_dim, out_dim, deg):
+        # fixme, specific test-case
+        assert in_dim == 4
+        super().__init__(in_dim * (deg + 1), out_dim)
+        self.deg = deg
+
+    def forward(self, X):
+        x_pow_list = []
+        for d in range(self.deg + 1):
+            x_pow_list.append(torch.pow(X, d))
+        X_pow_aug = torch.cat(x_pow_list, dim=1)
+        term = torch.einsum("bi,ij->bj", X_pow_aug, self.A)
         y_hat = term + self.b
         return y_hat
 
@@ -155,6 +205,7 @@ if __name__ == '__main__':
     loss_fn = nn.MSELoss()
     lr = 0.01
     epochs = 50000
+    rank = 3
     ## Models ##
     #
     # model = NNmodel(Dx, output_dim)
@@ -162,7 +213,9 @@ if __name__ == '__main__':
     # model = TensorTrainFixedRank(dims=[poly_deg + 1] * Dx, fixed_rank=rank, requires_grad=True, unif_low=-0.01,
     #                              unif_high=0.01, poly_deg=poly_deg)
     # model = PolyReg(in_dim=Dx, out_dim=output_dim, deg=poly_deg)
-    model = LinearModeEinSum(in_dim=Dx, out_dim=1)
+    # model = LinearModeEinSum(in_dim=Dx, out_dim=1)
+    # model = PolyLinearEinsum(in_dim=Dx, out_dim=output_dim, deg=poly_deg)
+    model = TTpoly4dim(in_dim=Dx, out_dim=output_dim, deg=poly_deg, rank=3)
     ###########################
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
     ds = ToyData1(Dx)
@@ -173,7 +226,7 @@ if __name__ == '__main__':
         # Clear gradients w.r.t. parameters
         losses = []
         for i, (X, y) in enumerate(dl):
-            if isinstance(model, (NNmodel, LinearModel, PolyReg, LinearModeEinSum)):
+            if isinstance(model, (NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim)):
                 loss_val = nn_opt_block(model=model, X=X, y=y, optim=optimizer, loss_func=loss_fn)
             elif isinstance(model, TensorTrainFixedRank):
                 loss_val = tt_opt_block(model=model, X=X, y=y, optim=optimizer, loss_func=loss_fn)
