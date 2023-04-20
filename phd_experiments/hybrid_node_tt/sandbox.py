@@ -37,6 +37,14 @@ class ToyData1(Dataset):
         return self.X[idx], self.Y[idx]
 
 
+class LinearModeEinSum(torch.nn.Module):
+    # TODO
+    #   1. a linear model implemented by torch.nn.Param and einsum instead of linear apply
+    #   2. make dims and num of el the same as the vanilla model
+    #   3. compare grad vals and compu graph.
+    pass
+
+
 class NNmodel(nn.Module):
     def __init__(self, input_dim, output_dim):
         hidden_dim = 50
@@ -69,8 +77,8 @@ class LinearModel(torch.nn.Module):
     def __init__(self, in_dim, out_dim):
         super().__init__()
         hidden_dim = 10
-        self.lin_model = torch.nn.Sequential(torch.nn.Linear(in_dim, hidden_dim),
-                                             torch.nn.Linear(hidden_dim, out_dim))
+        self.lin_model = torch.nn.Sequential(torch.nn.Linear(in_dim, out_dim))
+        # torch.nn.Linear(hidden_dim, out_dim)
 
     def forward(self, x):
         return self.lin_model(x)
@@ -119,18 +127,19 @@ if __name__ == '__main__':
     output_dim = 1
     poly_deg = 3
     rank = 3
+    loss_fn = nn.MSELoss()
+    lr = 0.001
     #
     # model = NNmodel(Dx, output_dim)
-    # model = LinearModel(in_dim=Dx, out_dim=1)
-    model = TensorTrainFixedRank(dims=[poly_deg + 1] * Dx, fixed_rank=rank, requires_grad=True, unif_low=-0.01,
-                                 unif_high=0.01, poly_deg=poly_deg)
+    model = LinearModel(in_dim=Dx, out_dim=1)
+    # model = TensorTrainFixedRank(dims=[poly_deg + 1] * Dx, fixed_rank=rank, requires_grad=True, unif_low=-0.01,
+    #                              unif_high=0.01, poly_deg=poly_deg)
     # model = PolyReg(in_dim=Dx, out_dim=output_dim, deg=poly_deg)
-    loss_fn = nn.MSELoss()
-    learning_rate = 0.001
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr)
     ds = ToyData1(Dx)
     dl = DataLoader(dataset=ds, batch_size=64, shuffle=True)
-    epochs = 1  # 50000
+    epochs = 50000
     print(f'model type = {type(model)}')
     for epoch in range(epochs):
         # Clear gradients w.r.t. parameters
