@@ -5,17 +5,37 @@ https://discuss.pytorch.org/t/how-to-check-for-vanishing-exploding-gradients/901
 
 torch einsum autograd
 https://discuss.pytorch.org/t/automatic-differentation-for-pytorch-einsum/112504
+
+PyTorch Reproducibility
+https://pytorch.org/docs/stable/notes/randomness.html
+
+SEED value selection
+https://www.linkedin.com/pulse/how-choose-seed-generating-random-numbers-rick-wicklin/
+https://blogs.sas.com/content/iml/2017/06/01/choose-seed-random-number.html
+Typical SEED Values
+42
+large primes https://bigprimes.org/
+18819191
+71623183
+71623183
+from here https://www.linkedin.com/pulse/how-choose-seed-generating-random-numbers-rick-wicklin/
+12345
+54321
+987654321
 """
+
+import logging
 
 # https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_linear_regression/
 from typing import List
-
+from datetime import datetime
 import torch
-import torch.nn as nn
+
+torch.use_deterministic_algorithms(True)
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from torchviz import make_dot
-
+import random
 from phd_experiments.hybrid_node_tt.models import TensorTrainFixedRank
 
 
@@ -24,22 +44,25 @@ class VDP(Dataset):
     # https://www.johndcook.com/blog/2019/12/22/van-der-pol/
     # https://arxiv.org/pdf/0803.1658.pdf
     # todo add plotting
-    def __init__(self, mio: float):
-        self.N = 10000
+    def __init__(self, mio: float, N: int):
+        self.N = N
         Dx_vdp = 2
+        self.mio = mio
         self.X = torch.distributions.Normal(loc=0, scale=5).sample(torch.Size([self.N, Dx_vdp]))
         x1 = self.X[:, 0].view(-1, 1)
         x2 = self.X[:, 1].view(-1, 1)
         x1_dot = x2
         x2_dot = mio * (1 - x1 ** 2) * x2 - x1
         self.Y = torch.cat([x1_dot, x2_dot], dim=1)
-        x = 10
 
     def __len__(self):
         return self.N
 
     def __getitem__(self, idx):
         return self.X[idx], self.Y[idx]
+
+    def __str__(self):
+        return f"***\nVDP Dataset\nmio = {self.mio}\n***"
 
 
 class LorenzSystem(Dataset):
@@ -178,20 +201,27 @@ class TTpoly2in2out(torch.nn.Module):
     """
 
     def __init__(self, rank, deg):
+        super().__init__()
         out_dim = 2
+        self.rank = rank
+        self.deg = deg
         self.G0 = torch.nn.Parameter(torch.empty(deg + 1, rank))
         self.G1 = torch.nn.Parameter(torch.empty(rank, deg + 1, out_dim))
-        torch.nn.init.xavier_normal_(self.G0)
-        torch.nn.init.xavier_normal_(self.G1)
+        torch.nn.init.normal_(self.G0, mean=0.0, std=1.0)
+        torch.nn.init.normal_(self.G1, mean=0.0, std=1.0)
+        self.numel_learnable = self.G0.numel() + self.G1.numel()
         self.deg = deg
-        super().__init__()
 
     def forward(self, X):
         poly_basis_list = get_poly_basis_list(X, self.deg)
-        R0 = torch.einsum('dr,bd->br',self.G0,poly_basis_list[0])
-        R1 = torch.einsum('rdl,bd->brl',self.G1,poly_basis_list[1])
-        res = torch.einsum('br,brl->bl',R0,R1)
+        R0 = torch.einsum('dr,bd->br', self.G0, poly_basis_list[0])
+        R1 = torch.einsum('rdl,bd->brl', self.G1, poly_basis_list[1])
+        res = torch.einsum('br,brl->bl', R0, R1)
         return res
+
+    def __str__(self):
+        return f"***\nTT-poly\nrank={self.rank}\ndeg={self.deg}\n" \
+               f"numel_learnable = {self.numel_learnable}\n***"
 
 
 class LinearModeEinSum(torch.nn.Module):
@@ -237,20 +267,29 @@ class PolyLinearEinsum(LinearModeEinSum):
         return y_hat
 
 
-class NNmodel(nn.Module):
-    def __init__(self, input_dim, output_dim):
-        hidden_dim = 50
+class NNmodel(torch.nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim):
+
         super(NNmodel, self).__init__()
-        self.net = torch.nn.Sequential(nn.Linear(input_dim, hidden_dim), torch.nn.Tanh(),
+        self.net = torch.nn.Sequential(torch.nn.Linear(input_dim, hidden_dim), torch.nn.Tanh(),
                                        torch.nn.Linear(hidden_dim, output_dim))
-        # self.net = torch.nn.Sequential(nn.Linear(input_dim, output_dim))
+        self.numel_learnable = 0
+        for m in self.net.modules():
+            if isinstance(m, torch.nn.Linear):
+                torch.nn.init.normal_(m.weight, mean=0, std=1.0)
+                self.numel_learnable += m.weight.numel()
+                torch.nn.init.constant_(m.bias, val=0.0)
+                self.numel_learnable += m.bias.numel()
 
     def forward(self, x):
         out = self.net(x)
         return out
 
+    def __str__(self):
+        return f"\n*** NNmodel \n {str(self.net)}\nnumel_learnable = {self.numel_learnable}\n***"
 
-class PolyReg(nn.Module):
+
+class PolyReg(torch.nn.Module):
     def __init__(self, in_dim, out_dim, deg):
         super().__init__()
         self.deg = deg
@@ -318,20 +357,45 @@ def tt_opt_block(model, X, y, optim, loss_func):
     return loss.item()
 
 
+LOG_FORMAT = "[%(filename)s:%(lineno)s - %(funcName)10s()] %(asctime)s %(levelname)s %(message)s"
+DATE_TIME_FORMAT = "%Y-%m-%d:%H:%M:%S"
+SEEDS = [42, 18819191, 71623183, 71623183, 12345, 54321, 987654321]
 if __name__ == '__main__':
-    ### fixme just test data-set creation
-    ds_vdp = VDP(mio=0.5)
-    ###
+
+    ### set logging
+    time_stamp = datetime.now().strftime(DATE_TIME_FORMAT)
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger()
+    fh = logging.FileHandler(filename=f"./experiments_log/experiment_{time_stamp}.log")
+    formatter = logging.Formatter(fmt=LOG_FORMAT)
+    fh.setFormatter(formatter)
+    fh.setLevel(logging.INFO)
+    logger.addHandler(fh)
+    ## set seed
+    # Why 42 ? https://medium.com/geekculture/the-story-behind-random-seed-42-in-machine-learning-b838c4ac290a
+    SEED = SEEDS[0]
+    torch.manual_seed(SEED)
+    random.seed(SEED)
+    np.random.seed(SEED)
+    logger.info(f'SEED = {SEED}')
+    ### train params ####
+    batch_size = 128
     Dx = 4
     output_dim = 1
-    poly_deg = 3
+    poly_deg = 10
     rank = 3
-    loss_fn = nn.MSELoss()
-    lr = 0.1
-    epochs = 50000
+    loss_fn = torch.nn.MSELoss()
+    lr = 0.01
+    epochs = 1000
+    vdp_mio = 0.5
+    N_samples_data = 100
+    nn_hidden_dim = 500
     ## Models ##
-    #
-    # model = NNmodel(Dx, output_dim)
+    # - Main models for now
+    # model = NNmodel(input_dim=2, hidden_dim=nn_hidden_dim, output_dim=2)
+    model = TTpoly2in2out(rank=rank, deg=poly_deg)
+    # ---
+    # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
     # model = TensorTrainFixedRank(dims=[poly_deg + 1] * Dx, fixed_rank=rank, requires_grad=True, unif_low=-0.01,
     #                              unif_high=0.01, poly_deg=poly_deg)
@@ -341,37 +405,52 @@ if __name__ == '__main__':
     # model = TTpoly4dim(in_dim=Dx, out_dim=output_dim, deg=3, rank=2)
     # model = FullTensorPoly4dim(input_dim=Dx, out_dim=output_dim, deg=poly_deg)
     # model = TTpoly1dim(in_dim=1, out_dim=1, deg=5)
-    model = TTpoly2dim(in_dim=Dx, out_dim=1, deg=poly_deg, rank=3)
-    ###########################
-    optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-    ds = ToyData1(Dx)
-    dl = DataLoader(dataset=ds, batch_size=64, shuffle=True)
+    # model = TTpoly2dim(in_dim=Dx, out_dim=1, deg=poly_deg, rank=3)
 
-    print(f'model type = {type(model)}')
-    for epoch in range(epochs):
+
+    ### Optimizers ####
+    # optimizer = torch.optim.SGD(params=model.parameters(), lr=lr, nesterov=True, momentum=0.1)
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=lr, weight_decay=0.0)
+    logger.info(f'model = {model}')
+    logger.info(f'opt  = {optimizer}')
+
+    # opt
+    ### data #####
+    data_set = VDP(mio=vdp_mio, N=N_samples_data)
+    dl = DataLoader(dataset=data_set, batch_size=batch_size, shuffle=True)
+    logger.info(f'data = {data_set}')
+    logger.info(f'epochs = {epochs}')
+
+    start_time_stamp = datetime.now()
+    # training
+    for epoch in range(epochs + 1):
         # Clear gradients w.r.t. parameters
         losses = []
-        for i, (X, y) in enumerate(dl):
+        for i, (X, Y) in enumerate(dl):
             # X_max = torch.max(X)
             # X_min = torch.min(X)
             # TODO, is sigmoid a good way to normalize data ?
             X_norm = torch.nn.Sigmoid()(X)  # (X - X_min) / (X_max - X_min)
-            u1 = torch.max(X_norm)
             if isinstance(model, (
                     NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim, FullTensorPoly4dim, TTpoly1dim,
-                    TTpoly2dim)):
-                loss_val = nn_opt_block(model=model, X=X_norm, y=y, optim=optimizer, loss_func=loss_fn)
+                    TTpoly2dim, TTpoly2in2out)):
+                loss_val = nn_opt_block(model=model, X=X_norm, y=Y, optim=optimizer, loss_func=loss_fn)
             elif isinstance(model, TensorTrainFixedRank):
-                loss_val = tt_opt_block(model=model, X=X_norm, y=y, optim=optimizer, loss_func=loss_fn)
+                loss_val = tt_opt_block(model=model, X=X_norm, y=Y, optim=optimizer, loss_func=loss_fn)
             else:
                 raise ValueError(f"Error {type(model)}")
 
             losses.append(loss_val)
-            print('epoch {}, batch {}, loss {}'.format(epoch, i, np.nanmean(losses)))
+            # print('epoch {}, batch {}, loss {}'.format(epoch, i, np.nanmean(losses)))
+        if epoch % 10 == 0:
+            logger.info(f'epoch {epoch}, loss = {np.nanmean(losses)}')
+    end_time_stamp = datetime.now()
+    training_time_sec = (end_time_stamp - start_time_stamp).seconds
+    logger.info(f'training time in seconds = {training_time_sec}')
 
 """
 scratch-pad
-vanilla steps
+vanilla ref steps
 # optimizer.zero_grad()
 # # Forward to get output
 # y_hat = model(X)
