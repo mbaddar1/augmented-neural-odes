@@ -19,13 +19,28 @@ from torchviz import make_dot
 from phd_experiments.hybrid_node_tt.models import TensorTrainFixedRank
 
 
+def get_poly_basis_list(X, deg):
+    poly_basis_list = []
+    b = X.size()[0]
+    dim = X.size()[1]
+    for dim_idx in range(dim):
+        X_d = X[:, dim_idx]
+        x_list = []
+        for deg_idx in range(deg + 1):
+            x_list.append(torch.pow(X_d, deg_idx).view(-1, 1))
+        poly_tensor_per_dim = torch.cat(x_list, dim=1)
+        poly_basis_list.append(poly_tensor_per_dim)
+    return poly_basis_list
+
+
 class ToyData1(Dataset):
     def __init__(self, Dx):
-        # fixme one special case
-        assert Dx == 4
         N = 10000
         self.N = N
-        W = torch.tensor([0.1, -0.2, 0.3, -0.8]).view(1, Dx)
+        W_dict = {1: torch.tensor([0.1]).view(1, 1),
+                  2: torch.tensor([0.1, -0.2]).view(1, 2),
+                  4: torch.tensor([0.1, -0.2, 0.3, -0.8]).view(1, 4)}
+        W = W_dict[Dx]
         X = torch.distributions.Normal(0, 1).sample(torch.Size([N, Dx]))
         X_nl = torch.sin(X)
         y = torch.einsum('ij,bj->b', W, X_nl).view(-1, 1)
@@ -39,6 +54,55 @@ class ToyData1(Dataset):
         return self.X[idx], self.Y[idx]
 
 
+class FullTensorPoly4dim(torch.nn.Module):
+    def __init__(self, input_dim, out_dim, deg):
+        super().__init__()
+        u_low = -0.05
+        u_high = 0.05
+        self.deg = deg
+        assert input_dim == 4
+        self.W = torch.nn.Parameter(
+            torch.distributions.Uniform(u_low, u_high).sample(torch.Size(input_dim * [deg + 1])))
+
+    def forward(self, X):
+        poly_basis_list = get_poly_basis_list(X, self.deg)
+        einsum_params = [self.W] + poly_basis_list
+        einsum_str = "acde,ba,bc,bd,be->b"
+        res = torch.einsum(einsum_str, einsum_params).view(-1, 1)
+        return res
+
+
+class TTpoly1dim(torch.nn.Module):
+    def __init__(self, in_dim, out_dim, deg):  # no rank
+        super().__init__()
+        assert in_dim == 1
+        self.deg = deg
+        u_low = -0.05
+        u_high = 0.05
+        self.G0 = torch.nn.Parameter(torch.distributions.Uniform(u_low, u_high).sample(torch.Size([deg + 1])))
+
+    def forward(self, X):
+        poly_tensor_list = get_poly_basis_list(X, self.deg)
+        res = torch.einsum("a,ba->b", self.G0, poly_tensor_list[0]).view(-1, 1)
+        return res
+
+
+class TTpoly2dim(torch.nn.Module):
+    def __init__(self, in_dim, out_dim, deg, rank):
+        super().__init__()
+        assert in_dim == 2
+        self.deg = deg
+        u_low = -0.05
+        u_high = 0.05
+        self.G0 = torch.nn.Parameter(torch.distributions.Uniform(u_low, u_high).sample(torch.Size([deg + 1, rank])))
+        self.G1 = torch.nn.Parameter(torch.distributions.Uniform(u_low, u_high).sample(torch.Size([rank, deg + 1])))
+
+    def forward(self, X):
+        poly_tensor_list = get_poly_basis_list(X, self.deg)
+        res = torch.einsum("ac,ba,cd,bd->b", self.G0, poly_tensor_list[0], self.G1, poly_tensor_list[1]).view(-1, 1)
+        return res
+
+
 class TTpoly4dim(torch.nn.Module):
     # https://soham.dev/posts/polynomial-regression-pytorch/
     # https://vamsibrp.github.io/pytorch-learning-tutorial/
@@ -49,8 +113,8 @@ class TTpoly4dim(torch.nn.Module):
         self.rank = rank
         assert in_dim == 4
         self.order = in_dim
-        u_low = -0.05
-        u_high = 0.05
+        u_low = -0.5
+        u_high = 0.5
         self.G0 = torch.nn.Parameter(torch.distributions.Uniform(u_low, u_high).sample(torch.Size([deg + 1, rank])))
         self.G1 = torch.nn.Parameter(
             torch.distributions.Uniform(u_low, u_high).sample(torch.Size([rank, deg + 1, rank])))
@@ -60,22 +124,14 @@ class TTpoly4dim(torch.nn.Module):
 
     def forward(self, X):
         # generate Phi
-        Phi = []
-        b = X.size()[0]
-        dim = X.size()[1]
-        for dim_idx in range(dim):
-            X_d = X[:, dim_idx]
-            x_list = []
-            for deg_idx in range(self.deg + 1):
-                x_list.append(torch.pow(X_d, deg_idx).view(-1, 1))
-            Phi_tensor = torch.cat(x_list, dim=1)
-            Phi.append(Phi_tensor)
-
-        einsum_params = [self.G0, Phi[0], self.G1, Phi[1], self.G2, Phi[2], self.G3, Phi[3]]
+        poly_basis_list = get_poly_basis_list(X, self.deg)
+        einsum_params = [self.G0, poly_basis_list[0], self.G1, poly_basis_list[1], self.G2, poly_basis_list[2], self.G3,
+                         poly_basis_list[3]]
         # ValueError: Size of label 'i' for operand 6 (3) does not match previous terms (4).
         einsum_str = "ac,ba,cfe,bf,ehi,bh,iq,bq->b"
-        res = torch.einsum(einsum_str,einsum_params)
-        return res.view(-1,1)
+        res = torch.einsum(einsum_str, einsum_params)
+        return res.view(-1, 1)
+
 
 class LinearModeEinSum(torch.nn.Module):
     # TODO
@@ -205,7 +261,6 @@ if __name__ == '__main__':
     loss_fn = nn.MSELoss()
     lr = 0.01
     epochs = 50000
-    rank = 3
     ## Models ##
     #
     # model = NNmodel(Dx, output_dim)
@@ -215,7 +270,10 @@ if __name__ == '__main__':
     # model = PolyReg(in_dim=Dx, out_dim=output_dim, deg=poly_deg)
     # model = LinearModeEinSum(in_dim=Dx, out_dim=1)
     # model = PolyLinearEinsum(in_dim=Dx, out_dim=output_dim, deg=poly_deg)
-    model = TTpoly4dim(in_dim=Dx, out_dim=output_dim, deg=poly_deg, rank=3)
+    model = TTpoly4dim(in_dim=Dx, out_dim=output_dim, deg=poly_deg, rank=20)
+    # model = FullTensorPoly4dim(input_dim=Dx, out_dim=output_dim, deg=poly_deg)
+    # model = TTpoly1dim(in_dim=1, out_dim=1, deg=poly_deg)
+    # model = TTpoly2dim(in_dim=Dx, out_dim=1, deg=poly_deg,rank=3)
     ###########################
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
     ds = ToyData1(Dx)
@@ -226,7 +284,9 @@ if __name__ == '__main__':
         # Clear gradients w.r.t. parameters
         losses = []
         for i, (X, y) in enumerate(dl):
-            if isinstance(model, (NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim)):
+            if isinstance(model, (
+                    NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim, FullTensorPoly4dim, TTpoly1dim,
+                    TTpoly2dim)):
                 loss_val = nn_opt_block(model=model, X=X, y=y, optim=optimizer, loss_func=loss_fn)
             elif isinstance(model, TensorTrainFixedRank):
                 loss_val = tt_opt_block(model=model, X=X, y=y, optim=optimizer, loss_func=loss_fn)
