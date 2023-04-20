@@ -20,10 +20,26 @@ from phd_experiments.hybrid_node_tt.models import TensorTrainFixedRank
 
 
 class VDP(Dataset):
-    #
+    # https://en.wikipedia.org/wiki/Van_der_Pol_oscillator
+    # https://www.johndcook.com/blog/2019/12/22/van-der-pol/
     # https://arxiv.org/pdf/0803.1658.pdf
     # todo add plotting
-    pass
+    def __init__(self, mio: float):
+        self.N = 10000
+        Dx_vdp = 2
+        self.X = torch.distributions.Normal(loc=0, scale=5).sample(torch.Size([self.N, Dx_vdp]))
+        x1 = self.X[:, 0].view(-1, 1)
+        x2 = self.X[:, 1].view(-1, 1)
+        x1_dot = x2
+        x2_dot = mio * (1 - x1 ** 2) * x2 - x1
+        self.Y = torch.cat([x1_dot, x2_dot], dim=1)
+        x = 10
+
+    def __len__(self):
+        return self.N
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.Y[idx]
 
 
 class LorenzSystem(Dataset):
@@ -156,6 +172,28 @@ class TTpoly4dim(torch.nn.Module):
         return res.view(-1, 1)
 
 
+class TTpoly2in2out(torch.nn.Module):
+    """
+    mainly for VDP traj modeling
+    """
+
+    def __init__(self, rank, deg):
+        out_dim = 2
+        self.G0 = torch.nn.Parameter(torch.empty(deg + 1, rank))
+        self.G1 = torch.nn.Parameter(torch.empty(rank, deg + 1, out_dim))
+        torch.nn.init.xavier_normal_(self.G0)
+        torch.nn.init.xavier_normal_(self.G1)
+        self.deg = deg
+        super().__init__()
+
+    def forward(self, X):
+        poly_basis_list = get_poly_basis_list(X, self.deg)
+        R0 = torch.einsum('dr,bd->br',self.G0,poly_basis_list[0])
+        R1 = torch.einsum('rdl,bd->brl',self.G1,poly_basis_list[1])
+        res = torch.einsum('br,brl->bl',R0,R1)
+        return res
+
+
 class LinearModeEinSum(torch.nn.Module):
     # TODO
     #   1. a linear model implemented by torch.nn.Param and einsum instead of linear apply
@@ -241,6 +279,7 @@ class LinearModel(torch.nn.Module):
         return self.lin_model(x)
 
 
+#########################
 def get_param_grad_norm_sum(param_list: List[torch.nn.Parameter]):
     s = sum(map(lambda x: torch.norm(x.grad), param_list))
     return s
@@ -280,6 +319,9 @@ def tt_opt_block(model, X, y, optim, loss_func):
 
 
 if __name__ == '__main__':
+    ### fixme just test data-set creation
+    ds_vdp = VDP(mio=0.5)
+    ###
     Dx = 4
     output_dim = 1
     poly_deg = 3
@@ -296,10 +338,10 @@ if __name__ == '__main__':
     # model = PolyReg(in_dim=Dx, out_dim=output_dim, deg=5)
     # model = LinearModeEinSum(in_dim=Dx, out_dim=1)
     # model = PolyLinearEinsum(in_dim=Dx, out_dim=output_dim, deg=poly_deg)
-    model = TTpoly4dim(in_dim=Dx, out_dim=output_dim, deg=3, rank=2)
+    # model = TTpoly4dim(in_dim=Dx, out_dim=output_dim, deg=3, rank=2)
     # model = FullTensorPoly4dim(input_dim=Dx, out_dim=output_dim, deg=poly_deg)
     # model = TTpoly1dim(in_dim=1, out_dim=1, deg=5)
-    # model = TTpoly2dim(in_dim=Dx, out_dim=1, deg=poly_deg,rank=3)
+    model = TTpoly2dim(in_dim=Dx, out_dim=1, deg=poly_deg, rank=3)
     ###########################
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
     ds = ToyData1(Dx)
