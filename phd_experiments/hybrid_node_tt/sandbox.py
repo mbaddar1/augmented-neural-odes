@@ -3,6 +3,8 @@ Bad Gradient in pytorch
 https://gist.github.com/apaszke/f93a377244be9bfcb96d3547b9bc424d
 https://discuss.pytorch.org/t/how-to-check-for-vanishing-exploding-gradients/9019/3
 
+torch einsum autograd
+https://discuss.pytorch.org/t/automatic-differentation-for-pytorch-einsum/112504
 """
 
 # https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_linear_regression/
