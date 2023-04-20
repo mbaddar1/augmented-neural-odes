@@ -19,6 +19,17 @@ from torchviz import make_dot
 from phd_experiments.hybrid_node_tt.models import TensorTrainFixedRank
 
 
+class VDP(Dataset):
+    #
+    # https://arxiv.org/pdf/0803.1658.pdf
+    pass
+
+
+class FVDP(Dataset):
+    # http://math.colgate.edu/~wweckesser/pubs/FVDPI.pdf
+    pass
+
+
 class ToyData1(Dataset):
     def __init__(self, Dx):
         N = 10000
@@ -270,7 +281,7 @@ if __name__ == '__main__':
     # model = PolyReg(in_dim=Dx, out_dim=output_dim, deg=5)
     # model = LinearModeEinSum(in_dim=Dx, out_dim=1)
     # model = PolyLinearEinsum(in_dim=Dx, out_dim=output_dim, deg=poly_deg)
-    model = TTpoly4dim(in_dim=Dx, out_dim=output_dim, deg=4, rank=5)
+    model = TTpoly4dim(in_dim=Dx, out_dim=output_dim, deg=3, rank=2)
     # model = FullTensorPoly4dim(input_dim=Dx, out_dim=output_dim, deg=poly_deg)
     # model = TTpoly1dim(in_dim=1, out_dim=1, deg=5)
     # model = TTpoly2dim(in_dim=Dx, out_dim=1, deg=poly_deg,rank=3)
