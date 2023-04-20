@@ -19,6 +19,24 @@ from torchviz import make_dot
 from phd_experiments.hybrid_node_tt.models import TensorTrainFixedRank
 
 
+class ToyData1(Dataset):
+    def __init__(self, Dx):
+        N = 10000
+        self.N = N
+        W_dict = {1: torch.tensor([0.1]).view(1, 1),
+                  2: torch.tensor([0.1, -0.2]).view(1, 2),
+                  4: torch.tensor([0.1, -0.2, 0.3, -0.8]).view(1, 4)}
+        W = W_dict[Dx]
+        self.X = torch.distributions.Normal(0, 1).sample(torch.Size([N, Dx]))
+        self.y = torch.einsum('ij,bj->b', W, 0.5 * torch.sin(self.X) + 0.5 * torch.cos(self.X)).view(-1, 1)
+
+    def __len__(self):
+        return self.N
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+
+
 def get_poly_basis_list(X, deg):
     poly_basis_list = []
     b = X.size()[0]
@@ -31,24 +49,6 @@ def get_poly_basis_list(X, deg):
         poly_tensor_per_dim = torch.cat(x_list, dim=1)
         poly_basis_list.append(poly_tensor_per_dim)
     return poly_basis_list
-
-
-class ToyData1(Dataset):
-    def __init__(self, Dx):
-        N = 10000
-        self.N = N
-        W_dict = {1: torch.tensor([0.1]).view(1, 1),
-                  2: torch.tensor([0.1, -0.2]).view(1, 2),
-                  4: torch.tensor([0.1, -0.2, 0.3, -0.8]).view(1, 4)}
-        W = W_dict[Dx]
-        self.X = torch.distributions.Normal(0, 1).sample(torch.Size([N, Dx]))
-        self.y = torch.einsum('ij,bj->b', W, torch.sin(self.X)).view(-1, 1)
-
-    def __len__(self):
-        return self.N
-
-    def __getitem__(self, idx):
-        return self.X[idx], self.y[idx]
 
 
 class FullTensorPoly4dim(torch.nn.Module):
@@ -114,10 +114,10 @@ class TTpoly4dim(torch.nn.Module):
         self.G1 = torch.nn.Parameter(torch.empty(rank, deg + 1, rank))
         self.G2 = torch.nn.Parameter(torch.empty(rank, deg + 1, rank))
         self.G3 = torch.nn.Parameter(torch.empty(rank, deg + 1))
-        torch.nn.init.uniform_(self.G0, -0.5, 0.5)
-        torch.nn.init.uniform_(self.G1, -0.5, 0.5)
-        torch.nn.init.uniform_(self.G2, -0.5, 0.5)
-        torch.nn.init.uniform_(self.G3, -0.5, 0.5)
+        torch.nn.init.xavier_normal_(self.G0)
+        torch.nn.init.xavier_normal_(self.G1)
+        torch.nn.init.xavier_normal_(self.G2)
+        torch.nn.init.xavier_normal_(self.G3)
         ####
 
     def forward(self, X):
@@ -193,10 +193,13 @@ class PolyReg(nn.Module):
         self.linear_part = torch.nn.Linear(in_features=in_dim * (deg + 1), out_features=out_dim)
 
     def forward(self, x):
+        x_max = torch.max(x)
         x_pows = []
         for d in range(self.deg + 1):
             x_pows.append(torch.pow(x, d))
+
         x_pows_cat = torch.cat(x_pows, dim=1)
+        x_max = torch.max(x_pows_cat)
         y_hat = self.linear_part(x_pows_cat)
         return y_hat
 
@@ -256,7 +259,7 @@ if __name__ == '__main__':
     poly_deg = 3
     rank = 3
     loss_fn = nn.MSELoss()
-    lr = 0.01
+    lr = 0.1
     epochs = 50000
     ## Models ##
     #
@@ -264,12 +267,12 @@ if __name__ == '__main__':
     # model = LinearModel(in_dim=Dx, out_dim=1)
     # model = TensorTrainFixedRank(dims=[poly_deg + 1] * Dx, fixed_rank=rank, requires_grad=True, unif_low=-0.01,
     #                              unif_high=0.01, poly_deg=poly_deg)
-    # model = PolyReg(in_dim=Dx, out_dim=output_dim, deg=3)
+    # model = PolyReg(in_dim=Dx, out_dim=output_dim, deg=5)
     # model = LinearModeEinSum(in_dim=Dx, out_dim=1)
     # model = PolyLinearEinsum(in_dim=Dx, out_dim=output_dim, deg=poly_deg)
-    model = TTpoly4dim(in_dim=Dx, out_dim=output_dim, deg=2, rank=4)
+    model = TTpoly4dim(in_dim=Dx, out_dim=output_dim, deg=4, rank=5)
     # model = FullTensorPoly4dim(input_dim=Dx, out_dim=output_dim, deg=poly_deg)
-    # model = TTpoly1dim(in_dim=1, out_dim=1, deg=3)
+    # model = TTpoly1dim(in_dim=1, out_dim=1, deg=5)
     # model = TTpoly2dim(in_dim=Dx, out_dim=1, deg=poly_deg,rank=3)
     ###########################
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
@@ -281,12 +284,17 @@ if __name__ == '__main__':
         # Clear gradients w.r.t. parameters
         losses = []
         for i, (X, y) in enumerate(dl):
+            # X_max = torch.max(X)
+            # X_min = torch.min(X)
+            # TODO, is sigmoid a good way to normalize data ?
+            X_norm = torch.nn.Sigmoid()(X)  # (X - X_min) / (X_max - X_min)
+            u1 = torch.max(X_norm)
             if isinstance(model, (
                     NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim, FullTensorPoly4dim, TTpoly1dim,
                     TTpoly2dim)):
-                loss_val = nn_opt_block(model=model, X=X, y=y, optim=optimizer, loss_func=loss_fn)
+                loss_val = nn_opt_block(model=model, X=X_norm, y=y, optim=optimizer, loss_func=loss_fn)
             elif isinstance(model, TensorTrainFixedRank):
-                loss_val = tt_opt_block(model=model, X=X, y=y, optim=optimizer, loss_func=loss_fn)
+                loss_val = tt_opt_block(model=model, X=X_norm, y=y, optim=optimizer, loss_func=loss_fn)
             else:
                 raise ValueError(f"Error {type(model)}")
 
