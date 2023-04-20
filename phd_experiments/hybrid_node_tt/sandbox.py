@@ -21,9 +21,11 @@ from phd_experiments.hybrid_node_tt.models import TensorTrainFixedRank
 
 class ToyData1(Dataset):
     def __init__(self, Dx):
+        # fixme one special case
+        assert Dx == 4
         N = 10000
         self.N = N
-        W = torch.tensor([0.1, -0.2, 0.3]).view(1, Dx)
+        W = torch.tensor([0.1, -0.2, 0.3, -0.8]).view(1, Dx)
         X = torch.distributions.Normal(0, 1).sample(torch.Size([N, Dx]))
         X_nl = torch.sin(X)
         y = torch.einsum('ij,bj->b', W, X_nl).view(-1, 1)
@@ -37,12 +39,35 @@ class ToyData1(Dataset):
         return self.X[idx], self.Y[idx]
 
 
+class TTxr(torch.nn.Module):
+    def __init__(self, in_dim, out_dim):
+        super().__init__()
+
+
 class LinearModeEinSum(torch.nn.Module):
     # TODO
     #   1. a linear model implemented by torch.nn.Param and einsum instead of linear apply
     #   2. make dims and num of el the same as the vanilla model
     #   3. compare grad vals and compu graph.
-    pass
+    def __init__(self, in_dim, out_dim):
+        """
+        einsum impl. for AX+b
+        A,b will be torch.nn.Parameters
+        AX will be impl. via torch.nn.sum
+        """
+        super().__init__()
+        # https://stackoverflow.com/questions/64507404/defining-named-parameters-for-a-customized-nn-module-in-pytorch
+        u_lower = -0.01
+        u_upper = 0.01
+        self.A = torch.nn.Parameter(
+            torch.nn.Parameter(torch.distributions.Uniform(u_lower, u_upper).sample(torch.Size([in_dim, out_dim]))))
+        self.b = torch.nn.Parameter(
+            torch.nn.Parameter(torch.distributions.Uniform(u_lower, u_upper).sample(torch.Size([1, out_dim]))))
+
+    def forward(self, X):
+        term = torch.einsum("bi,ij->bj", X, self.A)
+        y_hat = term + self.b
+        return y_hat
 
 
 class NNmodel(nn.Module):
@@ -123,29 +148,32 @@ def tt_opt_block(model, X, y, optim, loss_func):
 
 
 if __name__ == '__main__':
-    Dx = 3
+    Dx = 4
     output_dim = 1
     poly_deg = 3
     rank = 3
     loss_fn = nn.MSELoss()
-    lr = 0.001
+    lr = 0.01
+    epochs = 50000
+    ## Models ##
     #
     # model = NNmodel(Dx, output_dim)
-    model = LinearModel(in_dim=Dx, out_dim=1)
+    # model = LinearModel(in_dim=Dx, out_dim=1)
     # model = TensorTrainFixedRank(dims=[poly_deg + 1] * Dx, fixed_rank=rank, requires_grad=True, unif_low=-0.01,
     #                              unif_high=0.01, poly_deg=poly_deg)
     # model = PolyReg(in_dim=Dx, out_dim=output_dim, deg=poly_deg)
-
+    model = LinearModeEinSum(in_dim=Dx, out_dim=1)
+    ###########################
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
     ds = ToyData1(Dx)
     dl = DataLoader(dataset=ds, batch_size=64, shuffle=True)
-    epochs = 50000
+
     print(f'model type = {type(model)}')
     for epoch in range(epochs):
         # Clear gradients w.r.t. parameters
         losses = []
         for i, (X, y) in enumerate(dl):
-            if isinstance(model, (NNmodel, LinearModel, PolyReg)):
+            if isinstance(model, (NNmodel, LinearModel, PolyReg, LinearModeEinSum)):
                 loss_val = nn_opt_block(model=model, X=X, y=y, optim=optimizer, loss_func=loss_fn)
             elif isinstance(model, TensorTrainFixedRank):
                 loss_val = tt_opt_block(model=model, X=X, y=y, optim=optimizer, loss_func=loss_fn)
