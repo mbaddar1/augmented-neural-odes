@@ -6,6 +6,7 @@ import pandas as pd
 import torch
 import yaml
 from torch.utils.data import random_split, DataLoader
+from torchviz import make_dot
 from tqdm import tqdm
 from phd_experiments.hybrid_node_tt.models import ProjectionModel, OdeSolverModel, OutputModel, LearnableOde, NNodeFunc, \
     TensorTrainOdeFunc
@@ -115,8 +116,7 @@ if __name__ == '__main__':
     ode_model_emu = TensorTrainOdeFunc(Dz=13, basis_model="poly", unif_low=-0.1, unif_high=0.1, tt_rank=4,
                                        poly_deg=5)
     # ode_model_emu = NNodeFunc(latent_dim=13,nn_hidden_dim=100,emulation=False)
-    emu_optimizer = torch.optim.SGD(params=ode_model_emu.parameters(), lr=0.5)
-    core_train_idx = 0
+    emu_optimizer = torch.optim.SGD(params=ode_model_emu.parameters(), lr=0.1)
     for epoch_idx in tqdm(range(epochs_emu), desc="epochs"):
         batches_losses = []
         for i in range(N):  # len batches
@@ -125,17 +125,23 @@ if __name__ == '__main__':
             dzdt_true = ode_func.dzdt_emu[i].detach()[:, 0]
             z_batch = z_aug[:, :(Dz_aug - 1)]
             t = z_aug[:, -1].detach().numpy()[0]
-            ode_model_emu.set_learnable_core(core_train_idx)
+            dzdt_hat = None
+            for core_idx in range(ode_model_emu.A_TT.order):
+                # core_idx = 0
+                ode_model_emu.set_learnable_core(core_idx, True)
+                dzdt_hat = ode_model_emu.forward2(t, z_batch)
 
-            dzdt_hat = ode_model_emu(t, z_batch)
-            loss = loss_fn(dzdt_hat, dzdt_true)
-            batches_losses.append(loss.item())
-            loss.backward()
-            core_grad = ode_model_emu.A_TT.core_tensors[f"G{core_train_idx}"].grad
-            core_train_idx = core_train_idx + 1
-            core_train_idx = core_train_idx % Dz_aug
-            emu_optimizer.step()
-            logger.info(f'Emulation : epoch # {epoch_idx} - batch # {i} => loss = {loss}')
+                # FIXME for debugging
+                make_dot(dzdt_hat, params=dict(ode_model_emu.A_TT.named_parameters())).render(f"ttxr_traj_{i}",
+                                                                                              format="png")
+                loss = loss_fn(dzdt_hat, dzdt_true)
+                batches_losses.append(loss.item()) # fixme this is per core_dim, batch and epoch !!!
+                loss.backward()
+                # fixme for debugging
+                core_grad = ode_model_emu.A_TT.core_tensors[f"G{core_idx}"].grad
+                emu_optimizer.step()
+                logger.info(f'Emulation : epoch # {epoch_idx} - batch # {i} - core # {core_idx}=> loss = {loss}')
+                ode_model_emu.set_learnable_core(core_idx, False)
         # if epoch_idx % 1 == 0:
         #     logger.info(f'Emulation - Epoch # {epoch_idx} - loss => {np.nanmean(batches_losses)}')
 
