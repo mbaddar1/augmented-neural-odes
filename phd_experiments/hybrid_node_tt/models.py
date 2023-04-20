@@ -133,7 +133,7 @@ class TensorTrainFixedRank(torch.nn.Module):
         # assert res_tensor.size()[1] == self.out_dim, f"output tensor size must = " \
         #                                              f"out_dim : {res_tensor.size()}!={self.out_dim}"
         # make_dot(res_tensor).render("fw", format="png")
-        return res_tensor
+        return res_tensor.view(-1,1)
 
     def calculate_R_i_minus_1(self, Phi: List[torch.Tensor]) -> torch.Tensor | None:
         chars = (string.ascii_lowercase + string.ascii_uppercase).replace("b", "")  # b for batches

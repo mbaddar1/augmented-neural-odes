@@ -1,8 +1,18 @@
+"""
+Bad Gradient in pytorch
+https://gist.github.com/apaszke/f93a377244be9bfcb96d3547b9bc424d
+https://discuss.pytorch.org/t/how-to-check-for-vanishing-exploding-gradients/9019/3
+
+"""
+
 # https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_linear_regression/
+from typing import List
+
 import torch
 import torch.nn as nn
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
+from torchviz import make_dot
 
 from phd_experiments.hybrid_node_tt.models import TensorTrainFixedRank
 
@@ -64,11 +74,27 @@ class LinearModel(torch.nn.Module):
         return self.lin_model(x)
 
 
+def get_param_grad_norm_sum(param_list: List[torch.nn.Parameter]):
+    s = sum(map(lambda x: torch.norm(x.grad), param_list))
+    return s
+
+
+def get_param_grad_norm_avg(param_list: List[torch.nn.Parameter]):
+    sum_ = get_param_grad_norm_sum(param_list)
+    num_el = sum(map(lambda x: torch.numel(x), param_list))
+    avg_ = float(sum_) / num_el
+    return avg_
+
+
 def nn_opt_block(model, X, y, optim, loss_func):
     optim.zero_grad()
     y_hat = model(X)
+    make_dot(y_hat, params=dict(model.named_parameters())).render(str(type(model)), format="png")
     loss = loss_func(y_hat, y)
     loss.backward()
+    param_list = list(model.parameters())
+    grad_norm_sum = get_param_grad_norm_sum(param_list)
+    grad_norm_avg = get_param_grad_norm_avg(param_list)
     optim.step()
     return loss.item()
 
@@ -76,8 +102,12 @@ def nn_opt_block(model, X, y, optim, loss_func):
 def tt_opt_block(model, X, y, optim, loss_func):
     optim.zero_grad()
     y_hat = model.forward_old(X)
+    make_dot(y_hat, params=dict(model.named_parameters())).render(str(type(model)), format="png")
     loss = loss_func(y_hat, y)
     loss.backward()
+    param_list = list(model.parameters())
+    grad_norm_sum = get_param_grad_norm_sum(param_list)
+    grad_norm_avg = get_param_grad_norm_avg(param_list)
     optim.step()
     return loss.item()
 
@@ -90,26 +120,26 @@ if __name__ == '__main__':
     #
     # model = NNmodel(Dx, output_dim)
     # model = LinearModel(in_dim=Dx, out_dim=1)
-    # model = TensorTrainFixedRank(dims=[poly_deg + 1] * Dx, fixed_rank=rank, requires_grad=True, unif_low=-0.01,
-    #                              unif_high=0.01, poly_deg=poly_deg)
-    model = PolyReg(in_dim=Dx,out_dim=output_dim,deg=poly_deg)
+    model = TensorTrainFixedRank(dims=[poly_deg + 1] * Dx, fixed_rank=rank, requires_grad=True, unif_low=-0.01,
+                                 unif_high=0.01, poly_deg=poly_deg)
+    # model = PolyReg(in_dim=Dx, out_dim=output_dim, deg=poly_deg)
     loss_fn = nn.MSELoss()
     learning_rate = 0.001
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
     ds = ToyData1(Dx)
     dl = DataLoader(dataset=ds, batch_size=64, shuffle=True)
-    epochs = 50000
+    epochs = 1  # 50000
     print(f'model type = {type(model)}')
     for epoch in range(epochs):
         # Clear gradients w.r.t. parameters
         losses = []
         for i, (X, y) in enumerate(dl):
-            if isinstance(model, (NNmodel, LinearModel,PolyReg)):
+            if isinstance(model, (NNmodel, LinearModel, PolyReg)):
                 loss_val = nn_opt_block(model=model, X=X, y=y, optim=optimizer, loss_func=loss_fn)
             elif isinstance(model, TensorTrainFixedRank):
                 loss_val = tt_opt_block(model=model, X=X, y=y, optim=optimizer, loss_func=loss_fn)
             else:
-                raise ValueError(f"Errooooor {type(model)}")
+                raise ValueError(f"Error {type(model)}")
 
             losses.append(loss_val)
             print('epoch {}, batch {}, loss {}'.format(epoch, i, np.nanmean(losses)))
