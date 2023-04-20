@@ -22,6 +22,14 @@ from phd_experiments.hybrid_node_tt.models import TensorTrainFixedRank
 class VDP(Dataset):
     #
     # https://arxiv.org/pdf/0803.1658.pdf
+    # todo add plotting
+    pass
+
+
+class LorenzSystem(Dataset):
+    # High Dim non-linear systems
+    # https://tglab.princeton.edu/wp-content/uploads/2011/03/Mol410Lecture13.pdf (P 2)
+    # https://en.wikipedia.org/wiki/Lorenz_system
     pass
 
 
@@ -48,6 +56,7 @@ class ToyData1(Dataset):
         return self.X[idx], self.y[idx]
 
 
+####### Basis Funs #############
 def get_poly_basis_list(X, deg):
     poly_basis_list = []
     b = X.size()[0]
@@ -60,6 +69,12 @@ def get_poly_basis_list(X, deg):
         poly_tensor_per_dim = torch.cat(x_list, dim=1)
         poly_basis_list.append(poly_tensor_per_dim)
     return poly_basis_list
+
+
+########## Models ##############
+class TTrbf(torch.nn.Module):
+    # https://github.com/JeremyLinux/PyTorch-Radial-Basis-Function-Layer/blob/master/Torch%20RBF/torch_rbf.py
+    pass
 
 
 class FullTensorPoly4dim(torch.nn.Module):
