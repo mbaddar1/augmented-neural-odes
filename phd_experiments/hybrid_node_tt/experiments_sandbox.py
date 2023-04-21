@@ -114,7 +114,10 @@ def get_poly_basis_list(X, deg):
 class TTrbf(torch.nn.Module):
     # https://github.com/JeremyLinux/PyTorch-Radial-Basis-Function-Layer/blob/master/Torch%20RBF/torch_rbf.py
     pass
+class RBFN(torch.nn.Module):
+    # https://en.wikipedia.org/wiki/Radial_basis_function_network
 
+    pass
 
 class FullTensorPoly4dim(torch.nn.Module):
     def __init__(self, input_dim, out_dim, deg):
@@ -386,7 +389,7 @@ if __name__ == '__main__':
     rank = 3
     loss_fn = torch.nn.MSELoss()
     lr = 0.01
-    epochs = 1000
+    epochs = 100000
     vdp_mio = 0.5
     N_samples_data = 100
     nn_hidden_dim = 500
