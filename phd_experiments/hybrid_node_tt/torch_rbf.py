@@ -39,8 +39,8 @@ class RBF(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        nn.init.normal_(self.centres, 0, 1)
-        nn.init.constant_(self.log_sigmas, 0)
+        nn.init.normal_(self.centres, mean=0, std=1)
+        nn.init.constant_(self.log_sigmas, val=0)
 
     def forward(self, input):
         size = (input.size(0), self.n_centers, self.in_features)
@@ -48,6 +48,7 @@ class RBF(nn.Module):
         c = self.centres.unsqueeze(0).expand(size)
         distances = (x - c).pow(2).sum(-1).pow(0.5) / torch.exp(self.log_sigmas).unsqueeze(0)
         return self.basis_func(distances)
+
 
 
 # RBFs

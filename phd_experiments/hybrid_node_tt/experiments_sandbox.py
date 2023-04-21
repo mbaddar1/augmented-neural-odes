@@ -28,6 +28,11 @@ https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
 https://machinelearningmastery.com/using-learning-rate-schedule-in-pytorch-training/
 https://stackoverflow.com/questions/48324152/pytorch-how-to-change-the-learning-rate-of-an-optimizer-at-any-given-moment-no
 
+oscillating loss
+https://ai.stackexchange.com/questions/14079/what-could-an-oscillating-training-loss-curve-represent
+
+Learning rate adjustment
+https://www.jeremyjordan.me/nn-learning-rate/
 """
 
 import logging
@@ -70,7 +75,7 @@ class VDP(Dataset):
         return self.X[idx], self.Y[idx]
 
     def __str__(self):
-        return f"***\nVDP Dataset\nmio = {self.mio}\n***"
+        return f"***\nVDP Dataset\nN={self.N}\nmio = {self.mio}\n***"
 
 
 class LorenzSystem(Dataset):
@@ -316,6 +321,11 @@ class NNmodel(torch.nn.Module):
         super(NNmodel, self).__init__()
         self.net = torch.nn.Sequential(torch.nn.Linear(input_dim, hidden_dim), torch.nn.Tanh(),
                                        torch.nn.Linear(hidden_dim, output_dim))
+        # init net weights and biases
+        for m in self.net.modules():
+            if isinstance(m, torch.nn.Linear):
+                torch.nn.init.normal_(m.weight, mean=0, std=1)
+                torch.nn.init.constant_(m.bias, val=0)
         # get numel learnable
         self.numel_learnable = 0
         named_param_list = list(self.named_parameters())
@@ -425,25 +435,26 @@ if __name__ == '__main__':
     output_dim = 2
     loss_fn = torch.nn.MSELoss()
     lr = 0.01
-    epochs = 100000
+    epochs = 10000
+    epochs_losses_window = 10
     # tt
     poly_deg = 10
     rank = 3
     # rbf
-    rbf_n_centres = 100
+    rbf_n_centres = 200
     basis_fn_str = "gaussian"
     # nn
     nn_hidden_dim = 500
     # data
     vdp_mio = 0.5
-    N_samples_data = 200
+    N_samples_data = 100
 
     ## Models ##
     # => Set model here
     # - Main models for now
     # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
-    model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=basis_fn_str)
+    # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=basis_fn_str)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
@@ -458,8 +469,8 @@ if __name__ == '__main__':
     # model = TTpoly2dim(in_dim=Dx, out_dim=1, deg=poly_deg, rank=3)
 
     ### Optimizers ####
-    # optimizer = torch.optim.SGD(params=model.parameters(), lr=lr, nesterov=True, momentum=0.1)
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=lr, weight_decay=0.0)
+    # optimizer = torch.optim.SGD(params=model.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=lr)
     logger.info(f'model = {model}')
     logger.info(f'opt  = {optimizer}')
 
@@ -475,27 +486,44 @@ if __name__ == '__main__':
 
     start_time_stamp = datetime.now()
     # training
+    logger.info(f'epochs_losses_window = {epochs_losses_window}')
+    epochs_losses = []
     for epoch in range(epochs + 1):
-        # Clear gradients w.r.t. parameters
-        losses = []
+        # fixme for debug only
+        if epoch>=900:
+            x=10
+        batches_losses = []
         for i, (X, Y) in enumerate(dl):
             # X_max = torch.max(X)
             # X_min = torch.min(X)
-            # TODO, is sigmoid a good way to normalize data ?
-            X_norm = torch.nn.Sigmoid()(X)  # (X - X_min) / (X_max - X_min)
+            # FIXME , for now no normalization is applied, do we need it ?
+            #   1. https://www.baeldung.com/cs/normalizing-inputs-artificial-neural-network
+            #   2. https://stackoverflow.com/questions/4674623/why-do-we-have-to-normalize-the-input-for-an-artificial-neural-network
+            X_norm = X
+            # torch.nn.Sigmoid()(X)  # (X - X_min) / (X_max - X_min)
             if isinstance(model, (
                     NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim, FullTensorPoly4dim, TTpoly1dim,
                     TTpoly2dim, TTpoly2in2out, RBFN)):
                 loss_val = nn_opt_block(model=model, X=X_norm, y=Y, optim=optimizer, loss_func=loss_fn)
             elif isinstance(model, TensorTrainFixedRank):
                 loss_val = tt_opt_block(model=model, X=X_norm, y=Y, optim=optimizer, loss_func=loss_fn)
+                assert (not np.isnan(loss_val)) and (not np.isinf(loss_val))
             else:
                 raise ValueError(f"Error {type(model)}")
-
-            losses.append(loss_val)
+            # todo : read https://stackoverflow.com/questions/54053868/how-do-i-get-a-loss-per-epoch-and-not-per-batch
+            batches_losses.append(loss_val)
             # print('epoch {}, batch {}, loss {}'.format(epoch, i, np.nanmean(losses)))
-        if epoch % 10 == 0:
-            logger.info(f'epoch {epoch}, loss = {np.nanmean(losses)}')
+        if len(batches_losses)==0:
+            x=10
+        epochs_losses.append(np.mean(batches_losses))
+        if epoch >= epochs_losses_window and epoch % epochs_losses_window == 0:
+            assert len(epochs_losses) >= epochs_losses_window
+            epochs_rolling_avg_loss = epochs_losses[-epochs_losses_window:]
+            # fixme : I am using mean not nanmean to capture any nan loss, but should
+            #   check for it explicitly
+            logger.info(f'epoch {epoch}, rolling-avg-loss (window={epochs_losses_window})= '
+                        f'{np.mean(epochs_rolling_avg_loss)}')
+
     end_time_stamp = datetime.now()
     training_time_sec = (end_time_stamp - start_time_stamp).seconds
     logger.info(f'training time in seconds = {training_time_sec}')
