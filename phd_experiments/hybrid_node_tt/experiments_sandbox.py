@@ -22,6 +22,12 @@ from here https://www.linkedin.com/pulse/how-choose-seed-generating-random-numbe
 12345
 54321
 987654321
+
+adjustable (adaptive) learning rate (using pytorch optim schedulers)
+https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+https://machinelearningmastery.com/using-learning-rate-schedule-in-pytorch-training/
+https://stackoverflow.com/questions/48324152/pytorch-how-to-change-the-learning-rate-of-an-optimizer-at-any-given-moment-no
+
 """
 
 import logging
@@ -30,6 +36,8 @@ import logging
 from typing import List
 from datetime import datetime
 import torch
+
+from phd_experiments.hybrid_node_tt.torch_rbf import RBF, basis_func_dict
 
 torch.use_deterministic_algorithms(True)
 import numpy as np
@@ -114,10 +122,39 @@ def get_poly_basis_list(X, deg):
 class TTrbf(torch.nn.Module):
     # https://github.com/JeremyLinux/PyTorch-Radial-Basis-Function-Layer/blob/master/Torch%20RBF/torch_rbf.py
     pass
+
+
 class RBFN(torch.nn.Module):
     # https://en.wikipedia.org/wiki/Radial_basis_function_network
+    def __init__(self, in_dim, out_dim, n_centres, basis_fn_str):
+        super().__init__()
+        self.basis_fn_str = basis_fn_str
+        self.n_centres = n_centres
+        self.out_dim = out_dim
+        self.in_dim = in_dim
+        basis_fn = basis_func_dict()[basis_fn_str]
+        self.rbf_module = RBF(in_features=in_dim, n_centres=n_centres, basis_func=basis_fn)
+        # rbf inited by its own reset fn
+        self.linear_module = torch.nn.Linear(in_features=n_centres, out_features=out_dim)
+        self.net = torch.nn.Sequential(self.rbf_module, self.linear_module)
+        # init
+        torch.nn.init.normal_(self.linear_module.weight, mean=0, std=1)
+        torch.nn.init.constant_(self.linear_module.bias, val=0)
+        # get numel learnable
+        self.numel_learnable = 0
+        param_list = list(self.named_parameters())
+        for name, param in param_list:
+            self.numel_learnable += torch.numel(param)
 
-    pass
+    def forward(self, X):
+        y_hat = self.net(X)
+        return y_hat
+
+    def __str__(self):
+        return f"\n***\nRBF\nin_dim={self.in_dim}\nn_centres={self.n_centres}\n" \
+               f"out_dim={self.out_dim}\nbasis_fn={self.basis_fn_str}\n" \
+               f"numel_learnable={self.numel_learnable}\n***\n"
+
 
 class FullTensorPoly4dim(torch.nn.Module):
     def __init__(self, input_dim, out_dim, deg):
@@ -212,8 +249,12 @@ class TTpoly2in2out(torch.nn.Module):
         self.G1 = torch.nn.Parameter(torch.empty(rank, deg + 1, out_dim))
         torch.nn.init.normal_(self.G0, mean=0.0, std=1.0)
         torch.nn.init.normal_(self.G1, mean=0.0, std=1.0)
-        self.numel_learnable = self.G0.numel() + self.G1.numel()
-        self.deg = deg
+
+        # get numel learnable
+        named_params_list = self.named_parameters()
+        self.numel_learnable = 0
+        for name, param in named_params_list:
+            self.numel_learnable += torch.numel(param)
 
     def forward(self, X):
         poly_basis_list = get_poly_basis_list(X, self.deg)
@@ -272,17 +313,14 @@ class PolyLinearEinsum(LinearModeEinSum):
 
 class NNmodel(torch.nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
-
         super(NNmodel, self).__init__()
         self.net = torch.nn.Sequential(torch.nn.Linear(input_dim, hidden_dim), torch.nn.Tanh(),
                                        torch.nn.Linear(hidden_dim, output_dim))
+        # get numel learnable
         self.numel_learnable = 0
-        for m in self.net.modules():
-            if isinstance(m, torch.nn.Linear):
-                torch.nn.init.normal_(m.weight, mean=0, std=1.0)
-                self.numel_learnable += m.weight.numel()
-                torch.nn.init.constant_(m.bias, val=0.0)
-                self.numel_learnable += m.bias.numel()
+        named_param_list = list(self.named_parameters())
+        for name, param in named_param_list:
+            self.numel_learnable += torch.numel(param)
 
     def forward(self, x):
         out = self.net(x)
@@ -382,21 +420,30 @@ if __name__ == '__main__':
     np.random.seed(SEED)
     logger.info(f'SEED = {SEED}')
     ### train params ####
-    batch_size = 128
-    Dx = 4
-    output_dim = 1
-    poly_deg = 10
-    rank = 3
+    batch_size = 32
+    input_dim = 2
+    output_dim = 2
     loss_fn = torch.nn.MSELoss()
     lr = 0.01
     epochs = 100000
-    vdp_mio = 0.5
-    N_samples_data = 100
+    # tt
+    poly_deg = 10
+    rank = 3
+    # rbf
+    rbf_n_centres = 100
+    basis_fn_str = "gaussian"
+    # nn
     nn_hidden_dim = 500
+    # data
+    vdp_mio = 0.5
+    N_samples_data = 200
+
     ## Models ##
+    # => Set model here
     # - Main models for now
-    # model = NNmodel(input_dim=2, hidden_dim=nn_hidden_dim, output_dim=2)
-    model = TTpoly2in2out(rank=rank, deg=poly_deg)
+    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
+    # model = TTpoly2in2out(rank=rank, deg=poly_deg)
+    model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=basis_fn_str)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
@@ -410,7 +457,6 @@ if __name__ == '__main__':
     # model = TTpoly1dim(in_dim=1, out_dim=1, deg=5)
     # model = TTpoly2dim(in_dim=Dx, out_dim=1, deg=poly_deg, rank=3)
 
-
     ### Optimizers ####
     # optimizer = torch.optim.SGD(params=model.parameters(), lr=lr, nesterov=True, momentum=0.1)
     optimizer = torch.optim.Adam(params=model.parameters(), lr=lr, weight_decay=0.0)
@@ -420,6 +466,9 @@ if __name__ == '__main__':
     # opt
     ### data #####
     data_set = VDP(mio=vdp_mio, N=N_samples_data)
+    if isinstance(data_set, VDP):
+        assert input_dim == 2
+        assert output_dim == 2
     dl = DataLoader(dataset=data_set, batch_size=batch_size, shuffle=True)
     logger.info(f'data = {data_set}')
     logger.info(f'epochs = {epochs}')
@@ -436,7 +485,7 @@ if __name__ == '__main__':
             X_norm = torch.nn.Sigmoid()(X)  # (X - X_min) / (X_max - X_min)
             if isinstance(model, (
                     NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim, FullTensorPoly4dim, TTpoly1dim,
-                    TTpoly2dim, TTpoly2in2out)):
+                    TTpoly2dim, TTpoly2in2out, RBFN)):
                 loss_val = nn_opt_block(model=model, X=X_norm, y=Y, optim=optimizer, loss_func=loss_fn)
             elif isinstance(model, TensorTrainFixedRank):
                 loss_val = tt_opt_block(model=model, X=X_norm, y=Y, optim=optimizer, loss_func=loss_fn)
