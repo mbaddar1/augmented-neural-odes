@@ -67,7 +67,7 @@ class VDP(Dataset):
         self.N = N
         Dx_vdp = 2
         self.mio = mio
-        self.X = torch.distributions.Normal(loc=0, scale=1).sample(torch.Size([self.N, Dx_vdp]))
+        self.X = torch.distributions.Normal(loc=0, scale=10).sample(torch.Size([self.N, Dx_vdp]))
         x1 = self.X[:, 0].view(-1, 1)
         x2 = self.X[:, 1].view(-1, 1)
         x1_dot = x2
@@ -97,7 +97,7 @@ class FVDP(Dataset):
 
 
 class ToyData1(Dataset):
-    def __init__(self, input_dim,N):
+    def __init__(self, input_dim, N):
         self.N = N
         W_dict = {1: torch.tensor([0.1]).view(1, 1),
                   2: torch.tensor([0.1, -0.2]).view(1, 2),
@@ -440,13 +440,13 @@ if __name__ == '__main__':
     logger.info(f'SEED = {SEED}')
     ### train general params ####
     batch_size = 32
-    input_dim = 4
-    output_dim = 1
+    input_dim = 2
+    output_dim = 2
     loss_fn = torch.nn.MSELoss()
-    epochs = 1000
+    epochs = 100
     epochs_losses_window = 10
     ## opts and lr schedulers
-    lr = 0.3
+    lr = 0.1
     sgd_momentum = 0.99
     linear_lr_scheduler_start_factor = 1.0
     linear_lr_scheduler_end_factor = 0.001
@@ -466,9 +466,9 @@ if __name__ == '__main__':
     ## Models ##
     # => Set model here
     # - Main models for now
-    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
+    model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
-    model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name)
+    # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
@@ -486,8 +486,9 @@ if __name__ == '__main__':
     # TODO (SGD with momentum)
     #   read https://pytorch.org/docs/stable/generated/torch.optim.SGD.html
     #   and  http://www.cs.toronto.edu/~hinton/absps/momentum.pdf
-    # optimizer = torch.optim.SGD(params=model.parameters(), lr=lr, nesterov=True, momentum=0.5)
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=lr)
+    optimizer = torch.optim.SGD(params=model.parameters(), lr=lr)
+    # , nesterov=True, momentum=0.99
+    # optimizer = torch.optim.Adam(params=model.parameters(), lr=lr)
     # optimizer = torch.optim.RMSprop(params=model.parameters(),lr=lr,momentum=0.99)
     logger.info(f'model = {model}')
     logger.info(f'optimizer  = {optimizer}')
@@ -500,11 +501,11 @@ if __name__ == '__main__':
     logger.info(f'lr_scheduler = {lr_scheduler}')
 
     ### data #####
-    data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
-    # data_set = VDP(mio=vdp_mio, N=N_samples_data)
+    # data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
+    data_set = VDP(mio=vdp_mio, N=N_samples_data)
     if isinstance(data_set, VDP):
         assert input_dim == 2
-        assert output_dim == 2
+        # assert output_dim == 2
     dl = DataLoader(dataset=data_set, batch_size=batch_size, shuffle=True)
     logger.info(f'data = {data_set}')
     logger.info(f'epochs = {epochs}')
@@ -523,22 +524,27 @@ if __name__ == '__main__':
             # FIXME , for now no normalization is applied, do we need it ?
             #   1. https://www.baeldung.com/cs/normalizing-inputs-artificial-neural-network
             #   2. https://stackoverflow.com/questions/4674623/why-do-we-have-to-normalize-the-input-for-an-artificial-neural-network
-            X_np = X.detach().numpy()
-            # fixme , debug code
-            min_X_np, max_X_np, avg_X_np = \
-                np.amin(X_np), np.amax(X_np), np.mean(X_np)
-            scaler = MinMaxScaler()
-            scaler.fit(X_np)
-            X_norm_np = scaler.transform(X_np)
-            min_X_np_norm, max_X_np_norm, avg_X_np_norm = \
-                np.amin(X_norm_np), np.amax(X_norm_np), np.mean(X_norm_np)
-            X_tensor_norm = torch.tensor(X_norm_np)
+            #   3. https://machinelearningmastery.com/how-to-improve-neural-network-stability-and-modeling-performance-with-data-scaling/
+            #   ==> seems we need to scale INPUT and OUTPUT ( BOTH)
+            # X_np = X.detach().numpy()
+            # # fixme , debug code
+            # min_X_np, max_X_np, avg_X_np = \
+            #     np.amin(X_np), np.amax(X_np), np.mean(X_np)
+            # scaler = MinMaxScaler()
+            # scaler.fit(X_np)
+            # X_norm_np = scaler.transform(X_np)
+            # min_X_np_norm, max_X_np_norm, avg_X_np_norm = \
+            #     np.amin(X_norm_np), np.amax(X_norm_np), np.mean(X_norm_np)
+            # X_tensor_norm = torch.tensor(X_norm_np)
+            # fixme , skip normalization
+            X_tensor_norm = X
             # fixme, end debug code
             # torch.nn.Sigmoid()(X)  # (X - X_min) / (X_max - X_min)
             if isinstance(model, (
                     NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim, FullTensorPoly4dim, TTpoly1dim,
                     TTpoly2dim, TTpoly2in2out, RBFN)):
-                loss_val = vanilla_opt_block(model=model, X=X_tensor_norm, y=Y, optim=optimizer, loss_func=loss_fn)
+                loss_val = vanilla_opt_block(model=model, X=X_tensor_norm, y=Y, optim=optimizer,
+                                             loss_func=loss_fn)
             elif isinstance(model, TensorTrainFixedRank):
                 loss_val = tt_opt_block(model=model, X=X_tensor_norm, y=Y, optim=optimizer, loss_func=loss_fn)
                 assert (not np.isnan(loss_val)) and (not np.isinf(loss_val))
