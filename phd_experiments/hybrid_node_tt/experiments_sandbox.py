@@ -94,7 +94,7 @@ class VDP(Dataset):
         self.N = N
         Dx_vdp = 2
         self.mio = mio
-        self.X = torch.distributions.Normal(loc=0, scale=10).sample(torch.Size([self.N, Dx_vdp]))
+        self.X = torch.distributions.Normal(loc=0, scale=1).sample(torch.Size([self.N, Dx_vdp]))
         x1 = self.X[:, 0].view(-1, 1)
         x2 = self.X[:, 1].view(-1, 1)
         x1_dot = x2
@@ -293,6 +293,7 @@ class TTpoly2in2out(torch.nn.Module):
         # get numel learnable
         named_params_list = self.named_parameters()
         self.numel_learnable = 0
+
         for name, param in named_params_list:
             self.numel_learnable += torch.numel(param)
 
@@ -524,7 +525,7 @@ if __name__ == '__main__':
     #                         start_factor=linear_lr_scheduler_start_factor,
     #                         end_factor=linear_lr_scheduler_end_factor,
     #                         total_iters=linear_lr_scheduler_total_iter)
-    lr_scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.9)
+    lr_scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.8)
     logger.info(f'lr_scheduler = {lr_scheduler}')
 
     ### data #####
