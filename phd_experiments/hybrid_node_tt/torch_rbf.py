@@ -1,3 +1,7 @@
+"""
+Kernels CookBook
+https://www.cs.toronto.edu/~duvenaud/cookbook/
+"""
 import torch
 import torch.nn as nn
 
