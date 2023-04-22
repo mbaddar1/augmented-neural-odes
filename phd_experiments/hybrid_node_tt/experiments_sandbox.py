@@ -440,13 +440,13 @@ if __name__ == '__main__':
     logger.info(f'SEED = {SEED}')
     ### train general params ####
     batch_size = 32
-    input_dim = 2
+    input_dim = 4
     output_dim = 1
     loss_fn = torch.nn.MSELoss()
     epochs = 1000
     epochs_losses_window = 10
     ## opts and lr schedulers
-    lr = 0.7
+    lr = 0.3
     sgd_momentum = 0.99
     linear_lr_scheduler_start_factor = 1.0
     linear_lr_scheduler_end_factor = 0.001
@@ -456,7 +456,7 @@ if __name__ == '__main__':
     rank = 3
     # rbf
     rbf_n_centres = 20
-    basis_fn_str = "matern52"
+    kernel_name = "gaussian"
     # nn
     nn_hidden_dim = 50
     # data
@@ -466,9 +466,9 @@ if __name__ == '__main__':
     ## Models ##
     # => Set model here
     # - Main models for now
-    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
+    model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
-    model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=basis_fn_str)
+    # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
@@ -496,7 +496,7 @@ if __name__ == '__main__':
     #                         start_factor=linear_lr_scheduler_start_factor,
     #                         end_factor=linear_lr_scheduler_end_factor,
     #                         total_iters=linear_lr_scheduler_total_iter)
-    lr_scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.8)
+    lr_scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.9)
     logger.info(f'lr_scheduler = {lr_scheduler}')
 
     ### data #####
