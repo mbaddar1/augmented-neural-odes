@@ -33,14 +33,20 @@ https://ai.stackexchange.com/questions/14079/what-could-an-oscillating-training-
 
 Learning rate adjustment
 https://www.jeremyjordan.me/nn-learning-rate/
+
+getting nan loss with SGD
+https://stackoverflow.com/a/37242531
 """
 
 import logging
-
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 # https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_linear_regression/
 from typing import List
 from datetime import datetime
+
+import pandas as pd
 import torch
+from torch.optim.lr_scheduler import LinearLR, ReduceLROnPlateau
 
 from phd_experiments.hybrid_node_tt.torch_rbf import RBF, basis_func_dict
 
@@ -54,14 +60,14 @@ from phd_experiments.hybrid_node_tt.models import TensorTrainFixedRank
 
 class VDP(Dataset):
     # https://en.wikipedia.org/wiki/Van_der_Pol_oscillator
-    # https://www.johndcook.com/blog/2019/12/22/van-der-pol/
+    # https://www.johndcook.com/blog/2019/12/22/van-der-pol/f
     # https://arxiv.org/pdf/0803.1658.pdf
     # todo add plotting
     def __init__(self, mio: float, N: int):
         self.N = N
         Dx_vdp = 2
         self.mio = mio
-        self.X = torch.distributions.Normal(loc=0, scale=5).sample(torch.Size([self.N, Dx_vdp]))
+        self.X = torch.distributions.Normal(loc=0, scale=1).sample(torch.Size([self.N, Dx_vdp]))
         x1 = self.X[:, 0].view(-1, 1)
         x2 = self.X[:, 1].view(-1, 1)
         x1_dot = x2
@@ -91,14 +97,13 @@ class FVDP(Dataset):
 
 
 class ToyData1(Dataset):
-    def __init__(self, Dx):
-        N = 10000
+    def __init__(self, input_dim,N):
         self.N = N
         W_dict = {1: torch.tensor([0.1]).view(1, 1),
                   2: torch.tensor([0.1, -0.2]).view(1, 2),
                   4: torch.tensor([0.1, -0.2, 0.3, -0.8]).view(1, 4)}
-        W = W_dict[Dx]
-        self.X = torch.distributions.Normal(0, 1).sample(torch.Size([N, Dx]))
+        W = W_dict[input_dim]
+        self.X = torch.distributions.Normal(0, 1).sample(torch.Size([N, input_dim]))
         self.y = torch.einsum('ij,bj->b', W, 0.5 * torch.sin(self.X) + 0.5 * torch.cos(self.X)).view(-1, 1)
 
     def __len__(self):
@@ -143,7 +148,7 @@ class RBFN(torch.nn.Module):
         self.linear_module = torch.nn.Linear(in_features=n_centres, out_features=out_dim)
         self.net = torch.nn.Sequential(self.rbf_module, self.linear_module)
         # init
-        torch.nn.init.normal_(self.linear_module.weight, mean=0, std=1)
+        torch.nn.init.normal_(self.linear_module.weight, mean=0, std=0.01)
         torch.nn.init.constant_(self.linear_module.bias, val=0)
         # get numel learnable
         self.numel_learnable = 0
@@ -152,7 +157,10 @@ class RBFN(torch.nn.Module):
             self.numel_learnable += torch.numel(param)
 
     def forward(self, X):
-        y_hat = self.net(X)
+        # fixme, several steps for debugging
+        rbfn_out = self.rbf_module(X)
+        y_hat = self.linear_module(rbfn_out)
+        # y_hat = self.net(X)
         return y_hat
 
     def __str__(self):
@@ -382,7 +390,7 @@ def get_param_grad_norm_avg(param_list: List[torch.nn.Parameter]):
     return avg_
 
 
-def nn_opt_block(model, X, y, optim, loss_func):
+def vanilla_opt_block(model, X, y, optim, loss_func):
     optim.zero_grad()
     y_hat = model(X)
     make_dot(y_hat, params=dict(model.named_parameters())).render(str(type(model)), format="png")
@@ -412,7 +420,8 @@ LOG_FORMAT = "[%(filename)s:%(lineno)s - %(funcName)10s()] %(asctime)s %(levelna
 DATE_TIME_FORMAT = "%Y-%m-%d:%H:%M:%S"
 SEEDS = [42, 18819191, 71623183, 71623183, 12345, 54321, 987654321]
 if __name__ == '__main__':
-
+    # set max rows for pd
+    pd.set_option('display.max_rows', None)
     ### set logging
     time_stamp = datetime.now().strftime(DATE_TIME_FORMAT)
     logging.basicConfig(level=logging.INFO)
@@ -429,22 +438,27 @@ if __name__ == '__main__':
     random.seed(SEED)
     np.random.seed(SEED)
     logger.info(f'SEED = {SEED}')
-    ### train params ####
+    ### train general params ####
     batch_size = 32
     input_dim = 2
-    output_dim = 2
+    output_dim = 1
     loss_fn = torch.nn.MSELoss()
-    lr = 0.01
-    epochs = 10000
+    epochs = 1000
     epochs_losses_window = 10
+    ## opts and lr schedulers
+    lr = 0.3
+    sgd_momentum = 0.99
+    linear_lr_scheduler_start_factor = 1.0
+    linear_lr_scheduler_end_factor = 0.001
+    linear_lr_scheduler_total_iter = int(0.9 * epochs)
     # tt
     poly_deg = 10
     rank = 3
     # rbf
-    rbf_n_centres = 200
+    rbf_n_centres = 10
     basis_fn_str = "gaussian"
     # nn
-    nn_hidden_dim = 500
+    nn_hidden_dim = 50
     # data
     vdp_mio = 0.5
     N_samples_data = 100
@@ -452,7 +466,7 @@ if __name__ == '__main__':
     ## Models ##
     # => Set model here
     # - Main models for now
-    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
+    model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
     # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=basis_fn_str)
     # ---
@@ -469,14 +483,25 @@ if __name__ == '__main__':
     # model = TTpoly2dim(in_dim=Dx, out_dim=1, deg=poly_deg, rank=3)
 
     ### Optimizers ####
-    # optimizer = torch.optim.SGD(params=model.parameters(), lr=lr)
+    # TODO (SGD with momentum)
+    #   read https://pytorch.org/docs/stable/generated/torch.optim.SGD.html
+    #   and  http://www.cs.toronto.edu/~hinton/absps/momentum.pdf
+    # optimizer = torch.optim.SGD(params=model.parameters(), lr=lr, nesterov=True, momentum=0.5)
     optimizer = torch.optim.Adam(params=model.parameters(), lr=lr)
+    # optimizer = torch.optim.RMSprop(params=model.parameters(),lr=lr,momentum=0.99)
     logger.info(f'model = {model}')
-    logger.info(f'opt  = {optimizer}')
+    logger.info(f'optimizer  = {optimizer}')
+    # lr scheduler
+    # lr_scheduler = LinearLR(optimizer=optimizer,
+    #                         start_factor=linear_lr_scheduler_start_factor,
+    #                         end_factor=linear_lr_scheduler_end_factor,
+    #                         total_iters=linear_lr_scheduler_total_iter)
+    lr_scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.9)
+    logger.info(f'lr_scheduler = {lr_scheduler}')
 
-    # opt
     ### data #####
-    data_set = VDP(mio=vdp_mio, N=N_samples_data)
+    data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
+    # data_set = VDP(mio=vdp_mio, N=N_samples_data)
     if isinstance(data_set, VDP):
         assert input_dim == 2
         assert output_dim == 2
@@ -488,10 +513,9 @@ if __name__ == '__main__':
     # training
     logger.info(f'epochs_losses_window = {epochs_losses_window}')
     epochs_losses = []
+    epochs_losses_curve_x = []
+    epochs_losses_curve_y = []
     for epoch in range(epochs + 1):
-        # fixme for debug only
-        if epoch>=900:
-            x=10
         batches_losses = []
         for i, (X, Y) in enumerate(dl):
             # X_max = torch.max(X)
@@ -499,35 +523,58 @@ if __name__ == '__main__':
             # FIXME , for now no normalization is applied, do we need it ?
             #   1. https://www.baeldung.com/cs/normalizing-inputs-artificial-neural-network
             #   2. https://stackoverflow.com/questions/4674623/why-do-we-have-to-normalize-the-input-for-an-artificial-neural-network
-            X_norm = X
+            X_np = X.detach().numpy()
+            # fixme , debug code
+            min_X_np, max_X_np, avg_X_np = \
+                np.amin(X_np), np.amax(X_np), np.mean(X_np)
+            scaler = MinMaxScaler()
+            scaler.fit(X_np)
+            X_norm_np = scaler.transform(X_np)
+            min_X_np_norm, max_X_np_norm, avg_X_np_norm = \
+                np.amin(X_norm_np), np.amax(X_norm_np), np.mean(X_norm_np)
+            X_tensor_norm = torch.tensor(X_norm_np)
+            # fixme, end debug code
             # torch.nn.Sigmoid()(X)  # (X - X_min) / (X_max - X_min)
             if isinstance(model, (
                     NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim, FullTensorPoly4dim, TTpoly1dim,
                     TTpoly2dim, TTpoly2in2out, RBFN)):
-                loss_val = nn_opt_block(model=model, X=X_norm, y=Y, optim=optimizer, loss_func=loss_fn)
+                loss_val = vanilla_opt_block(model=model, X=X_tensor_norm, y=Y, optim=optimizer, loss_func=loss_fn)
             elif isinstance(model, TensorTrainFixedRank):
-                loss_val = tt_opt_block(model=model, X=X_norm, y=Y, optim=optimizer, loss_func=loss_fn)
+                loss_val = tt_opt_block(model=model, X=X_tensor_norm, y=Y, optim=optimizer, loss_func=loss_fn)
                 assert (not np.isnan(loss_val)) and (not np.isinf(loss_val))
             else:
                 raise ValueError(f"Error {type(model)}")
             # todo : read https://stackoverflow.com/questions/54053868/how-do-i-get-a-loss-per-epoch-and-not-per-batch
             batches_losses.append(loss_val)
             # print('epoch {}, batch {}, loss {}'.format(epoch, i, np.nanmean(losses)))
-        if len(batches_losses)==0:
-            x=10
+        ### code for epoch ###
+        # scheduler lr update
+        before_lr = optimizer.param_groups[0]["lr"]
+        lr_scheduler.step(np.nanmean(batches_losses))
+        after_lr = optimizer.param_groups[0]["lr"]
+        logger.info(f'epoch # {epoch} - for optimizer {type(optimizer)} '
+                    f'lr : {before_lr}-> {after_lr} - loss = {np.mean(batches_losses)}')
+        # log epoch loss
         epochs_losses.append(np.mean(batches_losses))
         if epoch >= epochs_losses_window and epoch % epochs_losses_window == 0:
             assert len(epochs_losses) >= epochs_losses_window
-            epochs_rolling_avg_loss = epochs_losses[-epochs_losses_window:]
-            # fixme : I am using mean not nanmean to capture any nan loss, but should
+            epochs_rolling_window_losses = epochs_losses[-epochs_losses_window:]
+            # fixme : I am using mean not nan-mean to capture any nan loss, but should
             #   check for it explicitly
-            logger.info(f'epoch {epoch}, rolling-avg-loss (window={epochs_losses_window})= '
-                        f'{np.mean(epochs_rolling_avg_loss)}')
+            logger.info(f'*** epoch {epoch}, rolling-avg-loss (window={epochs_losses_window})= '
+                        f'{np.mean(epochs_rolling_window_losses)}')
+            epochs_losses_curve_x.append(epoch)
+            epochs_losses_curve_y.append(np.nanmean(epochs_rolling_window_losses))
 
+    # train time logging
     end_time_stamp = datetime.now()
     training_time_sec = (end_time_stamp - start_time_stamp).seconds
     logger.info(f'training time in seconds = {training_time_sec}')
-
+    # epoch loss curve
+    epoch_loss_df = pd.DataFrame({'epochs': epochs_losses_curve_x,
+                                  'rolling-avg-loss': epochs_losses_curve_y})
+    logger.info('epochs-loss curve df :')
+    logger.info(f"\n{epoch_loss_df}")
 """
 scratch-pad
 vanilla ref steps
