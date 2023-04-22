@@ -1,0 +1,155 @@
+[experiments_sandbox.py:467 -   <module>()] 2023-04-22 03:44:01,959 INFO SEED = 42
+[experiments_sandbox.py:520 -   <module>()] 2023-04-22 03:44:01,960 INFO model = 
+***
+RBF
+in_dim=2
+n_centres=20
+out_dim=2
+basis_fn=gaussian
+numel_learnable=102
+***
+
+[experiments_sandbox.py:521 -   <module>()] 2023-04-22 03:44:01,960 INFO optimizer  = SGD (
+Parameter Group 0
+    dampening: 0
+    differentiable: False
+    foreach: None
+    lr: 0.1
+    maximize: False
+    momentum: 0
+    nesterov: False
+    weight_decay: 0
+)
+[experiments_sandbox.py:528 -   <module>()] 2023-04-22 03:44:01,960 INFO lr_scheduler = <torch.optim.lr_scheduler.ReduceLROnPlateau object at 0x7f1365570580>
+[experiments_sandbox.py:537 -   <module>()] 2023-04-22 03:44:01,961 INFO data = ***
+VDP Dataset
+N=100
+mio = 0.5
+***
+[experiments_sandbox.py:538 -   <module>()] 2023-04-22 03:44:01,961 INFO epochs = 100
+[experiments_sandbox.py:543 -   <module>()] 2023-04-22 03:44:01,961 INFO epochs_losses_window = 10
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:02,143 INFO epoch # 0 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = 179502.291015625
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:02,322 INFO epoch # 1 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = 172735.3583984375
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:02,473 INFO epoch # 2 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = 186691.078125
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:02,626 INFO epoch # 3 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = 163613.13023376465
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:02,778 INFO epoch # 4 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = 444736.275390625
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:02,930 INFO epoch # 5 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = 365330.525390625
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:03,092 INFO epoch # 6 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = 467161.740234375
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:03,243 INFO epoch # 7 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:03,393 INFO epoch # 8 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:03,545 INFO epoch # 9 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:03,699 INFO epoch # 10 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = nan
+[experiments_sandbox.py:578 -   <module>()] 2023-04-22 03:44:03,699 INFO *** epoch 10, rolling-avg-loss (window=10)= nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:03,854 INFO epoch # 11 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:04,008 INFO epoch # 12 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:04,167 INFO epoch # 13 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:04,339 INFO epoch # 14 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:04,513 INFO epoch # 15 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:04,687 INFO epoch # 16 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:04,860 INFO epoch # 17 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.1 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:05,035 INFO epoch # 18 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.1-> 0.09000000000000001 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:05,205 INFO epoch # 19 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.09000000000000001-> 0.09000000000000001 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:05,378 INFO epoch # 20 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.09000000000000001-> 0.09000000000000001 - loss = nan
+[experiments_sandbox.py:578 -   <module>()] 2023-04-22 03:44:05,378 INFO *** epoch 20, rolling-avg-loss (window=10)= nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:05,554 INFO epoch # 21 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.09000000000000001-> 0.09000000000000001 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:05,725 INFO epoch # 22 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.09000000000000001-> 0.09000000000000001 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:05,904 INFO epoch # 23 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.09000000000000001-> 0.09000000000000001 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:06,070 INFO epoch # 24 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.09000000000000001-> 0.09000000000000001 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:06,241 INFO epoch # 25 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.09000000000000001-> 0.09000000000000001 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:06,416 INFO epoch # 26 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.09000000000000001-> 0.09000000000000001 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:06,588 INFO epoch # 27 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.09000000000000001-> 0.09000000000000001 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:06,747 INFO epoch # 28 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.09000000000000001-> 0.09000000000000001 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:06,922 INFO epoch # 29 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.09000000000000001-> 0.08100000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:07,082 INFO epoch # 30 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.08100000000000002-> 0.08100000000000002 - loss = nan
+[experiments_sandbox.py:578 -   <module>()] 2023-04-22 03:44:07,082 INFO *** epoch 30, rolling-avg-loss (window=10)= nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:07,253 INFO epoch # 31 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.08100000000000002-> 0.08100000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:07,429 INFO epoch # 32 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.08100000000000002-> 0.08100000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:07,603 INFO epoch # 33 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.08100000000000002-> 0.08100000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:07,775 INFO epoch # 34 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.08100000000000002-> 0.08100000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:07,940 INFO epoch # 35 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.08100000000000002-> 0.08100000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:08,125 INFO epoch # 36 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.08100000000000002-> 0.08100000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:08,300 INFO epoch # 37 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.08100000000000002-> 0.08100000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:08,488 INFO epoch # 38 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.08100000000000002-> 0.08100000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:08,667 INFO epoch # 39 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.08100000000000002-> 0.08100000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:08,821 INFO epoch # 40 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.08100000000000002-> 0.07290000000000002 - loss = nan
+[experiments_sandbox.py:578 -   <module>()] 2023-04-22 03:44:08,821 INFO *** epoch 40, rolling-avg-loss (window=10)= nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:08,984 INFO epoch # 41 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.07290000000000002-> 0.07290000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:09,155 INFO epoch # 42 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.07290000000000002-> 0.07290000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:09,328 INFO epoch # 43 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.07290000000000002-> 0.07290000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:09,507 INFO epoch # 44 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.07290000000000002-> 0.07290000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:09,682 INFO epoch # 45 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.07290000000000002-> 0.07290000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:09,835 INFO epoch # 46 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.07290000000000002-> 0.07290000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:09,990 INFO epoch # 47 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.07290000000000002-> 0.07290000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:10,147 INFO epoch # 48 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.07290000000000002-> 0.07290000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:10,312 INFO epoch # 49 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.07290000000000002-> 0.07290000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:10,472 INFO epoch # 50 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.07290000000000002-> 0.07290000000000002 - loss = nan
+[experiments_sandbox.py:578 -   <module>()] 2023-04-22 03:44:10,472 INFO *** epoch 50, rolling-avg-loss (window=10)= nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:10,626 INFO epoch # 51 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.07290000000000002-> 0.06561000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:10,785 INFO epoch # 52 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.06561000000000002-> 0.06561000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:10,953 INFO epoch # 53 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.06561000000000002-> 0.06561000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:11,124 INFO epoch # 54 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.06561000000000002-> 0.06561000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:11,298 INFO epoch # 55 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.06561000000000002-> 0.06561000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:11,470 INFO epoch # 56 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.06561000000000002-> 0.06561000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:11,636 INFO epoch # 57 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.06561000000000002-> 0.06561000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:11,808 INFO epoch # 58 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.06561000000000002-> 0.06561000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:11,982 INFO epoch # 59 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.06561000000000002-> 0.06561000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:12,135 INFO epoch # 60 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.06561000000000002-> 0.06561000000000002 - loss = nan
+[experiments_sandbox.py:578 -   <module>()] 2023-04-22 03:44:12,135 INFO *** epoch 60, rolling-avg-loss (window=10)= nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:12,298 INFO epoch # 61 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.06561000000000002-> 0.06561000000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:12,457 INFO epoch # 62 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.06561000000000002-> 0.05904900000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:12,614 INFO epoch # 63 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05904900000000002-> 0.05904900000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:12,766 INFO epoch # 64 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05904900000000002-> 0.05904900000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:12,920 INFO epoch # 65 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05904900000000002-> 0.05904900000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:13,093 INFO epoch # 66 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05904900000000002-> 0.05904900000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:13,271 INFO epoch # 67 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05904900000000002-> 0.05904900000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:13,458 INFO epoch # 68 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05904900000000002-> 0.05904900000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:13,637 INFO epoch # 69 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05904900000000002-> 0.05904900000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:13,813 INFO epoch # 70 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05904900000000002-> 0.05904900000000002 - loss = nan
+[experiments_sandbox.py:578 -   <module>()] 2023-04-22 03:44:13,813 INFO *** epoch 70, rolling-avg-loss (window=10)= nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:13,994 INFO epoch # 71 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05904900000000002-> 0.05904900000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:14,167 INFO epoch # 72 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05904900000000002-> 0.05904900000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:14,340 INFO epoch # 73 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05904900000000002-> 0.05314410000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:14,511 INFO epoch # 74 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05314410000000002-> 0.05314410000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:14,682 INFO epoch # 75 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05314410000000002-> 0.05314410000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:14,840 INFO epoch # 76 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05314410000000002-> 0.05314410000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:14,992 INFO epoch # 77 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05314410000000002-> 0.05314410000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:15,147 INFO epoch # 78 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05314410000000002-> 0.05314410000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:15,301 INFO epoch # 79 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05314410000000002-> 0.05314410000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:15,454 INFO epoch # 80 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05314410000000002-> 0.05314410000000002 - loss = nan
+[experiments_sandbox.py:578 -   <module>()] 2023-04-22 03:44:15,454 INFO *** epoch 80, rolling-avg-loss (window=10)= nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:15,608 INFO epoch # 81 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05314410000000002-> 0.05314410000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:15,761 INFO epoch # 82 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05314410000000002-> 0.05314410000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:15,922 INFO epoch # 83 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05314410000000002-> 0.05314410000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:16,077 INFO epoch # 84 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.05314410000000002-> 0.04782969000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:16,229 INFO epoch # 85 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.04782969000000002-> 0.04782969000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:16,387 INFO epoch # 86 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.04782969000000002-> 0.04782969000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:16,578 INFO epoch # 87 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.04782969000000002-> 0.04782969000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:16,750 INFO epoch # 88 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.04782969000000002-> 0.04782969000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:16,925 INFO epoch # 89 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.04782969000000002-> 0.04782969000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:17,099 INFO epoch # 90 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.04782969000000002-> 0.04782969000000002 - loss = nan
+[experiments_sandbox.py:578 -   <module>()] 2023-04-22 03:44:17,099 INFO *** epoch 90, rolling-avg-loss (window=10)= nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:17,253 INFO epoch # 91 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.04782969000000002-> 0.04782969000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:17,406 INFO epoch # 92 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.04782969000000002-> 0.04782969000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:17,558 INFO epoch # 93 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.04782969000000002-> 0.04782969000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:17,709 INFO epoch # 94 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.04782969000000002-> 0.04782969000000002 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:17,862 INFO epoch # 95 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.04782969000000002-> 0.043046721000000024 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:18,012 INFO epoch # 96 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.043046721000000024-> 0.043046721000000024 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:18,164 INFO epoch # 97 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.043046721000000024-> 0.043046721000000024 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:18,315 INFO epoch # 98 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.043046721000000024-> 0.043046721000000024 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:18,473 INFO epoch # 99 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.043046721000000024-> 0.043046721000000024 - loss = nan
+[experiments_sandbox.py:569 -   <module>()] 2023-04-22 03:44:18,633 INFO epoch # 100 - for optimizer <class 'torch.optim.sgd.SGD'> lr : 0.043046721000000024-> 0.043046721000000024 - loss = nan
+[experiments_sandbox.py:578 -   <module>()] 2023-04-22 03:44:18,634 INFO *** epoch 100, rolling-avg-loss (window=10)= nan
+[experiments_sandbox.py:586 -   <module>()] 2023-04-22 03:44:18,634 INFO training time in seconds = 16
+[experiments_sandbox.py:590 -   <module>()] 2023-04-22 03:44:18,634 INFO epochs-loss curve df :
+[experiments_sandbox.py:591 -   <module>()] 2023-04-22 03:44:18,637 INFO 
+   epochs  rolling-avg-loss
+0      10               NaN
+1      20               NaN
+2      30               NaN
+3      40               NaN
+4      50               NaN
+5      60               NaN
+6      70               NaN
+7      80               NaN
+8      90               NaN
+9     100               NaN

@@ -36,6 +36,33 @@ https://www.jeremyjordan.me/nn-learning-rate/
 
 getting nan loss with SGD
 https://stackoverflow.com/a/37242531
+
+Data Standardization and Normalization
+# X_max = torch.max(X)
+            # X_min = torch.min(X)
+            # FIXME , for now no normalization is applied, do we need it ?
+            #   1. https://www.baeldung.com/cs/normalizing-inputs-artificial-neural-network
+            #   2. https://stackoverflow.com/questions/4674623/why-do-we-have-to-normalize-the-input-for-an-artificial-neural-network
+            #   3. https://machinelearningmastery.com/how-to-improve-neural-network-stability-and-modeling-performance-with-data-scaling/
+            #   ==> seems we need to scale INPUT and OUTPUT ( BOTH)
+            if scaler is None:
+                X_tensor_norm = X
+            else:
+
+                X_np = X.detach().numpy()
+                # # fixme , debug code
+                # min_X_np, max_X_np, avg_X_np = \
+                #     np.amin(X_np), np.amax(X_np), np.mean(X_np)
+                scaler.fit(X)
+            # scaler.fit(X_np)
+            # X_norm_np = scaler.transform(X_np)
+            # min_X_np_norm, max_X_np_norm, avg_X_np_norm = \
+            #     np.amin(X_norm_np), np.amax(X_norm_np), np.mean(X_norm_np)
+            # X_tensor_norm = torch.tensor(X_norm_np)
+            # fixme , skip normalization
+            X_tensor_norm = X
+            # fixme, end debug code
+            # torch.nn.Sigmoid()(X)  # (X - X_min) / (X_max - X_min)
 """
 
 import logging
@@ -466,9 +493,9 @@ if __name__ == '__main__':
     ## Models ##
     # => Set model here
     # - Main models for now
-    model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
+    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
-    # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name)
+    model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
@@ -509,7 +536,8 @@ if __name__ == '__main__':
     dl = DataLoader(dataset=data_set, batch_size=batch_size, shuffle=True)
     logger.info(f'data = {data_set}')
     logger.info(f'epochs = {epochs}')
-
+    # data scaler
+    scaler = StandardScaler()  # or MinMax or NOne
     start_time_stamp = datetime.now()
     # training
     logger.info(f'epochs_losses_window = {epochs_losses_window}')
@@ -519,34 +547,14 @@ if __name__ == '__main__':
     for epoch in range(epochs + 1):
         batches_losses = []
         for i, (X, Y) in enumerate(dl):
-            # X_max = torch.max(X)
-            # X_min = torch.min(X)
-            # FIXME , for now no normalization is applied, do we need it ?
-            #   1. https://www.baeldung.com/cs/normalizing-inputs-artificial-neural-network
-            #   2. https://stackoverflow.com/questions/4674623/why-do-we-have-to-normalize-the-input-for-an-artificial-neural-network
-            #   3. https://machinelearningmastery.com/how-to-improve-neural-network-stability-and-modeling-performance-with-data-scaling/
-            #   ==> seems we need to scale INPUT and OUTPUT ( BOTH)
-            # X_np = X.detach().numpy()
-            # # fixme , debug code
-            # min_X_np, max_X_np, avg_X_np = \
-            #     np.amin(X_np), np.amax(X_np), np.mean(X_np)
-            # scaler = MinMaxScaler()
-            # scaler.fit(X_np)
-            # X_norm_np = scaler.transform(X_np)
-            # min_X_np_norm, max_X_np_norm, avg_X_np_norm = \
-            #     np.amin(X_norm_np), np.amax(X_norm_np), np.mean(X_norm_np)
-            # X_tensor_norm = torch.tensor(X_norm_np)
-            # fixme , skip normalization
-            X_tensor_norm = X
-            # fixme, end debug code
-            # torch.nn.Sigmoid()(X)  # (X - X_min) / (X_max - X_min)
+
             if isinstance(model, (
                     NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim, FullTensorPoly4dim, TTpoly1dim,
                     TTpoly2dim, TTpoly2in2out, RBFN)):
-                loss_val = vanilla_opt_block(model=model, X=X_tensor_norm, y=Y, optim=optimizer,
+                loss_val = vanilla_opt_block(model=model, X=X, y=Y, optim=optimizer,
                                              loss_func=loss_fn)
             elif isinstance(model, TensorTrainFixedRank):
-                loss_val = tt_opt_block(model=model, X=X_tensor_norm, y=Y, optim=optimizer, loss_func=loss_fn)
+                loss_val = tt_opt_block(model=model, X=X, y=Y, optim=optimizer, loss_func=loss_fn)
                 assert (not np.isnan(loss_val)) and (not np.isinf(loss_val))
             else:
                 raise ValueError(f"Error {type(model)}")
@@ -570,7 +578,7 @@ if __name__ == '__main__':
             logger.info(f'*** epoch {epoch}, rolling-avg-loss (window={epochs_losses_window})= '
                         f'{np.mean(epochs_rolling_window_losses)}')
             epochs_losses_curve_x.append(epoch)
-            epochs_losses_curve_y.append(np.nanmean(epochs_rolling_window_losses))
+            epochs_losses_curve_y.append(np.mean(epochs_rolling_window_losses))
 
     # train time logging
     end_time_stamp = datetime.now()
