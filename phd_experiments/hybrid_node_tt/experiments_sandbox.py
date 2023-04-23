@@ -527,17 +527,20 @@ def vanilla_opt_block(model, X, y, optim, loss_func, y_mean, y_std):
     return loss.item()
 
 
-def tt_opt_block(model, X, y, optim, loss_func):
-    optim.zero_grad()
-    y_hat = model.forward_old(X)
-    make_dot(y_hat, params=dict(model.named_parameters())).render(str(type(model)), format="png")
-    loss = loss_func(y_hat, y)
-    loss.backward()
-    param_list = list(model.parameters())
-    grad_norm_sum = get_param_grad_norm_sum(param_list)
-    grad_norm_avg = get_param_grad_norm_avg(param_list)
-    optim.step()
-    return loss.item()
+# fixme, refactor to be as vanilla_opt_block
+
+def tt_opt_block(model, X_train, Y_train, optim, loss_func):
+    raise NotImplementedError("Must refactor to be as vanilla_opt_block")
+    # optim.zero_grad()
+    # Y_hat = model.forward_old(X_train)
+    # make_dot(Y_hat, params=dict(model.named_parameters())).render(str(type(model)), format="png")
+    # loss = loss_func(Y_hat, Y_train)
+    # loss.backward()
+    # param_list = list(model.parameters())
+    # grad_norm_sum = get_param_grad_norm_sum(param_list)
+    # grad_norm_avg = get_param_grad_norm_avg(param_list)
+    # optim.step()
+    # return loss.item()
 
 
 LOG_FORMAT = "[%(filename)s:%(lineno)s - %(funcName)10s()] %(asctime)s %(levelname)s %(message)s"
@@ -588,13 +591,13 @@ if __name__ == '__main__':
     vdp_norm_mean = 5
     vdp_norm_std = 10
     N_train = 100
-    N_test = int(0.2*N_train)
+    N_test = int(0.2 * N_train)
     ## Models ##
     # => Set model here
     # - Main models for now
-    model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
+    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
-    # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name)
+    model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
@@ -647,16 +650,17 @@ if __name__ == '__main__':
     epochs_losses_curve_y = []
     for epoch in range(epochs + 1):
         batches_losses = []
-        for i, (X, Y) in enumerate(test_data_loader):
+        for i, (X_train, Y_train) in enumerate(test_data_loader):
 
             if isinstance(model, (
                     NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim, FullTensorPoly4dim, TTpoly1dim,
                     TTpoly2dim, TTpoly2in2out, RBFN)):
-                loss_val = vanilla_opt_block(model=model, X=X, y=Y, optim=optimizer,
+                loss_val = vanilla_opt_block(model=model, X=X_train, y=Y_train, optim=optimizer,
                                              loss_func=loss_fn, y_mean=train_data_set.get_y_mean(),
                                              y_std=train_data_set.get_y_std())
             elif isinstance(model, TensorTrainFixedRank):
-                loss_val = tt_opt_block(model=model, X=X, y=Y, optim=optimizer, loss_func=loss_fn)
+                loss_val = tt_opt_block(model=model, X_train=X_train, Y_train=Y_train, optim=optimizer,
+                                        loss_func=loss_fn)
                 assert (not np.isnan(loss_val)) and (not np.isinf(loss_val))
             else:
                 raise ValueError(f"Error {type(model)}")
