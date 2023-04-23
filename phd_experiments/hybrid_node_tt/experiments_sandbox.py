@@ -63,6 +63,12 @@ Data Standardization and Normalization
             X_tensor_norm = X
             # fixme, end debug code
             # torch.nn.Sigmoid()(X)  # (X - X_min) / (X_max - X_min)
+Batch-Norm refs:
+https://machinelearningmastery.com/how-to-improve-neural-network-stability-and-modeling-performance-with-data-scaling/
+https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm1d.html
+https://arxiv.org/abs/1502.03167
+https://medium.com/dejunhuang/learning-day-20-batch-normalization-concept-and-usage-in-pytorch-a8d077d16533
+
 """
 
 import logging
@@ -90,11 +96,15 @@ class VDP(Dataset):
     # https://www.johndcook.com/blog/2019/12/22/van-der-pol/f
     # https://arxiv.org/pdf/0803.1658.pdf
     # todo add plotting
-    def __init__(self, mio: float, N: int):
+    def __init__(self, mio: float, N: int, norm_mean: float, norm_std: float):
         self.N = N
+        self.norm_mean = norm_mean
+        self.norm_std = norm_std
         Dx_vdp = 2
         self.mio = mio
-        self.X = torch.distributions.Normal(loc=0, scale=1).sample(torch.Size([self.N, Dx_vdp]))
+        self.X = torch.distributions.\
+            Normal(loc=self.norm_mean, scale=self.norm_std).\
+            sample(torch.Size([self.N, Dx_vdp]))
         x1 = self.X[:, 0].view(-1, 1)
         x2 = self.X[:, 1].view(-1, 1)
         x1_dot = x2
@@ -108,7 +118,13 @@ class VDP(Dataset):
         return self.X[idx], self.Y[idx]
 
     def __str__(self):
-        return f"***\nVDP Dataset\nN={self.N}\nmio = {self.mio}\n***"
+        return f"***\n" \
+               f"VDP Dataset\n" \
+               f"N={self.N}\n" \
+               f"mio = {self.mio}\n" \
+               f"norm_mean = {self.norm_mean}\n" \
+               f"norm_std = {self.norm_std}\n" \
+               f"***"
 
 
 class LorenzSystem(Dataset):
@@ -172,8 +188,15 @@ class RBFN(torch.nn.Module):
         basis_fn = basis_func_dict()[basis_fn_str]
         self.rbf_module = RBF(in_features=in_dim, n_centres=n_centres, basis_func=basis_fn)
         # rbf inited by its own reset fn
+        self.batch_norm_1d_module = torch.nn.BatchNorm1d(num_features=in_dim, affine=True)
         self.linear_module = torch.nn.Linear(in_features=n_centres, out_features=out_dim)
-        self.net = torch.nn.Sequential(self.rbf_module, self.linear_module)
+        # TODO revisit theory for batch-norm
+        #   ref : https://machinelearningmastery.com/how-to-improve-neural-network-stability-and-modeling-performance-with-data-scaling/
+        #   ref : https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm1d.html
+        #   ref-paper : https://arxiv.org/abs/1502.03167
+        #   Note : batch-norm layer is before the non-linearity
+        self.net = torch.nn.Sequential(self.batch_norm_1d_module,
+                                       self.rbf_module, self.linear_module)
         # init
         torch.nn.init.normal_(self.linear_module.weight, mean=0, std=0.01)
         torch.nn.init.constant_(self.linear_module.bias, val=0)
@@ -185,9 +208,15 @@ class RBFN(torch.nn.Module):
 
     def forward(self, X):
         # fixme, several steps for debugging
-        rbfn_out = self.rbf_module(X)
-        y_hat = self.linear_module(rbfn_out)
-        # y_hat = self.net(X)
+        mean1 = torch.mean(X, dim=0)
+        # std1 = torch.std(X, dim=0)
+        # batchnorm1d_out = self.batch_norm_1d_module(X)
+        # mean2 = torch.mean(batchnorm1d_out, dim=0)
+        # std2 = torch.std(batchnorm1d_out, dim=0)
+        # rbfn_out = self.rbf_module(batchnorm1d_out)
+        # y_hat = self.linear_module(rbfn_out)
+        # fixme : end debugging code
+        y_hat = self.net(X)
         return y_hat
 
     def __str__(self):
@@ -355,7 +384,15 @@ class PolyLinearEinsum(LinearModeEinSum):
 class NNmodel(torch.nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
         super(NNmodel, self).__init__()
-        self.net = torch.nn.Sequential(torch.nn.Linear(input_dim, hidden_dim), torch.nn.Tanh(),
+
+        # TODO revisit theory for batch-norm
+        #   ref : https://machinelearningmastery.com/how-to-improve-neural-network-stability-and-modeling-performance-with-data-scaling/
+        #   ref : https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm1d.html
+        #   ref-paper : https://arxiv.org/abs/1502.03167
+        #   Note : batch-norm layer is before the non-linearity
+        self.net = torch.nn.Sequential(torch.nn.Linear(input_dim, hidden_dim),
+                                       torch.nn.BatchNorm1d(hidden_dim, affine=True),
+                                       torch.nn.Tanh(),
                                        torch.nn.Linear(hidden_dim, output_dim))
         # init net weights and biases
         for m in self.net.modules():
@@ -369,6 +406,11 @@ class NNmodel(torch.nn.Module):
             self.numel_learnable += torch.numel(param)
 
     def forward(self, x):
+        # fixme several steps for debugging
+        # out_norm_layer = self.batch_norm_module(x)
+        # out_nn_layer = self.net(out_norm_layer)
+        # out = out_nn_layer
+        # fixme : end debugging code
         out = self.net(x)
         return out
 
@@ -420,9 +462,53 @@ def get_param_grad_norm_avg(param_list: List[torch.nn.Parameter]):
 
 def vanilla_opt_block(model, X, y, optim, loss_func):
     optim.zero_grad()
+    # TODO revisit output-normalization
+    #   ref : https://machinelearningmastery.com/how-to-improve-neural-network-stability-and-modeling-performance-with-data-scaling/
+    #   quote :
+    """
+    Scaling input and output variables is a critical step in using neural 
+    network models.
+    In practice it is nearly always advantageous to apply pre-processing 
+    transformations to the input data before it is presented to a network. 
+    >>> Similarly, the outputs of the network are often post-processed to 
+    give the required output values.
+    """
+    #  TODO (Notes)
+    #   Should we scale the output target variable
+    #   1. https://machinelearningmastery.com/how-to-choose-loss-functions-when-training-deep-learning-neural-networks/
+    # quote :
+    """
+    # generate regression dataset
+    X, y = make_regression(n_samples=1000, n_features=20, noise=0.1, random_state=1)
+    Neural networks generally perform better when the real-valued input and output variables are to be scaled to a sensible range. For this problem, each of the input variables and the target variable have a Gaussian distribution; therefore, standardizing the data in this case is desirable.
+    
+    We can achieve this using the StandardScaler transformer class also from the scikit-learn library. On a real problem, we would prepare the scaler on the training dataset and apply it to the train and test sets, but for simplicity, we will scale all of the data together before splitting into train and test sets.
+    
+    # standardize dataset
+    X = StandardScaler().fit_transform(X)
+    y = StandardScaler().fit_transform(y.reshape(len(y),1))[:,0]
+    1
+    2
+    3
+    # standardize dataset
+    X = StandardScaler().fit_transform(X)
+    y = StandardScaler().fit_transform(y.reshape(len(y),1))[:,0]
+    Once scaled, the data will be split evenly into train and test sets.
+    """
+    # TODO (Notes-Cont.)
+    #   Should we scale output-target variable
+    #   - https://datascience.stackexchange.com/questions/24214/why-should-i-normalize-also-the-output-data/24218#24218
+    #   - http://www.faqs.org/faqs/ai-faq/neural-nets/part2/
+    #   Search for "Search for Should I standardize the target variables (column vectors)? in above page."
+    Dy = y.size()[1]
+    # not affine, not learnable . NEVER set affine=true for output standardization
+    output_norm_standardizer = \
+        torch.nn.BatchNorm1d(num_features=Dy, affine=False,
+                             track_running_stats=False)
+    y_norm = output_norm_standardizer(y)
     y_hat = model(X)
     make_dot(y_hat, params=dict(model.named_parameters())).render(str(type(model)), format="png")
-    loss = loss_func(y_hat, y)
+    loss = loss_func(y_hat, y_norm)
     loss.backward()
     param_list = list(model.parameters())
     grad_norm_sum = get_param_grad_norm_sum(param_list)
@@ -487,8 +573,10 @@ if __name__ == '__main__':
     kernel_name = "gaussian"
     # nn
     nn_hidden_dim = 50
-    # data
+    ## Data
     vdp_mio = 0.5
+    vdp_norm_mean = 5
+    vdp_norm_std = 10
     N_samples_data = 100
 
     ## Models ##
@@ -530,7 +618,7 @@ if __name__ == '__main__':
 
     ### data #####
     # data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
-    data_set = VDP(mio=vdp_mio, N=N_samples_data)
+    data_set = VDP(mio=vdp_mio, N=N_samples_data, norm_mean=vdp_norm_mean, norm_std=vdp_norm_mean)
     if isinstance(data_set, VDP):
         assert input_dim == 2
         # assert output_dim == 2
@@ -567,8 +655,10 @@ if __name__ == '__main__':
         before_lr = optimizer.param_groups[0]["lr"]
         lr_scheduler.step(np.nanmean(batches_losses))
         after_lr = optimizer.param_groups[0]["lr"]
-        logger.info(f'epoch # {epoch} - for optimizer {type(optimizer)} '
-                    f'lr : {before_lr}-> {after_lr} - loss = {np.mean(batches_losses)}')
+        logger.info(f'epoch # {epoch} - '
+                    f'for optimizer {type(optimizer)} -'
+                    f'lr : {np.round(before_lr,2)}-> {np.round(after_lr,2)} -'
+                    f'loss = {np.mean(batches_losses)}')
         # log epoch loss
         epochs_losses.append(np.mean(batches_losses))
         if epoch >= epochs_losses_window and epoch % epochs_losses_window == 0:
