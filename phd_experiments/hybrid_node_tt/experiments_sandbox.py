@@ -157,7 +157,61 @@ class LorenzSystem(Dataset):
     # High Dim non-linear systems
     # https://tglab.princeton.edu/wp-content/uploads/2011/03/Mol410Lecture13.pdf (P 2)
     # https://en.wikipedia.org/wiki/Lorenz_system
-    pass
+    def __init__(self, N: int, rho: float, sigma: float, beta: float,
+                 x_gen_norm_mean: float, x_gen_norm_std: float,
+                 normalize_X: bool, normalize_Y: bool,
+                 train_or_test: str):
+        self.train_or_test = train_or_test
+        self.N = N
+        Dx = 3
+        # from wikipedia picture
+        # https://en.wikipedia.org/wiki/Lorenz_system
+        self.rho = rho
+        self.sigma = sigma
+        self.beta = beta
+        self.normalize_X = normalize_X
+        self.normalize_Y = normalize_Y
+        self.X = torch.distributions.Normal(x_gen_norm_mean, x_gen_norm_std). \
+            sample(torch.Size([self.N, Dx]))
+        x1 = self.X[:, 0]
+        x2 = self.X[:, 1]
+        x3 = self.X[:, 2]
+        dx1dt = sigma * (x2 - x1).view(-1, 1)
+        dx2dt = (x1 * (rho - x3) * x3).view(-1, 1)
+        dx3dt = (x1 * x2 - beta * x3).view(-1, 1)
+        self.Y = torch.cat([dx1dt, dx2dt, dx3dt], dim=1)
+        # normalize or not
+        if self.normalize_X:
+            X_mean = torch.mean(self.X, dim=0)
+            X_std = torch.std(self.X, dim=0)
+            self.X = (self.X - X_mean) / X_std
+        if self.normalize_Y:
+            self.Y_mean = torch.mean(self.Y, dim=0)
+            self.Y_std = torch.std(self.Y, dim=0)
+            self.Y = (self.Y - self.Y_mean) / self.Y_std
+
+    def __len__(self):
+        return self.N
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.Y[idx]
+
+    def get_Y_mean(self):
+        return self.Y_mean
+
+    def get_Y_std(self):
+        return self.Y_std
+
+    def __str__(self):
+        return "\n***\n" \
+               "Lorenz-System\n" \
+               f"N = {self.N}" \
+               f"rho = {self.rho}\n" \
+               f"sigma = {self.sigma}\n" \
+               f"beta = {self.beta}\n" \
+               f"normalize_X = {self.normalize_X}" \
+               f"normalize_Y = {self.normalize_Y}" \
+               f"****\n"
 
 
 class FVDP(Dataset):
@@ -165,7 +219,7 @@ class FVDP(Dataset):
     pass
 
 
-class ToyData1(Dataset):
+class Y_eq_a_sinX_cosX_dataset(Dataset):
     def __init__(self, input_dim, N):
         self.N = N
         W_dict = {1: torch.tensor([0.1]).view(1, 1),
@@ -612,10 +666,10 @@ if __name__ == '__main__':
     ### Training ####
     # general params
     batch_size = 32
-    input_dim = 2
-    output_dim = 2
+    input_dim = 3
+    output_dim = 3
     loss_fn = torch.nn.MSELoss()
-    train_epochs = 10000
+    train_epochs = 1000
     epochs_losses_window = 10
     input_batch_norm = False
     output_norm = None  # can be "data","batch" or None
@@ -634,16 +688,22 @@ if __name__ == '__main__':
     kernel_name = "gaussian"
     # nn
     nn_hidden_dim = 50
-    ## Data
-    vdp_mio = 0.5
-    vdp_x_gen_norm_mean = 10
-    vdp_x_gen_norm_std = 100
+    ### Data
     N_train = 1000
+    N_test = N_train
+    x_gen_norm_mean = 10
+    x_gen_norm_std = 5
+    # vdp
+    vdp_mio = 0.5
+    # lorenz
+    rho = 28
+    sigma = 10
+    beta = 8 / 3
+    #
     normalize_data_source_X_train = True
     normalize_data_source_Y_train = True
     normalize_data_source_X_test = True
     normalize_data_source_Y_test = True
-    N_test = N_train  # int(0.2 * N_train)
 
     ## Models ##
     # => Set model here
@@ -691,20 +751,29 @@ if __name__ == '__main__':
     logger.info(f'Normalize-Data-source-Y-test = {normalize_data_source_Y_test}')
     # data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
 
-    train_data_set = VDP(mio=vdp_mio, N=N_train,
-                         x_gen_norm_mean=vdp_x_gen_norm_mean, x_gen_norm_std=vdp_x_gen_norm_std,
-                         normalize_X=normalize_data_source_X_train,
-                         normalize_Y=normalize_data_source_Y_train,
-                         train_or_test="train")
+    # train_data_set = VDP(mio=vdp_mio, N=N_train,
+    #                      x_gen_norm_mean=vdp_x_gen_norm_mean, x_gen_norm_std=vdp_x_gen_norm_std,
+    #                      normalize_X=normalize_data_source_X_train,
+    #                      normalize_Y=normalize_data_source_Y_train,
+    #                      train_or_test="train")
+    train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+                                  x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
+                                  normalize_Y=normalize_data_source_Y_train, train_or_test="train")
     if isinstance(train_data_set, VDP):
         assert input_dim == 2
         assert output_dim == 2
+    elif isinstance(train_data_set, LorenzSystem):
+        assert input_dim == 3
+        assert output_dim == 3
     train_data_loader = DataLoader(dataset=train_data_set, batch_size=batch_size, shuffle=True)
-    test_data_set = VDP(mio=vdp_mio, N=N_test, x_gen_norm_mean=vdp_x_gen_norm_mean,
-                        x_gen_norm_std=vdp_x_gen_norm_std,
-                        normalize_X=normalize_data_source_X_test,
-                        normalize_Y=normalize_data_source_Y_test,
-                        train_or_test="test")
+    # test_data_set = VDP(mio=vdp_mio, N=N_test, x_gen_norm_mean=vdp_x_gen_norm_mean,
+    #                     x_gen_norm_std=vdp_x_gen_norm_std,
+    #                     normalize_X=normalize_data_source_X_test,
+    #                     normalize_Y=normalize_data_source_Y_test,
+    #                     train_or_test="test")
+    test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+                                 x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
+                                 normalize_Y=normalize_data_source_Y_train, train_or_test="test")
     test_data_loader = DataLoader(dataset=test_data_set, batch_size=batch_size, shuffle=True)
 
     logger.info(f'train-dataset = {train_data_set}')
