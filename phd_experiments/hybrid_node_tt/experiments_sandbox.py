@@ -87,6 +87,7 @@ torch.use_deterministic_algorithms(True)
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from torchviz import make_dot
+from tqdm import tqdm
 import random
 from phd_experiments.hybrid_node_tt.models import TensorTrainFixedRank
 
@@ -96,14 +97,20 @@ class VDP(Dataset):
     # https://www.johndcook.com/blog/2019/12/22/van-der-pol/f
     # https://arxiv.org/pdf/0803.1658.pdf
     # todo add plotting
-    def __init__(self, mio: float, N: int, norm_mean: float, norm_std: float):
+    def __init__(self, mio: float, N: int, x_gen_norm_mean: float,
+                 x_gen_norm_std: float, normalize_X: bool,
+                 normalize_Y: bool, train_or_test: str):
+        self.train_or_test = train_or_test
         self.N = N
-        self.norm_mean = norm_mean
-        self.norm_std = norm_std
+        self.x_gen_norm_mean = x_gen_norm_mean
+        self.x_gen_norm_std = x_gen_norm_std
+        self.normalize_X = normalize_X
+        self.normalize_Y = normalize_Y
         Dx_vdp = 2
         self.mio = mio
+        assert train_or_test in ["train", "test"]
         self.X = torch.distributions. \
-            Normal(loc=self.norm_mean, scale=self.norm_std). \
+            Normal(loc=self.x_gen_norm_mean, scale=self.x_gen_norm_std). \
             sample(torch.Size([self.N, Dx_vdp]))
         x1 = self.X[:, 0].view(-1, 1)
         x2 = self.X[:, 1].view(-1, 1)
@@ -111,8 +118,15 @@ class VDP(Dataset):
         x2_dot = mio * (1 - x1 ** 2) * x2 - x1
         self.Y = torch.cat([x1_dot, x2_dot], dim=1)
         # for target std
-        self.y_mean = torch.mean(self.Y, dim=0)
-        self.y_std = torch.std(self.Y, dim=0)
+        self.Y_mean = torch.mean(self.Y, dim=0)
+        self.Y_std = torch.std(self.Y, dim=0)
+        if normalize_Y:
+            self.Y = (self.Y - self.Y_mean) / self.Y_std
+        # normalize data from the source
+        if normalize_X:
+            X_mean = torch.mean(self.X, dim=0)
+            X_std = torch.std(self.X, dim=0)
+            self.X = (self.X - X_mean) / X_std
 
     def __len__(self):
         return self.N
@@ -120,19 +134,22 @@ class VDP(Dataset):
     def __getitem__(self, idx):
         return self.X[idx], self.Y[idx]
 
-    def get_y_mean(self):
-        return self.y_mean
+    def get_Y_mean(self):
+        return self.Y_mean
 
-    def get_y_std(self):
-        return self.y_std
+    def get_Y_std(self):
+        return self.Y_std
 
     def __str__(self):
         return f"***\n" \
                f"VDP Dataset\n" \
                f"N={self.N}\n" \
                f"mio = {self.mio}\n" \
-               f"norm_mean = {self.norm_mean}\n" \
-               f"norm_std = {self.norm_std}\n" \
+               f"x_gen_norm_mean = {self.x_gen_norm_mean}\n" \
+               f"x_gen_norm_std = {self.x_gen_norm_std}\n" \
+               f"normalize_X = {self.normalize_X}\n" \
+               f"normalize_Y = {self.normalize_Y}\n" \
+               f"train-or-test = {self.train_or_test}\n" \
                f"***"
 
 
@@ -188,7 +205,7 @@ class TTrbf(torch.nn.Module):
 
 class RBFN(torch.nn.Module):
     # https://en.wikipedia.org/wiki/Radial_basis_function_network
-    def __init__(self, in_dim, out_dim, n_centres, basis_fn_str):
+    def __init__(self, in_dim, out_dim, n_centres, basis_fn_str, input_batch_norm):
         super().__init__()
         self.basis_fn_str = basis_fn_str
         self.n_centres = n_centres
@@ -197,14 +214,16 @@ class RBFN(torch.nn.Module):
         basis_fn = basis_func_dict()[basis_fn_str]
         self.rbf_module = RBF(in_features=in_dim, n_centres=n_centres, basis_func=basis_fn)
         # rbf inited by its own reset fn
-        self.batch_norm_1d_module = torch.nn.BatchNorm1d(num_features=in_dim, affine=True)
+        self.input_norm_module = \
+            torch.nn.BatchNorm1d(num_features=in_dim, affine=True) if input_batch_norm \
+                else torch.nn.Identity()
         self.linear_module = torch.nn.Linear(in_features=n_centres, out_features=out_dim)
         # TODO revisit theory for batch-norm
         #   ref : https://machinelearningmastery.com/how-to-improve-neural-network-stability-and-modeling-performance-with-data-scaling/
         #   ref : https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm1d.html
         #   ref-paper : https://arxiv.org/abs/1502.03167
         #   Note : batch-norm layer is before the non-linearity
-        self.net = torch.nn.Sequential(self.batch_norm_1d_module,
+        self.net = torch.nn.Sequential(self.input_norm_module,
                                        self.rbf_module, self.linear_module)
         # init
         torch.nn.init.normal_(self.linear_module.weight, mean=0, std=0.01)
@@ -229,9 +248,12 @@ class RBFN(torch.nn.Module):
         return y_hat
 
     def __str__(self):
-        return f"\n***\nRBF\nin_dim={self.in_dim}\nn_centres={self.n_centres}\n" \
+        return f"\n***\n" \
+               f"RBFN\n" \
+               f"in_dim={self.in_dim}\nn_centres={self.n_centres}\n" \
                f"out_dim={self.out_dim}\nbasis_fn={self.basis_fn_str}\n" \
-               f"numel_learnable={self.numel_learnable}\n***\n"
+               f"numel_learnable={self.numel_learnable}" \
+               f"\n***\n"
 
 
 class FullTensorPoly4dim(torch.nn.Module):
@@ -391,7 +413,7 @@ class PolyLinearEinsum(LinearModeEinSum):
 
 
 class NNmodel(torch.nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim):
+    def __init__(self, input_dim, hidden_dim, output_dim, input_batch_norm):
         super(NNmodel, self).__init__()
 
         # TODO revisit theory for batch-norm
@@ -399,8 +421,9 @@ class NNmodel(torch.nn.Module):
         #   ref : https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm1d.html
         #   ref-paper : https://arxiv.org/abs/1502.03167
         #   Note : batch-norm layer is before the non-linearity
+        input_norm_module = torch.nn.BatchNorm1d(hidden_dim, affine=True) if input_batch_norm else torch.nn.Identity()
         self.net = torch.nn.Sequential(torch.nn.Linear(input_dim, hidden_dim),
-                                       torch.nn.BatchNorm1d(hidden_dim, affine=True),
+                                       input_norm_module,
                                        torch.nn.Tanh(),
                                        torch.nn.Linear(hidden_dim, output_dim))
         # init net weights and biases
@@ -416,15 +439,19 @@ class NNmodel(torch.nn.Module):
 
     def forward(self, x):
         # fixme several steps for debugging
-        # out_norm_layer = self.batch_norm_module(x)
-        # out_nn_layer = self.net(out_norm_layer)
-        # out = out_nn_layer
+        out0 = self.net[0](x)  # linear first layer
+        out1 = self.net[1](out0)  # input-batch-norm layer
+        out2 = self.net[2](out1)  # tanh layer
+        out3 = self.net[3](out2)  # 2nd linear layer
         # fixme : end debugging code
         out = self.net(x)
         return out
 
     def __str__(self):
-        return f"\n*** NNmodel \n {str(self.net)}\nnumel_learnable = {self.numel_learnable}\n***"
+        return f"\n***\n" \
+               f"NN-Model \n{str(self.net)}\n" \
+               f"numel_learnable = {self.numel_learnable}\n" \
+               f"***"
 
 
 class PolyReg(torch.nn.Module):
@@ -469,7 +496,8 @@ def get_param_grad_norm_avg(param_list: List[torch.nn.Parameter]):
     return avg_
 
 
-def vanilla_opt_block(model, X, y, optim, loss_func, y_mean, y_std):
+def vanilla_opt_block(model, X, y, optim, loss_func, output_norm: str, y_train_mean,
+                      y_train_std):
     optim.zero_grad()
     # TODO revisit output-normalization
     #   ref : https://machinelearningmastery.com/how-to-improve-neural-network-stability-and-modeling-performance-with-data-scaling/
@@ -496,9 +524,6 @@ def vanilla_opt_block(model, X, y, optim, loss_func, y_mean, y_std):
     # standardize dataset
     X = StandardScaler().fit_transform(X)
     y = StandardScaler().fit_transform(y.reshape(len(y),1))[:,0]
-    1
-    2
-    3
     # standardize dataset
     X = StandardScaler().fit_transform(X)
     y = StandardScaler().fit_transform(y.reshape(len(y),1))[:,0]
@@ -511,18 +536,36 @@ def vanilla_opt_block(model, X, y, optim, loss_func, y_mean, y_std):
     #   Search for "Search for Should I standardize the target variables (column vectors)? in above page."
     #   - Another opinion
     #     https://stackoverflow.com/questions/42604261/neural-networks-normalizing-output-data
+    if output_norm == 'batch':
+        Dy = y.size()[1]
+        target_batch_norm = \
+            torch.nn.BatchNorm1d(num_features=Dy, affine=False,
+                                 track_running_stats=False)
+        # not affine, not learnable . NEVER set affine=true for output
+        # standardization
+        y_norm = target_batch_norm(y)
+    elif output_norm == 'data':
+        y_norm = (y - y_train_mean) / y_train_std
+    elif output_norm is None:
+        y_norm = y
+    else:
+        raise ValueError(f'invalid out_norm flag {output_norm}')
 
-    Dy = y.size()[1]
-    # not affine, not learnable . NEVER set affine=true for output standardization
-
-    y_norm = (y - y_mean) / y_std
     y_hat = model(X)
-    make_dot(y_hat, params=dict(model.named_parameters())).render(str(type(model)), format="png")
+    # make_dot(y_hat, params=dict(model.named_parameters())).render(str(type(model)), format="png")
     loss = loss_func(y_hat, y_norm)
     loss.backward()
-    param_list = list(model.parameters())
-    grad_norm_sum = get_param_grad_norm_sum(param_list)
-    grad_norm_avg = get_param_grad_norm_avg(param_list)
+    # fixme , debug code
+    # param_list = list(model.parameters())
+    # grad_norm_sum = get_param_grad_norm_sum(param_list)
+    # grad_norm_avg = get_param_grad_norm_avg(param_list)
+
+    # TODO : gradient clipping, revisit
+    #   - https://stackoverflow.com/questions/67236480/why-is-the-clip-grad-norm-function-used-here
+    #   - (paper) http://proceedings.mlr.press/v28/pascanu13.pdf
+    #   - https://gist.github.com/omairaasim/2fb6419226be21c354e17c6d587bf1a4
+    torch.nn.utils.clip_grad_norm(parameters=model.parameters(),
+                                  max_norm=grad_clip_max_norm)
     optim.step()
     return loss.item()
 
@@ -547,9 +590,8 @@ LOG_FORMAT = "[%(filename)s:%(lineno)s - %(funcName)10s()] %(asctime)s %(levelna
 DATE_TIME_FORMAT = "%Y-%m-%d:%H:%M:%S"
 SEEDS = [42, 18819191, 71623183, 71623183, 12345, 54321, 987654321]
 if __name__ == '__main__':
-    # set max rows for pd
+    ### set logging configs
     pd.set_option('display.max_rows', None)
-    ### set logging
     time_stamp = datetime.now().strftime(DATE_TIME_FORMAT)
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger()
@@ -558,26 +600,32 @@ if __name__ == '__main__':
     fh.setFormatter(formatter)
     fh.setLevel(logging.INFO)
     logger.addHandler(fh)
-    ## set seed
+    # set float precision decimals
+    precision_decimals = 4
+    ### set seed
     # Why 42 ? https://medium.com/geekculture/the-story-behind-random-seed-42-in-machine-learning-b838c4ac290a
     SEED = SEEDS[0]
     torch.manual_seed(SEED)
     random.seed(SEED)
     np.random.seed(SEED)
     logger.info(f'SEED = {SEED}')
-    ### train general params ####
+    ### Training ####
+    # general params
     batch_size = 32
     input_dim = 2
     output_dim = 2
     loss_fn = torch.nn.MSELoss()
-    epochs = 100
+    train_epochs = 10000
     epochs_losses_window = 10
-    ## opts and lr schedulers
-    lr = 0.1
+    input_batch_norm = False
+    output_norm = None  # can be "data","batch" or None
+    grad_clip_max_norm = 10
+    # opts and lr schedulers
+    lr = 0.01
     sgd_momentum = 0.99
     linear_lr_scheduler_start_factor = 1.0
     linear_lr_scheduler_end_factor = 0.001
-    linear_lr_scheduler_total_iter = int(0.9 * epochs)
+    linear_lr_scheduler_total_iter = int(0.9 * train_epochs)
     # tt
     poly_deg = 10
     rank = 3
@@ -588,16 +636,23 @@ if __name__ == '__main__':
     nn_hidden_dim = 50
     ## Data
     vdp_mio = 0.5
-    vdp_norm_mean = 5
-    vdp_norm_std = 10
-    N_train = 100
-    N_test = int(0.2 * N_train)
+    vdp_x_gen_norm_mean = 10
+    vdp_x_gen_norm_std = 100
+    N_train = 1000
+    normalize_data_source_X_train = True
+    normalize_data_source_Y_train = True
+    normalize_data_source_X_test = True
+    normalize_data_source_Y_test = True
+    N_test = N_train  # int(0.2 * N_train)
+
     ## Models ##
     # => Set model here
     # - Main models for now
-    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim)
+    model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim,
+                    input_batch_norm=input_batch_norm)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
-    model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name)
+    # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name,
+    #              input_batch_norm=input_batch_norm)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
@@ -626,38 +681,56 @@ if __name__ == '__main__':
     #                         start_factor=linear_lr_scheduler_start_factor,
     #                         end_factor=linear_lr_scheduler_end_factor,
     #                         total_iters=linear_lr_scheduler_total_iter)
-    lr_scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.8)
+    lr_scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.99, min_lr=0.001)
     logger.info(f'lr_scheduler = {lr_scheduler}')
 
     ### data #####
+    logger.info(f'Normalize-Data-source-X-train = {normalize_data_source_X_train}')
+    logger.info(f'Normalize-Data-source-Y-train = {normalize_data_source_Y_train}')
+    logger.info(f'Normalize-Data-source-X-test = {normalize_data_source_X_test}')
+    logger.info(f'Normalize-Data-source-Y-test = {normalize_data_source_Y_test}')
     # data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
-    train_data_set = VDP(mio=vdp_mio, N=N_train,
-                         norm_mean=vdp_norm_mean, norm_std=vdp_norm_mean)
 
+    train_data_set = VDP(mio=vdp_mio, N=N_train,
+                         x_gen_norm_mean=vdp_x_gen_norm_mean, x_gen_norm_std=vdp_x_gen_norm_std,
+                         normalize_X=normalize_data_source_X_train,
+                         normalize_Y=normalize_data_source_Y_train,
+                         train_or_test="train")
     if isinstance(train_data_set, VDP):
         assert input_dim == 2
         assert output_dim == 2
-    test_data_loader = DataLoader(dataset=train_data_set, batch_size=batch_size, shuffle=True)
-    logger.info(f'train-data = {train_data_set}')
-    logger.info(f'epochs = {epochs}')
-    # data scaler
-    scaler = StandardScaler()  # or MinMax or NOne
+    train_data_loader = DataLoader(dataset=train_data_set, batch_size=batch_size, shuffle=True)
+    test_data_set = VDP(mio=vdp_mio, N=N_test, x_gen_norm_mean=vdp_x_gen_norm_mean,
+                        x_gen_norm_std=vdp_x_gen_norm_std,
+                        normalize_X=normalize_data_source_X_test,
+                        normalize_Y=normalize_data_source_Y_test,
+                        train_or_test="test")
+    test_data_loader = DataLoader(dataset=test_data_set, batch_size=batch_size, shuffle=True)
+
+    logger.info(f'train-dataset = {train_data_set}')
+    logger.info(f'test-dataset = {test_data_set}')
+    logger.info(f'train-epochs = {train_epochs}')
+
     start_time_stamp = datetime.now()
     # training
+    logger.info(f'Input batch normalization = {input_batch_norm}')
+    logger.info(f'Output Normalization = {output_norm}')
+    logger.info(f'Gradient-clipping max-norm = {grad_clip_max_norm}')
+    #
     logger.info(f'epochs_losses_window = {epochs_losses_window}')
     epochs_losses = []
     epochs_losses_curve_x = []
     epochs_losses_curve_y = []
-    for epoch in range(epochs + 1):
+    for train_epoch in tqdm(range(train_epochs + 1), desc='train-epochs'):
         batches_losses = []
-        for i, (X_train, Y_train) in enumerate(test_data_loader):
+        for i, (X_train, Y_train) in enumerate(train_data_loader):
 
             if isinstance(model, (
                     NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim, FullTensorPoly4dim, TTpoly1dim,
                     TTpoly2dim, TTpoly2in2out, RBFN)):
                 loss_val = vanilla_opt_block(model=model, X=X_train, y=Y_train, optim=optimizer,
-                                             loss_func=loss_fn, y_mean=train_data_set.get_y_mean(),
-                                             y_std=train_data_set.get_y_std())
+                                             loss_func=loss_fn, y_train_mean=train_data_set.get_Y_mean(),
+                                             y_train_std=train_data_set.get_Y_std(), output_norm=output_norm)
             elif isinstance(model, TensorTrainFixedRank):
                 loss_val = tt_opt_block(model=model, X_train=X_train, Y_train=Y_train, optim=optimizer,
                                         loss_func=loss_fn)
@@ -672,20 +745,21 @@ if __name__ == '__main__':
         before_lr = optimizer.param_groups[0]["lr"]
         lr_scheduler.step(np.nanmean(batches_losses))
         after_lr = optimizer.param_groups[0]["lr"]
-        logger.info(f'epoch # {epoch} - '
+        logger.info(f'epoch # {train_epoch} - '
                     f'for optimizer {type(optimizer)} -'
-                    f'lr : {np.round(before_lr, 2)}-> {np.round(after_lr, 2)} -'
+                    f'lr : {np.round(before_lr, precision_decimals)}->'
+                    f' {np.round(after_lr, precision_decimals)} -'
                     f'loss = {np.mean(batches_losses)}')
         # log epoch loss
         epochs_losses.append(np.mean(batches_losses))
-        if epoch >= epochs_losses_window and epoch % epochs_losses_window == 0:
+        if train_epoch >= epochs_losses_window and train_epoch % epochs_losses_window == 0:
             assert len(epochs_losses) >= epochs_losses_window
             epochs_rolling_window_losses = epochs_losses[-epochs_losses_window:]
             # fixme : I am using mean not nan-mean to capture any nan loss, but should
             #   check for it explicitly
-            logger.info(f'*** epoch {epoch}, rolling-avg-loss (window={epochs_losses_window})= '
+            logger.info(f'*** epoch {train_epoch}, rolling-avg-loss (window={epochs_losses_window})= '
                         f'{np.mean(epochs_rolling_window_losses)}')
-            epochs_losses_curve_x.append(epoch)
+            epochs_losses_curve_x.append(train_epoch)
             epochs_losses_curve_y.append(np.mean(epochs_rolling_window_losses))
 
     # train time logging
@@ -693,10 +767,18 @@ if __name__ == '__main__':
     training_time_sec = (end_time_stamp - start_time_stamp).seconds
     logger.info(f'training time in seconds = {training_time_sec}')
     # epoch loss curve
-    epoch_loss_df = pd.DataFrame({'epochs': epochs_losses_curve_x,
-                                  'rolling-avg-loss': epochs_losses_curve_y})
-    logger.info('epochs-loss curve df :')
-    logger.info(f"\n{epoch_loss_df}")
+    train_epoch_loss_df = pd.DataFrame({'epochs': epochs_losses_curve_x,
+                                        'rolling-avg-loss': epochs_losses_curve_y})
+    logger.info('train-epochs-loss curve df :')
+    logger.info(f"\n{train_epoch_loss_df}")
+
+    ### Out of Sample Testing ###
+    logger.info(f'Out-of sample batch-test')
+    for j, (X_test, Y_test) in enumerate(test_data_loader):
+        Y_hat_test = model(X_test)
+        Y_hat_denorm = Y_hat_test  # * train_data_set.get_Y_std() + train_data_set.get_Y_mean()
+        loss_test = loss_fn(Y_hat_denorm, Y_test)
+        logger.info(f'test-batch  # {j} => test-loss = {loss_test.item()}')
 """
 scratch-pad
 vanilla ref steps
