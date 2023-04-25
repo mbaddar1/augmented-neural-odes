@@ -746,21 +746,21 @@ if __name__ == '__main__':
     output_norm = None  # can be "data","batch" or None
     grad_clip_max_norm = 10
     # opts
-    lr = 1e-2
+    lr = 2e-1
     sgd_momentum = 0.99
     # schedulers
     linear_lr_scheduler_start_factor = 1.0
     linear_lr_scheduler_end_factor = 1e-4
     linear_lr_scheduler_total_iter = int(0.9 * train_epochs)
     #
-    reduce_on_plateau_sch_factor = 0.9
-    reduce_on_plateau_sch_min_lr = 1e-5
+    reduce_on_plateau_sch_factor = 0.8
+    reduce_on_plateau_sch_min_lr = 1e-3
     # tt
     tt_poly_deg = 10
     tt_rank = 3
     tt_order = 4
     # rbf
-    rbf_n_centres = 20
+    rbf_n_centres = 16
     kernel_name = "gaussian"
     # nn
     nn_hidden_dim = 50
@@ -784,8 +784,9 @@ if __name__ == '__main__':
     ## Models ##
     # => Set model here
     # - Main models for now
-    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim,
-    #                  input_batch_norm=input_batch_norm)
+    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim,
+    #                 output_dim=output_dim,
+    #                 input_batch_norm=input_batch_norm)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
     # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name,
     #              input_batch_norm=input_batch_norm)
@@ -832,7 +833,8 @@ if __name__ == '__main__':
     # data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
 
     # train_data_set = VDP(mio=vdp_mio, N=N_train,
-    #                      x_gen_norm_mean=vdp_x_gen_norm_mean, x_gen_norm_std=vdp_x_gen_norm_std,
+    #                      x_gen_norm_mean=x_gen_norm_mean,
+    #                      x_gen_norm_std=x_gen_norm_std,
     #                      normalize_X=normalize_data_source_X_train,
     #                      normalize_Y=normalize_data_source_Y_train,
     #                      train_or_test="train")
@@ -846,8 +848,8 @@ if __name__ == '__main__':
         assert input_dim == 3
         assert output_dim == 3
     train_data_loader = DataLoader(dataset=train_data_set, batch_size=batch_size, shuffle=True)
-    # test_data_set = VDP(mio=vdp_mio, N=N_test, x_gen_norm_mean=vdp_x_gen_norm_mean,
-    #                     x_gen_norm_std=vdp_x_gen_norm_std,
+    # test_data_set = VDP(mio=vdp_mio, N=N_test, x_gen_norm_mean=x_gen_norm_mean,
+    #                     x_gen_norm_std=x_gen_norm_std,
     #                     normalize_X=normalize_data_source_X_test,
     #                     normalize_Y=normalize_data_source_Y_test,
     #                     train_or_test="test")
