@@ -784,15 +784,15 @@ if __name__ == '__main__':
     ## Models ##
     # => Set model here
     # - Main models for now
-    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim,
-    #                 output_dim=output_dim,
-    #                 input_batch_norm=input_batch_norm)
+    model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim,
+                    output_dim=output_dim,
+                    input_batch_norm=input_batch_norm)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
     # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name,
     #              input_batch_norm=input_batch_norm)
-    model = TTRBF(in_dim=input_dim, out_dim=output_dim,
-                  num_rbf_centers=rbf_n_centres, rbf_basis_function_name=kernel_name,
-                  tt_rank=tt_rank, order=tt_order)
+    # model = TTRBF(in_dim=input_dim, out_dim=output_dim,
+    #               num_rbf_centers=rbf_n_centres, rbf_basis_function_name=kernel_name,
+    #               tt_rank=tt_rank, order=tt_order)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
