@@ -76,6 +76,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 # https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_linear_regression/
 from typing import List
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 import pandas as pd
 import torch
@@ -740,7 +741,7 @@ if __name__ == '__main__':
     input_dim = 3
     output_dim = 3
     loss_fn = torch.nn.MSELoss()
-    train_epochs = 10000
+    train_epochs = 100
     epochs_losses_window = 10
     input_batch_norm = False
     output_norm = None  # can be "data","batch" or None
@@ -919,7 +920,17 @@ if __name__ == '__main__':
     logger.info(f'training time in seconds = {training_time_sec}')
     # epoch loss curve
     train_epoch_loss_df = pd.DataFrame({'epochs': epochs_losses_curve_x,
-                                        'rolling-avg-loss': epochs_losses_curve_y})
+                                        'loss': epochs_losses_curve_y})
+    plt.plot(train_epoch_loss_df['epochs'].values,
+             train_epoch_loss_df['loss'].values)
+    plt.xlabel("epochs")
+    plt.ylabel("loss")
+    model_name = type(model).__name__
+    data_name = type(train_data_set).__name__
+    plt_title = f'model = {model_name} , data = {data_name}'
+    plt.title(plt_title)
+    plt_file_name = f'{model_name}_{data_name}_{time_stamp}.png'
+    plt.savefig(f"./plots/{plt_file_name}")
     logger.info('train-epochs-loss curve df :')
     logger.info(f"\n{train_epoch_loss_df}")
     ### Log model params after training ###
