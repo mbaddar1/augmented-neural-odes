@@ -738,16 +738,16 @@ if __name__ == '__main__':
     ### Training ####
     # general params
     batch_size = 32
-    input_dim = 3
-    output_dim = 3
+    input_dim = 2
+    output_dim = 2
     loss_fn = torch.nn.MSELoss()
-    train_epochs = 100
+    train_epochs = 1000
     epochs_losses_window = 10
     input_batch_norm = False
     output_norm = None  # can be "data","batch" or None
     grad_clip_max_norm = 10
     # opts
-    lr = 2e-1
+    lr = 0.1
     sgd_momentum = 0.99
     # schedulers
     linear_lr_scheduler_start_factor = 1.0
@@ -833,15 +833,15 @@ if __name__ == '__main__':
     logger.info(f'Normalize-Data-source-Y-test = {normalize_data_source_Y_test}')
     # data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
 
-    # train_data_set = VDP(mio=vdp_mio, N=N_train,
-    #                      x_gen_norm_mean=x_gen_norm_mean,
-    #                      x_gen_norm_std=x_gen_norm_std,
-    #                      normalize_X=normalize_data_source_X_train,
-    #                      normalize_Y=normalize_data_source_Y_train,
-    #                      train_or_test="train")
-    train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
-                                  x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
-                                  normalize_Y=normalize_data_source_Y_train, train_or_test="train")
+    train_data_set = VDP(mio=vdp_mio, N=N_train,
+                         x_gen_norm_mean=x_gen_norm_mean,
+                         x_gen_norm_std=x_gen_norm_std,
+                         normalize_X=normalize_data_source_X_train,
+                         normalize_Y=normalize_data_source_Y_train,
+                         train_or_test="train")
+    # train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+    #                               x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
+    #                               normalize_Y=normalize_data_source_Y_train, train_or_test="train")
     if isinstance(train_data_set, VDP):
         assert input_dim == 2
         assert output_dim == 2
@@ -849,14 +849,14 @@ if __name__ == '__main__':
         assert input_dim == 3
         assert output_dim == 3
     train_data_loader = DataLoader(dataset=train_data_set, batch_size=batch_size, shuffle=True)
-    # test_data_set = VDP(mio=vdp_mio, N=N_test, x_gen_norm_mean=x_gen_norm_mean,
-    #                     x_gen_norm_std=x_gen_norm_std,
-    #                     normalize_X=normalize_data_source_X_test,
-    #                     normalize_Y=normalize_data_source_Y_test,
-    #                     train_or_test="test")
-    test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
-                                 x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
-                                 normalize_Y=normalize_data_source_Y_train, train_or_test="test")
+    test_data_set = VDP(mio=vdp_mio, N=N_test, x_gen_norm_mean=x_gen_norm_mean,
+                        x_gen_norm_std=x_gen_norm_std,
+                        normalize_X=normalize_data_source_X_test,
+                        normalize_Y=normalize_data_source_Y_test,
+                        train_or_test="test")
+    # test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+    #                              x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
+    #                              normalize_Y=normalize_data_source_Y_train, train_or_test="test")
     test_data_loader = DataLoader(dataset=test_data_set, batch_size=batch_size, shuffle=True)
 
     logger.info(f'train-dataset = {train_data_set}')
@@ -921,15 +921,17 @@ if __name__ == '__main__':
     # epoch loss curve
     train_epoch_loss_df = pd.DataFrame({'epochs': epochs_losses_curve_x,
                                         'loss': epochs_losses_curve_y})
-    plt.plot(train_epoch_loss_df['epochs'].values,
-             train_epoch_loss_df['loss'].values)
+    skip_epochs = 10
+    x_plot = train_epoch_loss_df['epochs'].values[skip_epochs:]
+    y_plot = train_epoch_loss_df['loss'].values[skip_epochs:]
+    plt.plot(x_plot, y_plot)
     plt.xlabel("epochs")
     plt.ylabel("loss")
     model_name = type(model).__name__
     data_name = type(train_data_set).__name__
     plt_title = f'model = {model_name} , data = {data_name}'
     plt.title(plt_title)
-    plt_file_name = f'{model_name}_{data_name}_{time_stamp}.png'
+    plt_file_name = f'{model_name}_{data_name}_{time_stamp}_epochs_{train_epoch}.png'
     plt.savefig(f"./plots/{plt_file_name}")
     logger.info('train-epochs-loss curve df :')
     logger.info(f"\n{train_epoch_loss_df}")
