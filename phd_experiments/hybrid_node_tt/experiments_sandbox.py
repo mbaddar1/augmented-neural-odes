@@ -784,15 +784,15 @@ if __name__ == '__main__':
     ## Models ##
     # => Set model here
     # - Main models for now
-    model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim,
-                    output_dim=output_dim,
-                    input_batch_norm=input_batch_norm)
+    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim,
+    #                 output_dim=output_dim,
+    #                 input_batch_norm=input_batch_norm)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
     # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name,
     #              input_batch_norm=input_batch_norm)
-    # model = TTRBF(in_dim=input_dim, out_dim=output_dim,
-    #               num_rbf_centers=rbf_n_centres, rbf_basis_function_name=kernel_name,
-    #               tt_rank=tt_rank, order=tt_order)
+    model = TTRBF(in_dim=input_dim, out_dim=output_dim,
+                  num_rbf_centers=rbf_n_centres, rbf_basis_function_name=kernel_name,
+                  tt_rank=tt_rank, order=tt_order)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
@@ -922,6 +922,11 @@ if __name__ == '__main__':
                                         'rolling-avg-loss': epochs_losses_curve_y})
     logger.info('train-epochs-loss curve df :')
     logger.info(f"\n{train_epoch_loss_df}")
+    ### Log model params after training ###
+    logger.info('Model parameters after training')
+    logger.info(f'Model = {type(model).__name__}')
+    for name, param in model.named_parameters():
+        logger.info(f'{name} = {param}')
 
     ### Out of Sample Testing ###
     logger.info(f'Out-of sample batch-test')
