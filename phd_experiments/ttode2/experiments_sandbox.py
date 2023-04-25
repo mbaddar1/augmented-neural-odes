@@ -738,8 +738,8 @@ if __name__ == '__main__':
     ### Training ####
     # general params
     batch_size = 32
-    input_dim = 2
-    output_dim = 2
+    input_dim = 3
+    output_dim = 3
     loss_fn = torch.nn.MSELoss()
     train_epochs = 1000
     epochs_losses_window = 10
@@ -754,7 +754,7 @@ if __name__ == '__main__':
     linear_lr_scheduler_end_factor = 1e-4
     linear_lr_scheduler_total_iter = int(0.9 * train_epochs)
     #
-    reduce_on_plateau_sch_factor = 0.8
+    reduce_on_plateau_sch_factor = 0.85
     reduce_on_plateau_sch_min_lr = 1e-3
     # tt
     tt_poly_deg = 10
@@ -833,15 +833,15 @@ if __name__ == '__main__':
     logger.info(f'Normalize-Data-source-Y-test = {normalize_data_source_Y_test}')
     # data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
 
-    train_data_set = VDP(mio=vdp_mio, N=N_train,
-                         x_gen_norm_mean=x_gen_norm_mean,
-                         x_gen_norm_std=x_gen_norm_std,
-                         normalize_X=normalize_data_source_X_train,
-                         normalize_Y=normalize_data_source_Y_train,
-                         train_or_test="train")
-    # train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
-    #                               x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
-    #                               normalize_Y=normalize_data_source_Y_train, train_or_test="train")
+    # train_data_set = VDP(mio=vdp_mio, N=N_train,
+    #                      x_gen_norm_mean=x_gen_norm_mean,
+    #                      x_gen_norm_std=x_gen_norm_std,
+    #                      normalize_X=normalize_data_source_X_train,
+    #                      normalize_Y=normalize_data_source_Y_train,
+    #                      train_or_test="train")
+    train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+                                  x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
+                                  normalize_Y=normalize_data_source_Y_train, train_or_test="train")
     if isinstance(train_data_set, VDP):
         assert input_dim == 2
         assert output_dim == 2
@@ -849,14 +849,14 @@ if __name__ == '__main__':
         assert input_dim == 3
         assert output_dim == 3
     train_data_loader = DataLoader(dataset=train_data_set, batch_size=batch_size, shuffle=True)
-    test_data_set = VDP(mio=vdp_mio, N=N_test, x_gen_norm_mean=x_gen_norm_mean,
-                        x_gen_norm_std=x_gen_norm_std,
-                        normalize_X=normalize_data_source_X_test,
-                        normalize_Y=normalize_data_source_Y_test,
-                        train_or_test="test")
-    # test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
-    #                              x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
-    #                              normalize_Y=normalize_data_source_Y_train, train_or_test="test")
+    # test_data_set = VDP(mio=vdp_mio, N=N_test, x_gen_norm_mean=x_gen_norm_mean,
+    #                     x_gen_norm_std=x_gen_norm_std,
+    #                     normalize_X=normalize_data_source_X_test,
+    #                     normalize_Y=normalize_data_source_Y_test,
+    #                     train_or_test="test")
+    test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+                                 x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
+                                 normalize_Y=normalize_data_source_Y_train, train_or_test="test")
     test_data_loader = DataLoader(dataset=test_data_set, batch_size=batch_size, shuffle=True)
 
     logger.info(f'train-dataset = {train_data_set}')
