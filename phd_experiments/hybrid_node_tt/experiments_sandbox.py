@@ -153,6 +153,23 @@ class VDP(Dataset):
                f"***"
 
 
+class TrueLambda(torch.nn.Module):
+    def __init__(self, A_true):
+        super().__init__()
+        self.A_true = A_true
+
+    def forward(self, y):
+        return torch.mm(y ** 3, self.A_true)
+
+
+# class YeqAmultYpow3(Dataset):
+#     # https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L34
+#     def __init__(self, A_true,x_gen_norm,):
+#         self.true_lambda = TrueLambda(A_true=A_true)
+#
+#     pass
+
+
 class LorenzSystem(Dataset):
     # High Dim non-linear systems
     # https://tglab.princeton.edu/wp-content/uploads/2011/03/Mol410Lecture13.pdf (P 2)
@@ -181,13 +198,13 @@ class LorenzSystem(Dataset):
         dx3dt = (x1 * x2 - beta * x3).view(-1, 1)
         self.Y = torch.cat([dx1dt, dx2dt, dx3dt], dim=1)
         # normalize or not
+        self.Y_mean = torch.mean(self.Y, dim=0)
+        self.Y_std = torch.std(self.Y, dim=0)
+        X_mean = torch.mean(self.X, dim=0)
+        X_std = torch.std(self.X, dim=0)
         if self.normalize_X:
-            X_mean = torch.mean(self.X, dim=0)
-            X_std = torch.std(self.X, dim=0)
             self.X = (self.X - X_mean) / X_std
         if self.normalize_Y:
-            self.Y_mean = torch.mean(self.Y, dim=0)
-            self.Y_std = torch.std(self.Y, dim=0)
             self.Y = (self.Y - self.Y_mean) / self.Y_std
 
     def __len__(self):
@@ -252,9 +269,6 @@ def get_poly_basis_list(X, deg):
 
 
 ########## Models ##############
-class TTrbf(torch.nn.Module):
-    # https://github.com/JeremyLinux/PyTorch-Radial-Basis-Function-Layer/blob/master/Torch%20RBF/torch_rbf.py
-    pass
 
 
 class RBFN(torch.nn.Module):
@@ -308,6 +322,63 @@ class RBFN(torch.nn.Module):
                f"out_dim={self.out_dim}\nbasis_fn={self.basis_fn_str}\n" \
                f"numel_learnable={self.numel_learnable}" \
                f"\n***\n"
+
+
+class TTRBF(torch.nn.Module):
+    def __init__(self, in_dim: int, out_dim: int, order: int,
+                 num_rbf_centers: int, rbf_basis_function_name: str,
+                 tt_rank: int):
+        super().__init__()
+        self.num_rbf_centers = num_rbf_centers
+        self.order = order
+        self.tt_rank = tt_rank
+        init_param_norm_mean = 0
+        init_param_norm_std = 0.1
+        assert order == 4  # fixme, generalize later
+        assert rbf_n_centres % order == 0
+        self.dim = int(rbf_n_centres / order)
+        self.rbf_module = RBF(in_features=in_dim, n_centres=num_rbf_centers,
+                              basis_func=basis_func_dict()[rbf_basis_function_name])
+        self.G0 = torch.nn.Parameter(torch.empty(self.dim, tt_rank))
+        torch.nn.init.normal_(self.G0, mean=init_param_norm_mean, std=init_param_norm_std)
+
+        self.G1 = torch.nn.Parameter(torch.empty(tt_rank, self.dim, tt_rank))
+        torch.nn.init.normal_(self.G1, mean=init_param_norm_mean, std=init_param_norm_std)
+
+        self.G2 = torch.nn.Parameter(torch.empty(tt_rank, self.dim, tt_rank))
+        torch.nn.init.normal_(self.G2, mean=init_param_norm_mean, std=init_param_norm_std)
+
+        self.G3 = torch.nn.Parameter(torch.empty(tt_rank, self.dim, out_dim))
+        torch.nn.init.normal_(self.G3, mean=init_param_norm_mean, std=init_param_norm_std)
+
+        # get num learnable numel
+        self.learnable_numel = 0
+        for name, param in self.named_parameters():
+            self.learnable_numel += torch.numel(param)
+
+    def forward(self, X):
+        rbf_out = self.rbf_module(X)
+        Phi0 = rbf_out[:, 0:self.dim]
+        Phi1 = rbf_out[:, self.dim:2 * self.dim]
+        Phi2 = rbf_out[:, 2 * self.dim:3 * self.dim]
+        Phi3 = rbf_out[:, 3 * self.dim:4 * self.dim]
+
+        R0 = torch.einsum('di,bd->bi', self.G0, Phi0)
+        R1 = torch.einsum('idj,bd->ibj', self.G1, Phi1)
+        R2 = torch.einsum('idj,bd->ibj', self.G2, Phi2)
+        R3 = torch.einsum('jdl,bd->jbl', self.G3, Phi3)
+        res = torch.einsum('bi,ibj,jbk,kbl->bl', R0, R1, R2, R3)
+        return res
+
+    def __str__(self):
+        return "***\n" \
+               "TTRBF\n" \
+               f"order = {self.order}\n" \
+               f"num_rbf_centers= {self.num_rbf_centers}\n" \
+               f"tt_rank = {self.tt_rank}\n" \
+               f"dim = {self.dim}\n" \
+               f"learnable_numel = {self.learnable_numel}\n" \
+               f"***\n"
 
 
 class FullTensorPoly4dim(torch.nn.Module):
@@ -655,7 +726,7 @@ if __name__ == '__main__':
     fh.setLevel(logging.INFO)
     logger.addHandler(fh)
     # set float precision decimals
-    precision_decimals = 4
+    precision_decimals = 8
     ### set seed
     # Why 42 ? https://medium.com/geekculture/the-story-behind-random-seed-42-in-machine-learning-b838c4ac290a
     SEED = SEEDS[0]
@@ -669,20 +740,25 @@ if __name__ == '__main__':
     input_dim = 3
     output_dim = 3
     loss_fn = torch.nn.MSELoss()
-    train_epochs = 1000
+    train_epochs = 10000
     epochs_losses_window = 10
     input_batch_norm = False
     output_norm = None  # can be "data","batch" or None
     grad_clip_max_norm = 10
-    # opts and lr schedulers
-    lr = 0.01
+    # opts
+    lr = 1e-2
     sgd_momentum = 0.99
+    # schedulers
     linear_lr_scheduler_start_factor = 1.0
-    linear_lr_scheduler_end_factor = 0.001
+    linear_lr_scheduler_end_factor = 1e-4
     linear_lr_scheduler_total_iter = int(0.9 * train_epochs)
+    #
+    reduce_on_plateau_sch_factor = 0.9
+    reduce_on_plateau_sch_min_lr = 1e-5
     # tt
-    poly_deg = 10
-    rank = 3
+    tt_poly_deg = 10
+    tt_rank = 3
+    tt_order = 4
     # rbf
     rbf_n_centres = 20
     kernel_name = "gaussian"
@@ -691,8 +767,8 @@ if __name__ == '__main__':
     ### Data
     N_train = 1000
     N_test = N_train
-    x_gen_norm_mean = 10
-    x_gen_norm_std = 5
+    x_gen_norm_mean = 0
+    x_gen_norm_std = 1
     # vdp
     vdp_mio = 0.5
     # lorenz
@@ -700,19 +776,22 @@ if __name__ == '__main__':
     sigma = 10
     beta = 8 / 3
     #
-    normalize_data_source_X_train = True
-    normalize_data_source_Y_train = True
-    normalize_data_source_X_test = True
-    normalize_data_source_Y_test = True
+    normalize_data_source_X_train = False
+    normalize_data_source_Y_train = False
+    normalize_data_source_X_test = False
+    normalize_data_source_Y_test = False
 
     ## Models ##
     # => Set model here
     # - Main models for now
     # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim, output_dim=output_dim,
-    #                 input_batch_norm=input_batch_norm)
+    #                  input_batch_norm=input_batch_norm)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
-    model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name,
-                 input_batch_norm=input_batch_norm)
+    # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name,
+    #              input_batch_norm=input_batch_norm)
+    model = TTRBF(in_dim=input_dim, out_dim=output_dim,
+                  num_rbf_centers=rbf_n_centres, rbf_basis_function_name=kernel_name,
+                  tt_rank=tt_rank, order=tt_order)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
@@ -730,9 +809,9 @@ if __name__ == '__main__':
     # TODO (SGD with momentum)
     #   read https://pytorch.org/docs/stable/generated/torch.optim.SGD.html
     #   and  http://www.cs.toronto.edu/~hinton/absps/momentum.pdf
-    optimizer = torch.optim.SGD(params=model.parameters(), lr=lr)
+    # optimizer = torch.optim.SGD(params=model.parameters(), lr=lr)
     # , nesterov=True, momentum=0.99
-    # optimizer = torch.optim.Adam(params=model.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=lr)
     # optimizer = torch.optim.RMSprop(params=model.parameters(),lr=lr,momentum=0.99)
     logger.info(f'model = {model}')
     logger.info(f'optimizer  = {optimizer}')
@@ -741,7 +820,8 @@ if __name__ == '__main__':
     #                         start_factor=linear_lr_scheduler_start_factor,
     #                         end_factor=linear_lr_scheduler_end_factor,
     #                         total_iters=linear_lr_scheduler_total_iter)
-    lr_scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.99, min_lr=0.001)
+    lr_scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=reduce_on_plateau_sch_factor,
+                                     min_lr=reduce_on_plateau_sch_min_lr)
     logger.info(f'lr_scheduler = {lr_scheduler}')
 
     ### data #####
@@ -796,7 +876,7 @@ if __name__ == '__main__':
 
             if isinstance(model, (
                     NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim, FullTensorPoly4dim, TTpoly1dim,
-                    TTpoly2dim, TTpoly2in2out, RBFN)):
+                    TTpoly2dim, TTpoly2in2out, RBFN, TTRBF)):
                 loss_val = vanilla_opt_block(model=model, X=X_train, y=Y_train, optim=optimizer,
                                              loss_func=loss_fn, y_train_mean=train_data_set.get_Y_mean(),
                                              y_train_std=train_data_set.get_Y_std(), output_norm=output_norm)
