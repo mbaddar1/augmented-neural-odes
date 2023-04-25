@@ -1,7 +1,7 @@
 import string
 from typing import List, Tuple
 import torch
-from phd_experiments.hybrid_node_tt.basis import Basis
+from phd_experiments.ttode2.basis import Basis
 from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchOdeSolver
 import torch
 from torchviz import make_dot

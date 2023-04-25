@@ -7,7 +7,7 @@ from typing import Tuple
 
 import torch
 
-from phd_experiments.hybrid_node_tt.utils import generate_einsum_string_tensor_power, generate_identity_tensor, assert_dims_symmetry, \
+from phd_experiments.ttode2.utils import generate_einsum_string_tensor_power, generate_identity_tensor, assert_dims_symmetry, \
     prod_list
 
 

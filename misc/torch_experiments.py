@@ -2,7 +2,7 @@ import torch
 from torch.nn import ParameterList, Parameter, Linear
 
 from dlra.tt import TensorTrain
-from phd_experiments.tt_ode.ttode_model import TensorTrainODEBLOCK
+from phd_experiments.tt_ode_old.ttode_model import TensorTrainODEBLOCK
 
 
 class DummyModel(torch.nn.Module):

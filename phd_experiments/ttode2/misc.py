@@ -1,6 +1,6 @@
 import torch
 
-from phd_experiments.hybrid_node_tt.torch_rbf import RBF, basis_func_dict
+from phd_experiments.ttode2.torch_rbf import RBF, basis_func_dict
 
 if __name__ == '__main__':
     in_features = 2

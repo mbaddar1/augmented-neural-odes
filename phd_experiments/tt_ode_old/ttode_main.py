@@ -18,8 +18,8 @@ from tqdm import tqdm
 from torch.nn import SmoothL1Loss
 from torch.optim import Adam
 
-from phd_experiments.hybrid_node_tt.archive.tt2 import TensorTrainFixedRank
-from phd_experiments.tt_ode.ttode_model import TensorTrainODEBLOCK
+from phd_experiments.ttode2.archive.tt2 import TensorTrainFixedRank
+from phd_experiments.tt_ode_old.ttode_model import TensorTrainODEBLOCK
 
 MODEL_NAMES = ['baseline', 'node', 'anode', 'ttode']
 DATASETS_NAMES = ['flip1d', 'concentric-sphere']

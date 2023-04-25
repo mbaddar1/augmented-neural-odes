@@ -7,9 +7,9 @@ import random
 import numpy as np
 import torch.nn
 from torch.utils.data import random_split, DataLoader
-from phd_experiments.hybrid_node_tt.models import LearnableOde, ProjectionModel, OutputModel, OdeSolverModel, NNodeFunc, \
+from phd_experiments.ttode2.models import LearnableOde, ProjectionModel, OutputModel, OdeSolverModel, NNodeFunc, \
     TensorTrainOdeFunc
-from phd_experiments.hybrid_node_tt.utils import get_dataset, get_solver, get_ode_func, get_tensor_dtype, \
+from phd_experiments.ttode2.utils import get_dataset, get_solver, get_ode_func, get_tensor_dtype, \
     get_activation, get_loss_function, get_logger, assert_models_learnability
 from datetime import datetime
 from tqdm import tqdm

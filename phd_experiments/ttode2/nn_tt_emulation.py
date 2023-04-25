@@ -8,9 +8,9 @@ import yaml
 from torch.utils.data import random_split, DataLoader
 from torchviz import make_dot
 from tqdm import tqdm
-from phd_experiments.hybrid_node_tt.models import ProjectionModel, OdeSolverModel, OutputModel, LearnableOde, NNodeFunc, \
+from phd_experiments.ttode2.models import ProjectionModel, OdeSolverModel, OutputModel, LearnableOde, NNodeFunc, \
     TensorTrainOdeFunc
-from phd_experiments.hybrid_node_tt.utils import get_activation, get_logger, get_dataset, get_solver, get_ode_func, \
+from phd_experiments.ttode2.utils import get_activation, get_logger, get_dataset, get_solver, get_ode_func, \
     assert_models_learnability, get_tensor_dtype, get_loss_function
 
 EXPERIMENTS_LOG_DIR = "./experiments_log"

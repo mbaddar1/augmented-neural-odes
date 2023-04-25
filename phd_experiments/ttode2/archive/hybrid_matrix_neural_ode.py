@@ -16,7 +16,7 @@ import numpy as np
 import torch.nn
 from torch.nn import Sequential, MSELoss
 
-from phd_experiments.hybrid_node_tt.utils import OdeFuncType, DataSetInstance, get_dataset, get_solver, SolverType, \
+from phd_experiments.ttode2.utils import OdeFuncType, DataSetInstance, get_dataset, get_solver, SolverType, \
     ForwardMethod
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 from phd_experiments.torch_ode_solvers.torch_ode_solver import TorchOdeSolver

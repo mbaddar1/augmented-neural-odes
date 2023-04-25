@@ -81,7 +81,7 @@ import pandas as pd
 import torch
 from torch.optim.lr_scheduler import LinearLR, ReduceLROnPlateau
 
-from phd_experiments.hybrid_node_tt.torch_rbf import RBF, basis_func_dict
+from phd_experiments.ttode2.torch_rbf import RBF, basis_func_dict
 
 torch.use_deterministic_algorithms(True)
 import numpy as np
@@ -89,7 +89,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchviz import make_dot
 from tqdm import tqdm
 import random
-from phd_experiments.hybrid_node_tt.models import TensorTrainFixedRank
+from phd_experiments.ttode2.models import TensorTrainFixedRank
 
 
 class VDP(Dataset):

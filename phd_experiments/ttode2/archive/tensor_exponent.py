@@ -5,8 +5,8 @@ this script is to implement high-dim, tensor-exponent
 from scipy.linalg import expm
 import torch
 
-from phd_experiments.hybrid_node_tt.archive.tensor_power import TensorPower
-from phd_experiments.hybrid_node_tt.utils import prod_list, generate_identity_tensor, \
+from phd_experiments.ttode2.archive.tensor_power import TensorPower
+from phd_experiments.ttode2.utils import prod_list, generate_identity_tensor, \
     assert_dims_symmetry
 
 

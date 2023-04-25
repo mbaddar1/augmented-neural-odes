@@ -15,7 +15,7 @@ train:
     p: 2
   dtype: "torch.float32"
   epochs_block: 100
-  models_dir: "/home/mbaddar/phd/augmented-neural-odes/phd_experiments/hybrid_node_tt/ode_func_models"
+  models_dir: "/home/mbaddar/phd/augmented-neural-odes/phd_experiments/ttode2/ode_func_models"
 
 init:
   method: "uniform"

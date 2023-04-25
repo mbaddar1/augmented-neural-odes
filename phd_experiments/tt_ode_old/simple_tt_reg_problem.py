@@ -21,7 +21,7 @@ from torch.optim.adam import Adam
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 from sklearn.datasets import load_diabetes
-from phd_experiments.tt_ode.ttode_model import TensorTrainODEBLOCK
+from phd_experiments.tt_ode_old.ttode_model import TensorTrainODEBLOCK
 
 
 class SyntheticRegressionDataSet1(Dataset):

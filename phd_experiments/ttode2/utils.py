@@ -11,7 +11,7 @@ from phd_experiments.datasets.custom_dataset import CustomDataSet
 from phd_experiments.datasets.torch_boston_housing import TorchBostonHousingPrices
 from phd_experiments.datasets.toy_ode import ToyODE
 from phd_experiments.datasets.toy_relu import ToyRelu
-from phd_experiments.hybrid_node_tt.models import TensorTrainOdeFunc, NNodeFunc
+from phd_experiments.ttode2.models import TensorTrainOdeFunc, NNodeFunc
 from phd_experiments.torch_ode_solvers.torch_euler import TorchEulerSolver
 from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 

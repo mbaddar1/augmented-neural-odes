@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torchviz import make_dot, make_dot_from_trace
 
-from phd_experiments.hybrid_node_tt.models import TensorTrainFixedRank
+from phd_experiments.ttode2.models import TensorTrainFixedRank
 
 # model = nn.Sequential()
 # model.add_module('W0', nn.Linear(8, 16))
