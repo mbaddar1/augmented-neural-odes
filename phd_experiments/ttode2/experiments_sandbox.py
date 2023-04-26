@@ -222,9 +222,7 @@ class LorenzSystem(Dataset):
     # https://tglab.princeton.edu/wp-content/uploads/2011/03/Mol410Lecture13.pdf (P 2)
     # https://en.wikipedia.org/wiki/Lorenz_system
     def __init__(self, N: int, rho: float, sigma: float, beta: float,
-                 x_gen_norm_mean: float, x_gen_norm_std: float,
-                 normalize_X: bool, normalize_Y: bool,
-                 train_or_test: str):
+                 x_gen_norm_mean: float, x_gen_norm_std: float, train_or_test: str):
         self.train_or_test = train_or_test
         self.N = N
         Dx = 3
@@ -233,8 +231,7 @@ class LorenzSystem(Dataset):
         self.rho = rho
         self.sigma = sigma
         self.beta = beta
-        self.normalize_X = normalize_X
-        self.normalize_Y = normalize_Y
+
         self.X = torch.distributions.Normal(x_gen_norm_mean, x_gen_norm_std). \
             sample(torch.Size([self.N, Dx]))
         x1 = self.X[:, 0]
@@ -249,10 +246,6 @@ class LorenzSystem(Dataset):
         self.Y_std = torch.std(self.Y, dim=0)
         X_mean = torch.mean(self.X, dim=0)
         X_std = torch.std(self.X, dim=0)
-        if self.normalize_X:
-            self.X = (self.X - X_mean) / X_std
-        if self.normalize_Y:
-            self.Y = (self.Y - self.Y_mean) / self.Y_std
 
     def __len__(self):
         return self.N
@@ -273,8 +266,6 @@ class LorenzSystem(Dataset):
                f"rho = {self.rho}\n" \
                f"sigma = {self.sigma}\n" \
                f"beta = {self.beta}\n" \
-               f"normalize_X = {self.normalize_X}" \
-               f"normalize_Y = {self.normalize_Y}" \
                f"****\n"
 
 
@@ -779,7 +770,7 @@ if __name__ == '__main__':
     # general params
     batch_size = 32
     input_dim = 3
-    output_dim = 2
+    output_dim = 3
     loss_fn = torch.nn.MSELoss()
     train_epochs = 2000
     epochs_losses_window = 10
@@ -825,14 +816,14 @@ if __name__ == '__main__':
     ## Models ##
     # => Set model here
     # - Main models for now
-    model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim,
-                    output_dim=output_dim)
+    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim,
+    #                 output_dim=output_dim)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
     # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name,
     #              input_batch_norm=input_batch_norm)
-    # model = TTRBF(in_dim=input_dim, out_dim=output_dim,
-    #               num_rbf_centers=rbf_n_centres, rbf_basis_function_name=kernel_name,
-    #               tt_rank=tt_rank, order=tt_order)
+    model = TTRBF(in_dim=input_dim, out_dim=output_dim,
+                  num_rbf_centers=rbf_n_centres, rbf_basis_function_name=kernel_name,
+                  tt_rank=tt_rank, order=tt_order)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
@@ -868,13 +859,12 @@ if __name__ == '__main__':
     ### data #####
     # data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
 
-    train_data_set = FVDP(mio=vdp_mio, a=vdp_a, omega=vdp_omega, N=N_train,
-                          x_gen_norm_mean=x_gen_norm_mean,
-                          x_gen_norm_std=x_gen_norm_std,
-                          train_or_test="train")
-    # train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
-    #                               x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
-    #                               normalize_Y=normalize_data_source_Y_train, train_or_test="train")
+    # train_data_set = FVDP(mio=vdp_mio, a=vdp_a, omega=vdp_omega, N=N_train,
+    #                       x_gen_norm_mean=x_gen_norm_mean,
+    #                       x_gen_norm_std=x_gen_norm_std,
+    #                       train_or_test="train")
+    train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+                                  x_gen_norm_std=x_gen_norm_std, train_or_test="train")
     if isinstance(train_data_set, FVDP):
         assert input_dim == 3
         assert output_dim == 2
@@ -882,13 +872,12 @@ if __name__ == '__main__':
         assert input_dim == 3
         assert output_dim == 3
     train_data_loader = DataLoader(dataset=train_data_set, batch_size=batch_size, shuffle=True)
-    test_data_set = FVDP(mio=vdp_mio, a=vdp_a, omega=vdp_omega, N=N_test,
-                         x_gen_norm_mean=x_gen_norm_mean,
-                         x_gen_norm_std=x_gen_norm_std,
-                         train_or_test="test")
-    # test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
-    #                              x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
-    #                              normalize_Y=normalize_data_source_Y_train, train_or_test="test")
+    # test_data_set = FVDP(mio=vdp_mio, a=vdp_a, omega=vdp_omega, N=N_test,
+    #                      x_gen_norm_mean=x_gen_norm_mean,
+    #                      x_gen_norm_std=x_gen_norm_std,
+    #                      train_or_test="test")
+    test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+                                 x_gen_norm_std=x_gen_norm_std, train_or_test="test")
     test_data_loader = DataLoader(dataset=test_data_set, batch_size=batch_size, shuffle=True)
 
     logger.info(f'train-dataset = {train_data_set}')
