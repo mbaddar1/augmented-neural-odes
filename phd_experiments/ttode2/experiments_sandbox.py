@@ -209,12 +209,26 @@ class TrueLambda(torch.nn.Module):
         return torch.mm(y ** 3, self.A_true)
 
 
-# class YeqAmultYpow3(Dataset):
-#     # https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L34
-#     def __init__(self, A_true,x_gen_norm,):
-#         self.true_lambda = TrueLambda(A_true=A_true)
-#
-#     pass
+class SimplePolynomial(Dataset):
+    # https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L34
+    def __init__(self, N, A_true, x_gen_norm, x_gen_std):
+        self.N = N
+        Dx = 2
+        self.true_lambda = TrueLambda(A_true=A_true)
+        self.X = torch.distributions.Normal(x_gen_norm, x_gen_std).sample(torch.Size([N, Dx]))
+        self.Y = self.true_lambda(self.X)
+
+    def __len__(self):
+        return self.N
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.Y[idx]
+
+    def __str__(self):
+        return "***\n" \
+               "SimplePoly\n" \
+               f"A_true = {self.true_lambda.A_true}\n" \
+               f"***\n"
 
 
 class LorenzSystem(Dataset):
@@ -769,8 +783,8 @@ if __name__ == '__main__':
     ### Training ####
     # general params
     batch_size = 32
-    input_dim = 3
-    output_dim = 3
+    input_dim = 2
+    output_dim = 2
     loss_fn = torch.nn.MSELoss()
     train_epochs = 2000
     epochs_losses_window = 10
@@ -808,22 +822,28 @@ if __name__ == '__main__':
     vdp_mio = 8.53
     vdp_a = 0.2
     vdp_omega = 2.0 * torch.pi / 10
-    # lorenz
+    # lorenz system https://en.wikipedia.org/wiki/Lorenz_system
     rho = 28
     sigma = 10
     beta = 8 / 3
+    # SimplePoly
+    # https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L34
+    # https://github.com/rtqichen/torchdiffeq/blob/master/examples/ode_demo.py#L31
+    true_A = torch.tensor([[-0.1, 2.0], [-2.0, -0.1]])
+
+    # ****************************************#
 
     ## Models ##
     # => Set model here
     # - Main models for now
-    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim,
-    #                 output_dim=output_dim)
+    model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim,
+                    output_dim=output_dim)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
     # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name,
     #              input_batch_norm=input_batch_norm)
-    model = TTRBF(in_dim=input_dim, out_dim=output_dim,
-                  num_rbf_centers=rbf_n_centres, rbf_basis_function_name=kernel_name,
-                  tt_rank=tt_rank, order=tt_order)
+    # model = TTRBF(in_dim=input_dim, out_dim=output_dim,
+    #               num_rbf_centers=rbf_n_centres, rbf_basis_function_name=kernel_name,
+    #               tt_rank=tt_rank, order=tt_order)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
@@ -858,26 +878,31 @@ if __name__ == '__main__':
 
     ### data #####
     # data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
-
+    train_data_set = SimplePolynomial(N=N_train, A_true=true_A, x_gen_norm=x_gen_norm_mean, x_gen_std=x_gen_norm_std)
     # train_data_set = FVDP(mio=vdp_mio, a=vdp_a, omega=vdp_omega, N=N_train,
     #                       x_gen_norm_mean=x_gen_norm_mean,
     #                       x_gen_norm_std=x_gen_norm_std,
     #                       train_or_test="train")
-    train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
-                                  x_gen_norm_std=x_gen_norm_std, train_or_test="train")
+    # train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+    #                               x_gen_norm_std=x_gen_norm_std, train_or_test="train")
     if isinstance(train_data_set, FVDP):
         assert input_dim == 3
         assert output_dim == 2
     elif isinstance(train_data_set, LorenzSystem):
         assert input_dim == 3
         assert output_dim == 3
+    elif isinstance(train_data_set, SimplePolynomial):
+        assert input_dim == 2
+        assert output_dim == 2
     train_data_loader = DataLoader(dataset=train_data_set, batch_size=batch_size, shuffle=True)
+    test_data_set = SimplePolynomial(N=N_test, A_true=true_A, x_gen_norm=x_gen_norm_mean, x_gen_std=x_gen_norm_std)
     # test_data_set = FVDP(mio=vdp_mio, a=vdp_a, omega=vdp_omega, N=N_test,
     #                      x_gen_norm_mean=x_gen_norm_mean,
     #                      x_gen_norm_std=x_gen_norm_std,
     #                      train_or_test="test")
-    test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
-                                 x_gen_norm_std=x_gen_norm_std, train_or_test="test")
+
+    # test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+    #                              x_gen_norm_std=x_gen_norm_std, train_or_test="test")
     test_data_loader = DataLoader(dataset=test_data_set, batch_size=batch_size, shuffle=True)
 
     logger.info(f'train-dataset = {train_data_set}')
