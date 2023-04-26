@@ -82,6 +82,7 @@ import pandas as pd
 import torch
 from torch.optim.lr_scheduler import LinearLR, ReduceLROnPlateau
 
+from phd_experiments.torch_ode_solvers.torch_rk45 import TorchRK45
 from phd_experiments.ttode2.torch_rbf import RBF, basis_func_dict
 
 torch.use_deterministic_algorithms(True)
@@ -93,53 +94,100 @@ import random
 from phd_experiments.ttode2.models import TensorTrainFixedRank
 
 
-class VDP(Dataset):
+class FVDP_Trajectory_Model(torch.nn.Module):
+    def __init__(self, mio: float, a: float, omega: float):
+        super().__init__()
+        self.omega = omega
+        self.a = a
+        self.mio = mio
+
+    def forward(self, t: float, X: torch.Tensor):
+        b = X.size()[0]
+        t_tensor = torch.tensor(t).repeat(b, 1)
+        x1 = X[:, 0].view(-1, 1)
+        x2 = X[:, 1].view(-1, 1)
+        x1_dot = x2
+        x2_dot = self.mio * (1 - x1 ** 2) * x2 - x1 + self.a * torch.sin(self.omega * t_tensor)
+        Y = torch.cat([x1_dot, x2_dot], dim=1)
+        return Y
+
+
+class FVDP(Dataset):
     # https://en.wikipedia.org/wiki/Van_der_Pol_oscillator
     # https://www.johndcook.com/blog/2019/12/22/van-der-pol/f
     # https://arxiv.org/pdf/0803.1658.pdf
     # todo add plotting
-    def __init__(self, mio: float, N: int, x_gen_norm_mean: float,
-                 x_gen_norm_std: float, normalize_X: bool,
-                 normalize_Y: bool, train_or_test: str):
+    def __init__(self, mio: float, a: float, omega: float, N: int, x_gen_norm_mean: float,
+                 x_gen_norm_std: float, train_or_test: str):
         self.train_or_test = train_or_test
         self.N = N
         self.x_gen_norm_mean = x_gen_norm_mean
         self.x_gen_norm_std = x_gen_norm_std
-        self.normalize_X = normalize_X
-        self.normalize_Y = normalize_Y
         Dx_vdp = 2
         self.mio = mio
+        self.a = a
+        self.omega = omega
         assert train_or_test in ["train", "test"]
-        self.X = torch.distributions. \
-            Normal(loc=self.x_gen_norm_mean, scale=self.x_gen_norm_std). \
-            sample(torch.Size([self.N, Dx_vdp]))
-        x1 = self.X[:, 0].view(-1, 1)
-        x2 = self.X[:, 1].view(-1, 1)
-        x1_dot = x2
-        x2_dot = mio * (1 - x1 ** 2) * x2 - x1
-        self.Y = torch.cat([x1_dot, x2_dot], dim=1)
-        # for target std
-        self.Y_mean = torch.mean(self.Y, dim=0)
-        self.Y_std = torch.std(self.Y, dim=0)
-        if normalize_Y:
-            self.Y = (self.Y - self.Y_mean) / self.Y_std
-        # normalize data from the source
-        if normalize_X:
-            X_mean = torch.mean(self.X, dim=0)
-            X_std = torch.std(self.X, dim=0)
-            self.X = (self.X - X_mean) / X_std
+
+        self.t = torch.distributions.Uniform(0, 1).sample(torch.Size([self.N, 1])).view(-1, 1)
+        fvdp_traj_model = FVDP_Trajectory_Model(mio=self.mio, a=self.a,
+                                                omega=self.omega)
+        X_aug_list = []
+        Y_list = []
+        for t in np.arange(0, 1.1, 0.1):
+            X = torch.distributions. \
+                Normal(loc=self.x_gen_norm_mean, scale=self.x_gen_norm_std). \
+                sample(torch.Size([int(self.N / 10), Dx_vdp]))
+            b = X.size()[0]
+            X_aug = torch.cat([X, torch.tensor(t).repeat(b, 1)], dim=1)
+            Y = fvdp_traj_model(t, X)
+            X_aug_list.append(X_aug)
+            Y_list.append(Y)
+        self.Y = torch.cat(Y_list, dim=0).type(torch.float32)
+        self.X_aug = torch.cat(X_aug_list, dim=0).type(torch.float32)
+        solver = TorchRK45(device=torch.device("cpu"), tensor_dtype=torch.float32)
+        soln = solver.solve_ivp(func=fvdp_traj_model, t_span=(300, 600),
+                                z0=torch.tensor([0, 0], dtype=torch.float32).view(1, -1))
+        z_traj = soln.z_trajectory
+        z_traj_tensor = torch.cat(list(z_traj), dim=0)
+        z1 = z_traj_tensor[:, 0].detach().numpy()
+        z2 = z_traj_tensor[:, 1].detach().numpy()
+        t_vals = np.array(soln.t_values)
+        #
+        plt.xlabel('t')
+        plt.ylabel('z1')
+        plt.title(f"FVDP , mio = {self.mio} , a = {self.a}, omega = {self.omega}")
+        plt.plot(t_vals, z1)
+        plt.savefig('fvdp_torch_z1_t.png')
+        plt.clf()
+        #
+        #
+        # plt.plot(z1, z2)
+        # plt.savefig('fvdp_torch_phase_z1_z2.png')
+        # plt.clf()
+
+        # fixme, ignore data normalization for now, revisit later
+        # self.Y_mean = torch.mean(self.Y, dim=0)
+        # self.Y_std = torch.std(self.Y, dim=0)
+        # if normalize_Y:
+        #     self.Y = (self.Y - self.Y_mean) / self.Y_std
+        # # normalize data from the source
+        # if normalize_X:
+        #     X_mean = torch.mean(self.X, dim=0)
+        #     X_std = torch.std(self.X, dim=0)
+        #     self.X = (self.X - X_mean) / X_std
 
     def __len__(self):
         return self.N
 
     def __getitem__(self, idx):
-        return self.X[idx], self.Y[idx]
+        return self.X_aug[idx], self.Y[idx]
 
-    def get_Y_mean(self):
-        return self.Y_mean
-
-    def get_Y_std(self):
-        return self.Y_std
+    # def get_Y_mean(self):
+    #     return self.Y_mean
+    #
+    # def get_Y_std(self):
+    #     return self.Y_std
 
     def __str__(self):
         return f"***\n" \
@@ -148,8 +196,6 @@ class VDP(Dataset):
                f"mio = {self.mio}\n" \
                f"x_gen_norm_mean = {self.x_gen_norm_mean}\n" \
                f"x_gen_norm_std = {self.x_gen_norm_std}\n" \
-               f"normalize_X = {self.normalize_X}\n" \
-               f"normalize_Y = {self.normalize_Y}\n" \
                f"train-or-test = {self.train_or_test}\n" \
                f"***"
 
@@ -230,11 +276,6 @@ class LorenzSystem(Dataset):
                f"normalize_X = {self.normalize_X}" \
                f"normalize_Y = {self.normalize_Y}" \
                f"****\n"
-
-
-class FVDP(Dataset):
-    # http://math.colgate.edu/~wweckesser/pubs/FVDPI.pdf
-    pass
 
 
 class Y_eq_a_sinX_cosX_dataset(Dataset):
@@ -353,9 +394,9 @@ class TTRBF(torch.nn.Module):
         torch.nn.init.normal_(self.G3, mean=init_param_norm_mean, std=init_param_norm_std)
 
         # get num learnable numel
-        self.learnable_numel = 0
+        self.numel_learnable = 0
         for name, param in self.named_parameters():
-            self.learnable_numel += torch.numel(param)
+            self.numel_learnable += torch.numel(param)
 
     def forward(self, X):
         rbf_out = self.rbf_module(X)
@@ -378,7 +419,7 @@ class TTRBF(torch.nn.Module):
                f"num_rbf_centers= {self.num_rbf_centers}\n" \
                f"tt_rank = {self.tt_rank}\n" \
                f"dim = {self.dim}\n" \
-               f"learnable_numel = {self.learnable_numel}\n" \
+               f"learnable_numel = {self.numel_learnable}\n" \
                f"***\n"
 
 
@@ -539,7 +580,7 @@ class PolyLinearEinsum(LinearModeEinSum):
 
 
 class NNmodel(torch.nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim, input_batch_norm):
+    def __init__(self, input_dim, hidden_dim, output_dim):
         super(NNmodel, self).__init__()
 
         # TODO revisit theory for batch-norm
@@ -547,9 +588,9 @@ class NNmodel(torch.nn.Module):
         #   ref : https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm1d.html
         #   ref-paper : https://arxiv.org/abs/1502.03167
         #   Note : batch-norm layer is before the non-linearity
-        input_norm_module = torch.nn.BatchNorm1d(hidden_dim, affine=True) if input_batch_norm else torch.nn.Identity()
+        # fixme, skip batchnorm for now, visit later
+        # input_norm_module = torch.nn.BatchNorm1d(hidden_dim, affine=True) if input_batch_norm else torch.nn.Identity()
         self.net = torch.nn.Sequential(torch.nn.Linear(input_dim, hidden_dim),
-                                       input_norm_module,
                                        torch.nn.Tanh(),
                                        torch.nn.Linear(hidden_dim, output_dim))
         # init net weights and biases
@@ -565,10 +606,10 @@ class NNmodel(torch.nn.Module):
 
     def forward(self, x):
         # fixme several steps for debugging
-        out0 = self.net[0](x)  # linear first layer
-        out1 = self.net[1](out0)  # input-batch-norm layer
-        out2 = self.net[2](out1)  # tanh layer
-        out3 = self.net[3](out2)  # 2nd linear layer
+        # out0 = self.net[0](x)  # linear first layer
+        # out1 = self.net[1](out0)  # input-batch-norm layer
+        # out2 = self.net[2](out1)  # tanh layer
+        # out3 = self.net[3](out2)  # 2nd linear layer
         # fixme : end debugging code
         out = self.net(x)
         return out
@@ -622,8 +663,7 @@ def get_param_grad_norm_avg(param_list: List[torch.nn.Parameter]):
     return avg_
 
 
-def vanilla_opt_block(model, X, y, optim, loss_func, output_norm: str, y_train_mean,
-                      y_train_std):
+def vanilla_opt_block(model, X, y, optim, loss_func):
     optim.zero_grad()
     # TODO revisit output-normalization
     #   ref : https://machinelearningmastery.com/how-to-improve-neural-network-stability-and-modeling-performance-with-data-scaling/
@@ -739,61 +779,60 @@ if __name__ == '__main__':
     # general params
     batch_size = 32
     input_dim = 3
-    output_dim = 3
+    output_dim = 2
     loss_fn = torch.nn.MSELoss()
-    train_epochs = 1000
+    train_epochs = 2000
     epochs_losses_window = 10
-    input_batch_norm = False
+    # fixme, revisit batchnorm later
+    # input_batch_norm = False
     output_norm = None  # can be "data","batch" or None
     grad_clip_max_norm = 10
     # opts
-    lr = 0.1
+    lr = 0.05
     sgd_momentum = 0.99
     # schedulers
     linear_lr_scheduler_start_factor = 1.0
     linear_lr_scheduler_end_factor = 1e-4
     linear_lr_scheduler_total_iter = int(0.9 * train_epochs)
     #
-    reduce_on_plateau_sch_factor = 0.85
-    reduce_on_plateau_sch_min_lr = 1e-3
+    reduce_on_plateau_sch_factor = 0.8
+    reduce_on_plateau_sch_min_lr = 1e-4
     # tt
     tt_poly_deg = 10
     tt_rank = 3
     tt_order = 4
     # rbf
-    rbf_n_centres = 16
+    rbf_n_centres = 24
     kernel_name = "gaussian"
     # nn
     nn_hidden_dim = 50
     ### Data
-    N_train = 1000
+    N_train = 1100
     N_test = N_train
     x_gen_norm_mean = 0
     x_gen_norm_std = 1
     # vdp
-    vdp_mio = 0.5
+    # https://en.wikipedia.org/wiki/Van_der_Pol_oscillator
+    # param value from fig. ex. of FVDP
+    vdp_mio = 8.53
+    vdp_a = 0.2
+    vdp_omega = 2.0 * torch.pi / 10
     # lorenz
     rho = 28
     sigma = 10
     beta = 8 / 3
-    #
-    normalize_data_source_X_train = False
-    normalize_data_source_Y_train = False
-    normalize_data_source_X_test = False
-    normalize_data_source_Y_test = False
 
     ## Models ##
     # => Set model here
     # - Main models for now
-    # model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim,
-    #                 output_dim=output_dim,
-    #                 input_batch_norm=input_batch_norm)
+    model = NNmodel(input_dim=input_dim, hidden_dim=nn_hidden_dim,
+                    output_dim=output_dim)
     # model = TTpoly2in2out(rank=rank, deg=poly_deg)
     # model = RBFN(in_dim=input_dim, out_dim=output_dim, n_centres=rbf_n_centres, basis_fn_str=kernel_name,
     #              input_batch_norm=input_batch_norm)
-    model = TTRBF(in_dim=input_dim, out_dim=output_dim,
-                  num_rbf_centers=rbf_n_centres, rbf_basis_function_name=kernel_name,
-                  tt_rank=tt_rank, order=tt_order)
+    # model = TTRBF(in_dim=input_dim, out_dim=output_dim,
+    #               num_rbf_centers=rbf_n_centres, rbf_basis_function_name=kernel_name,
+    #               tt_rank=tt_rank, order=tt_order)
     # ---
     # - some sandbox models
     # model = LinearModel(in_dim=Dx, out_dim=1)
@@ -827,36 +866,29 @@ if __name__ == '__main__':
     logger.info(f'lr_scheduler = {lr_scheduler}')
 
     ### data #####
-    logger.info(f'Normalize-Data-source-X-train = {normalize_data_source_X_train}')
-    logger.info(f'Normalize-Data-source-Y-train = {normalize_data_source_Y_train}')
-    logger.info(f'Normalize-Data-source-X-test = {normalize_data_source_X_test}')
-    logger.info(f'Normalize-Data-source-Y-test = {normalize_data_source_Y_test}')
     # data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
 
-    # train_data_set = VDP(mio=vdp_mio, N=N_train,
-    #                      x_gen_norm_mean=x_gen_norm_mean,
-    #                      x_gen_norm_std=x_gen_norm_std,
-    #                      normalize_X=normalize_data_source_X_train,
-    #                      normalize_Y=normalize_data_source_Y_train,
-    #                      train_or_test="train")
-    train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
-                                  x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
-                                  normalize_Y=normalize_data_source_Y_train, train_or_test="train")
-    if isinstance(train_data_set, VDP):
-        assert input_dim == 2
+    train_data_set = FVDP(mio=vdp_mio, a=vdp_a, omega=vdp_omega, N=N_train,
+                          x_gen_norm_mean=x_gen_norm_mean,
+                          x_gen_norm_std=x_gen_norm_std,
+                          train_or_test="train")
+    # train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+    #                               x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
+    #                               normalize_Y=normalize_data_source_Y_train, train_or_test="train")
+    if isinstance(train_data_set, FVDP):
+        assert input_dim == 3
         assert output_dim == 2
     elif isinstance(train_data_set, LorenzSystem):
         assert input_dim == 3
         assert output_dim == 3
     train_data_loader = DataLoader(dataset=train_data_set, batch_size=batch_size, shuffle=True)
-    # test_data_set = VDP(mio=vdp_mio, N=N_test, x_gen_norm_mean=x_gen_norm_mean,
-    #                     x_gen_norm_std=x_gen_norm_std,
-    #                     normalize_X=normalize_data_source_X_test,
-    #                     normalize_Y=normalize_data_source_Y_test,
-    #                     train_or_test="test")
-    test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
-                                 x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
-                                 normalize_Y=normalize_data_source_Y_train, train_or_test="test")
+    test_data_set = FVDP(mio=vdp_mio, a=vdp_a, omega=vdp_omega, N=N_test,
+                         x_gen_norm_mean=x_gen_norm_mean,
+                         x_gen_norm_std=x_gen_norm_std,
+                         train_or_test="test")
+    # test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+    #                              x_gen_norm_std=x_gen_norm_std, normalize_X=normalize_data_source_X_train,
+    #                              normalize_Y=normalize_data_source_Y_train, train_or_test="test")
     test_data_loader = DataLoader(dataset=test_data_set, batch_size=batch_size, shuffle=True)
 
     logger.info(f'train-dataset = {train_data_set}')
@@ -865,7 +897,7 @@ if __name__ == '__main__':
 
     start_time_stamp = datetime.now()
     # training
-    logger.info(f'Input batch normalization = {input_batch_norm}')
+    # logger.info(f'Input batch normalization = {input_batch_norm}')
     logger.info(f'Output Normalization = {output_norm}')
     logger.info(f'Gradient-clipping max-norm = {grad_clip_max_norm}')
     #
@@ -881,8 +913,7 @@ if __name__ == '__main__':
                     NNmodel, LinearModel, PolyReg, LinearModeEinSum, TTpoly4dim, FullTensorPoly4dim, TTpoly1dim,
                     TTpoly2dim, TTpoly2in2out, RBFN, TTRBF)):
                 loss_val = vanilla_opt_block(model=model, X=X_train, y=Y_train, optim=optimizer,
-                                             loss_func=loss_fn, y_train_mean=train_data_set.get_Y_mean(),
-                                             y_train_std=train_data_set.get_Y_std(), output_norm=output_norm)
+                                             loss_func=loss_fn)
             elif isinstance(model, TensorTrainFixedRank):
                 loss_val = tt_opt_block(model=model, X_train=X_train, Y_train=Y_train, optim=optimizer,
                                         loss_func=loss_fn)
@@ -929,7 +960,8 @@ if __name__ == '__main__':
     plt.ylabel("loss")
     model_name = type(model).__name__
     data_name = type(train_data_set).__name__
-    plt_title = f'model = {model_name} , data = {data_name}'
+    plt_title = f'model = {model_name} ,numel = {model.numel_learnable}, ' \
+                f'data = {data_name}'
     plt.title(plt_title)
     plt_file_name = f'{model_name}_{data_name}_{time_stamp}_epochs_{train_epoch}.png'
     plt.savefig(f"./plots/{plt_file_name}")
