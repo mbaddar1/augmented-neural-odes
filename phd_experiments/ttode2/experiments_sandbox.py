@@ -231,6 +231,16 @@ class SimplePolynomial(Dataset):
                f"***\n"
 
 
+class MultiScrollAttractor(Dataset):
+    # https://en.wikipedia.org/wiki/Multiscroll_attractor
+    pass
+class FiveDimLorenzModel(Dataset):
+    # https://iopscience.iop.org/article/10.1088/2399-6528/aaa955/pdf
+    pass
+class SixDimLorenzModel(Dataset):
+    # https://iopscience.iop.org/article/10.1088/2399-6528/aaa955/pdf
+    pass
+
 class LorenzSystem(Dataset):
     # High Dim non-linear systems
     # https://tglab.princeton.edu/wp-content/uploads/2011/03/Mol410Lecture13.pdf (P 2)
@@ -252,7 +262,7 @@ class LorenzSystem(Dataset):
         x2 = self.X[:, 1]
         x3 = self.X[:, 2]
         dx1dt = sigma * (x2 - x1).view(-1, 1)
-        dx2dt = (x1 * (rho - x3) * x3).view(-1, 1)
+        dx2dt = (x1 * (rho - x3) - x2).view(-1, 1)
         dx3dt = (x1 * x2 - beta * x3).view(-1, 1)
         self.Y = torch.cat([dx1dt, dx2dt, dx3dt], dim=1)
         # normalize or not
@@ -783,14 +793,14 @@ if __name__ == '__main__':
     ### Training ####
     # general params
     batch_size = 32
-    input_dim = 2
-    output_dim = 2
+    input_dim = 3
+    output_dim = 3
     loss_fn = torch.nn.MSELoss()
     train_epochs = 2000
     epochs_losses_window = 10
     # fixme, revisit batchnorm later
     # input_batch_norm = False
-    output_norm = None  # can be "data","batch" or None
+    output_norm = None  # can be "data","fbatch" or None
     grad_clip_max_norm = 10
     # opts
     lr = 0.05
@@ -878,13 +888,13 @@ if __name__ == '__main__':
 
     ### data #####
     # data_set = ToyData1(input_dim=input_dim,N=N_samples_data)
-    train_data_set = SimplePolynomial(N=N_train, A_true=true_A, x_gen_norm=x_gen_norm_mean, x_gen_std=x_gen_norm_std)
+    # train_data_set = SimplePolynomial(N=N_train, A_true=true_A, x_gen_norm=x_gen_norm_mean, x_gen_std=x_gen_norm_std)
     # train_data_set = FVDP(mio=vdp_mio, a=vdp_a, omega=vdp_omega, N=N_train,
     #                       x_gen_norm_mean=x_gen_norm_mean,
     #                       x_gen_norm_std=x_gen_norm_std,
     #                       train_or_test="train")
-    # train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
-    #                               x_gen_norm_std=x_gen_norm_std, train_or_test="train")
+    train_data_set = LorenzSystem(N=N_train, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+                                  x_gen_norm_std=x_gen_norm_std, train_or_test="train")
     if isinstance(train_data_set, FVDP):
         assert input_dim == 3
         assert output_dim == 2
@@ -895,14 +905,14 @@ if __name__ == '__main__':
         assert input_dim == 2
         assert output_dim == 2
     train_data_loader = DataLoader(dataset=train_data_set, batch_size=batch_size, shuffle=True)
-    test_data_set = SimplePolynomial(N=N_test, A_true=true_A, x_gen_norm=x_gen_norm_mean, x_gen_std=x_gen_norm_std)
+    #test_data_set = SimplePolynomial(N=N_test, A_true=true_A, x_gen_norm=x_gen_norm_mean, x_gen_std=x_gen_norm_std)
     # test_data_set = FVDP(mio=vdp_mio, a=vdp_a, omega=vdp_omega, N=N_test,
     #                      x_gen_norm_mean=x_gen_norm_mean,
     #                      x_gen_norm_std=x_gen_norm_std,
     #                      train_or_test="test")
 
-    # test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
-    #                              x_gen_norm_std=x_gen_norm_std, train_or_test="test")
+    test_data_set = LorenzSystem(N=N_test, rho=rho, sigma=sigma, beta=beta, x_gen_norm_mean=x_gen_norm_mean,
+                                 x_gen_norm_std=x_gen_norm_std, train_or_test="test")
     test_data_loader = DataLoader(dataset=test_data_set, batch_size=batch_size, shuffle=True)
 
     logger.info(f'train-dataset = {train_data_set}')
